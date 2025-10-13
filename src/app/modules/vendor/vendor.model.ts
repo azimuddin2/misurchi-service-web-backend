@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 import { TVendor } from './vendor.interface';
 import config from '../../config';
 import bcrypt from 'bcrypt';
-import { Subscribed } from './vendor.constant';
+import { ChooseOffer, Subscribed } from './vendor.constant';
 
 const vendorSchema = new Schema<TVendor>(
   {
@@ -78,6 +78,13 @@ const vendorSchema = new Schema<TVendor>(
       trim: true,
       minlength: [8, 'Password can be minimum 8 characters'],
       maxlength: [20, 'Password can not be more than 20 characters'],
+    },
+    chooseOffer: {
+      type: String,
+      enum: {
+        values: ChooseOffer,
+        message: '{VALUE} is not valid',
+      },
     },
     isSubscribed: {
       type: String,

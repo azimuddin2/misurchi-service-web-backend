@@ -54,9 +54,22 @@ const updateVendorProfile = catchAsync(async (req, res) => {
   });
 });
 
+const chooseOffer = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await VendorServices.chooseOfferIntoDB(id, req.body);
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: `Thanks! Your offer choice has been recorded successfully.`,
+    data: result,
+  });
+});
+
 export const VendorControllers = {
   getAllVendors,
   getVendorProfile,
   getVendorUserById,
   updateVendorProfile,
+  chooseOffer,
 };

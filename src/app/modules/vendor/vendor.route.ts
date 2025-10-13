@@ -28,4 +28,12 @@ router.patch(
   VendorControllers.updateVendorProfile,
 );
 
+router.put(
+  '/choose-offer/:id',
+  auth('vendor'),
+  validateRequest(VendorValidations.chooseOfferValidationSchema),
+  VendorControllers.chooseOffer,
+);
+
+
 export const VendorRoutes = router;

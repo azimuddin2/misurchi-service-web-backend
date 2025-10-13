@@ -95,9 +95,15 @@ const updateVendorProfileIntoDB = async (
   }
 };
 
+const chooseOfferIntoDB = async (id: string, payload: { chooseOffer: string }) => {
+  const result = await Vendor.findByIdAndUpdate(id, payload, { new: true });
+  return result;
+};
+
 export const VendorServices = {
   getAllVendorsFromDB,
   getVendorProfileFromDB,
   getVendorUserByIdFromDB,
   updateVendorProfileIntoDB,
+  chooseOfferIntoDB,
 };

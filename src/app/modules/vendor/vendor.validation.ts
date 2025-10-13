@@ -1,4 +1,5 @@
 import z from 'zod';
+import { ChooseOffer } from './vendor.constant';
 
 const vendorRegisterUserValidationSchema = z.object({
   body: z
@@ -164,7 +165,14 @@ const updateVendorUserValidationSchema = z.object({
   }),
 });
 
+const chooseOfferValidationSchema = z.object({
+  body: z.object({
+    chooseOffer: z.enum([...ChooseOffer] as [string, ...string[]]),
+  }),
+});
+
 export const VendorValidations = {
   vendorRegisterUserValidationSchema,
   updateVendorUserValidationSchema,
+  chooseOfferValidationSchema,
 };

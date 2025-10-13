@@ -1,4 +1,4 @@
-import { TSubscribed } from './vendor.interface';
+import { TChooseOffer, TSubscribed } from './vendor.interface';
 
 export const vendorSearchableFields = [
   'businessName',
@@ -9,3 +9,5 @@ export const vendorSearchableFields = [
 ];
 
 export const Subscribed: TSubscribed[] = ['advance', 'basic'];
+
+export const ChooseOffer: TChooseOffer[] = ['products', 'services', 'both']; 
