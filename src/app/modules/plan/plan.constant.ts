@@ -1,9 +1,3 @@
 import { TValidityType } from './plan.interface';
 
-export const ValidityType: TValidityType[] = [
-  'unlimited',
-  '1month',
-  '3month',
-  '6month',
-  'custom',
-];
+export const ValidityType: TValidityType[] = ['free', '1month', '1year'];

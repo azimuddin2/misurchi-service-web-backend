@@ -10,4 +10,4 @@ export const vendorSearchableFields = [
 
 export const Subscribed: TSubscribed[] = ['advance', 'basic'];
 
-export const ChooseOffer: TChooseOffer[] = ['products', 'services', 'both']; 
+export const ChooseOffer: TChooseOffer[] = ['products', 'services', 'both'];

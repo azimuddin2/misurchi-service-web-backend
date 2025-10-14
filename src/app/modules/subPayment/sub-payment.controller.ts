@@ -22,7 +22,12 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
   res.redirect(config.client_Url + '/payment/success');
 });
 
+const webhook = catchAsync(async (req: Request, res: Response) => {
+  await SubPaymentsService.webhook(req);
+});
+
 export const SubPaymentsController = {
   subPayCheckout,
   confirmPayment,
+  webhook,
 };

@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 
 export type TSubscribed = 'advance' | 'basic';
-export type TChooseOffer = 'services' | 'products' | 'both'
+export type TChooseOffer = 'services' | 'products' | 'both';
 
 export type TVendor = {
   userId: Types.ObjectId;

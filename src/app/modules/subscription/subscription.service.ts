@@ -7,9 +7,10 @@ import { User } from '../user/user.model';
 import { TSubscription } from './subscription.interface';
 import { Subscription } from './subscription.model';
 import httpStatus from 'http-status';
+import { addMonths } from './subscription.utils';
 
-const createSubscriptionIntoDB = async (payload: TSubscription) => {
-  // 1️⃣ Check if the user already has an unpaid subscription for the same plan
+export const createSubscriptionIntoDB = async (payload: TSubscription) => {
+  // 1️⃣ Check for existing unpaid subscription for this plan
   const existing = await Subscription.findOne({
     user: payload.user,
     plan: payload.plan,
@@ -19,13 +20,17 @@ const createSubscriptionIntoDB = async (payload: TSubscription) => {
 
   if (existing) return existing;
 
-  // 2️⃣ Fetch the plan
+  // 2️⃣ Validate Plan
   const plan = await Plan.findById(payload.plan);
   if (!plan) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Plan not found.');
   }
 
-  // 3️⃣ Fetch the user
+  if (plan.isDeleted || !plan.isActive) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'This plan is not active.');
+  }
+
+  // 3️⃣ Validate User
   const user = await User.findById(payload.user);
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found.');
@@ -39,64 +44,49 @@ const createSubscriptionIntoDB = async (payload: TSubscription) => {
     );
   }
 
-  // 5️⃣ Calculate subscription expiry based on plan validity
+  // 5️⃣ Calculate subscription expiry
   const now = new Date();
-  const expiredAt = new Date(now);
+  let expiredAt: Date;
 
-  switch (plan.validity.type) {
+  switch (plan.validity) {
     case '1month':
-      expiredAt.setMonth(now.getMonth() + 1);
+      expiredAt = addMonths(now, 1);
       break;
-    case '3month':
-      expiredAt.setMonth(now.getMonth() + 3);
+    case '1year':
+      expiredAt = addMonths(now, 12);
       break;
-    case '6month':
-      expiredAt.setMonth(now.getMonth() + 6);
+    case 'free':
+      expiredAt = addMonths(now, 1);
       break;
-    case 'unlimited':
-      expiredAt.setFullYear(now.getFullYear() + 100); // effectively never expires
-      break;
-    case 'custom':
-      if (!plan.validity.durationInMonths) {
-        throw new AppError(
-          httpStatus.BAD_REQUEST,
-          'Custom validity requires durationInMonths.',
-        );
-      }
-
-      // Convert string to number
-      const duration = parseInt(plan.validity.durationInMonths, 10);
-      if (isNaN(duration) || duration <= 0) {
-        throw new AppError(
-          httpStatus.BAD_REQUEST,
-          'Invalid durationInMonths value.',
-        );
-      }
-
-      expiredAt.setMonth(now.getMonth() + duration);
-      break;
+    default:
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Invalid validity type: ${plan.validity}`,
+      );
   }
 
-  // 6️⃣ Create subscription
+  // 6️⃣ Prepare subscription payload
   const subscriptionPayload: TSubscription = {
     ...payload,
-    amount: plan.cost, // use plan cost as final price
+    amount: plan.cost,
+    status: 'pending',
     startedAt: now,
     expiredAt,
     isExpired: false,
     isDeleted: false,
+    durationType: plan.validity === '1year' ? 'yearly' : 'monthly',
   };
 
-  const result = await Subscription.create(subscriptionPayload);
-
-  if (!result) {
+  // 7️⃣ Save subscription
+  const subscription = await Subscription.create(subscriptionPayload);
+  if (!subscription) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
       'Failed to create subscription.',
     );
   }
 
-  return result;
+  return subscription;
 };
 
 const getAllSubscriptionFromDB = async (query: Record<string, unknown>) => {

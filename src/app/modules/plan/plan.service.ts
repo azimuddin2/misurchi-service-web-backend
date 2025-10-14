@@ -3,18 +3,37 @@ import { TPlan } from './plan.interface';
 import { User } from '../user/user.model';
 import { Plan } from './plan.model';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { createStripeProduct } from './plan.utils';
 
 const createPlanIntoDB = async (payload: TPlan) => {
-  // Find the admin to notify.
+  // Find the admin to notify
   const isAdmin = await User.findOne({ role: 'admin' });
   if (!isAdmin || !isAdmin.email) {
     throw new AppError(404, 'Admin email not found');
   }
 
-  const result = await Plan.create(payload);
+  // 1. Create Stripe Product & Price
+  const interval = payload.validity === '1year' ? 'year' : 'month';
+  const stripeData = await createStripeProduct(
+    payload.name,
+    payload.description,
+    payload.cost,
+    interval,
+  );
+
+  // 2. Add Stripe info to payload
+  const planData = {
+    ...payload,
+    stripeProductId: stripeData.productId,
+    stripePriceId: stripeData.priceId,
+  };
+
+  // 3. Save plan in DB
+  const result = await Plan.create(planData);
   if (!result) {
     throw new AppError(400, 'Failed to create subscription plan');
   }
+
   return result;
 };
 

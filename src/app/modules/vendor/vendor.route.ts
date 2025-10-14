@@ -35,5 +35,4 @@ router.put(
   VendorControllers.chooseOffer,
 );
 
-
 export const VendorRoutes = router;

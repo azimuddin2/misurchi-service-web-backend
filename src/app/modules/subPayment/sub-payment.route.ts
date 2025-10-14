@@ -12,6 +12,8 @@ router.post(
 
 router.get('/confirm-sub-payment', SubPaymentsController.confirmPayment);
 
+router.post('/webhook', SubPaymentsController.webhook);
+
 // router.get(
 //   '/dashboard-data',
 //   // auth(USER_ROLE.admin),

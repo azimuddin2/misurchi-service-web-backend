@@ -1,11 +1,6 @@
 import { Types } from 'mongoose';
 
-export type TValidityType =
-  | 'unlimited'
-  | '1month'
-  | '3month'
-  | '6month'
-  | 'custom';
+export type TValidityType = 'free' | '1month' | '1year';
 
 export type TPlan = {
   user: Types.ObjectId;
@@ -27,10 +22,10 @@ export type TPlan = {
     transactionFee: number;
   };
 
-  validity: {
-    type: TValidityType;
-    durationInMonths?: string;
-  };
+  validity: TValidityType;
+
+  stripeProductId: string;
+  stripePriceId: string;
 
   isDeleted?: boolean;
   isActive: boolean;

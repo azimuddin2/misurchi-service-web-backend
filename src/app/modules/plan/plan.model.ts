@@ -28,16 +28,17 @@ const planSchema = new Schema<TPlan>(
     },
 
     validity: {
-      type: {
-        type: String,
-        enum: {
-          values: ValidityType,
-          message: '{VALUE} is not valid',
-        },
-        default: '1month',
+      type: String,
+      enum: {
+        values: ValidityType,
+        message: '{VALUE} is not valid',
       },
-      durationInMonths: { type: String, default: null },
+      default: '1month',
     },
+
+    // Stripe fields
+    stripeProductId: { type: String },
+    stripePriceId: { type: String },
 
     isDeleted: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

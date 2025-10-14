@@ -24,5 +24,6 @@ export default {
 
   stripe_api_key: process.env.STRIPE_API_KEY,
   stripe_api_secret: process.env.STRIPE_API_SECRET,
+  stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
   currency: process.env.CURRENCY || 'usd',
 };

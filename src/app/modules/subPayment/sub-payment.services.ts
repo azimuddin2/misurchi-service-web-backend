@@ -9,6 +9,7 @@ import AppError from '../../errors/AppError';
 import SubPayment from './sub-payment.module';
 import { Plan } from '../plan/plan.model';
 import { createCheckoutSession } from './sub-payment.utils';
+import { Request } from 'express';
 
 export const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -30,6 +31,13 @@ const subPayCheckout = async (payload: TSubPayment) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Plan not found!');
   }
 
+  if (!plan.stripePriceId) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Stripe price not found for this plan.',
+    );
+  }
+
   // 3️⃣ Create Payment Entry
   const modifyPayload: Partial<TSubPayment> = {
     ...payload,
@@ -39,28 +47,26 @@ const subPayCheckout = async (payload: TSubPayment) => {
 
   const createdPayment = await SubPayment.create(modifyPayload);
   if (!createdPayment) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create payment');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Failed to create payment record.',
+    );
   }
 
-  // 4️⃣ Create Checkout Session
+  // 4️⃣ Create Checkout Session (pass both priceId + paymentId)
   const checkoutSession = await createCheckoutSession({
-    product: {
-      amount: createdPayment.amount,
-      name: plan.name,
-      quantity: 1,
-    },
-    //@ts-ignore
-    paymentId: createdPayment._id,
+    priceId: plan.stripePriceId,
+    paymentId: createdPayment._id as any,
   });
 
   if (!checkoutSession?.url) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Failed to create checkout session',
+      'Failed to create checkout session.',
     );
   }
 
-  // 5️⃣ Return Payment URL
+  // 5️⃣ Return payment URL
   return checkoutSession.url;
 };
 
@@ -72,6 +78,7 @@ const confirmPayment = async (query: Record<string, any>) => {
 
   // ✅ Stripe payment process
   const paymentSession = await stripe.checkout.sessions.retrieve(sessionId);
+
   const paymentIntentId = paymentSession.payment_intent as string;
 
   // ✅ Stripe now uses `payment_status` instead of `status`
@@ -121,7 +128,62 @@ const confirmPayment = async (query: Record<string, any>) => {
   }
 };
 
+const webhook = async (req: Request) => {
+  const endpointSecret = config.stripe_webhook_secret!;
+  const sig = req.headers['stripe-signature'] as string | undefined;
+
+  if (!sig) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Missing Stripe signature header.',
+    );
+  }
+
+  let event: Stripe.Event;
+
+  try {
+    // Ensure raw body is passed (you must extract raw body from the request middleware level)
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed.', err);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+    );
+  }
+
+  try {
+    switch (event.type) {
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        console.log('💸 Subscription payment succeeded', invoice);
+        // Optionally: Add coins/credits based on invoice.customer
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        console.log('❌ Subscription canceled', subscription);
+        // Optionally: Disable user's subscription
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+  } catch (err) {
+    console.error('Error handling Stripe webhook event', err);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Internal error processing webhook event: ${
+        err instanceof Error ? err.message : 'Unknown error'
+      }`,
+    );
+  }
+};
+
 export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
+  webhook,
 };
