@@ -20,7 +20,7 @@ app.use(
 );
 
 // application routes
-app.use('/api', router);
+app.use('/api/v1', router);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Misurchi service web backend running');

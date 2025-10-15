@@ -21,7 +21,7 @@ export type TVendor = {
   description?: string;
   password: string;
   confirmPassword: string;
-
+  stripeAccountId?: string;
   chooseOffer?: TChooseOffer;
   isSubscribed?: TSubscribed;
 };

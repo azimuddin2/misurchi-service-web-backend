@@ -1,10 +1,13 @@
-// stripe.ts
+// src/class/stripe.ts
 import { Stripe as StripeType } from 'stripe';
 import config from '../config';
 
 interface IProduct {
-  amount: number;
-  name: string;
+  price_data: {
+    currency: string;
+    product_data: { name: string };
+    unit_amount: number;
+  };
   quantity: number;
 }
 
@@ -29,34 +32,71 @@ class StripeService {
     }
   }
 
+  // ✅ Create Express Connected Account
+  public async createConnectAccount(email: string) {
+    try {
+      return await this.stripe().accounts.create({
+        type: 'express',
+        email,
+        capabilities: {
+          transfers: { requested: true },
+        },
+      });
+    } catch (error) {
+      this.handleError(error, 'Error creating connect account');
+    }
+  }
+
+  // ✅ Generate Onboarding Link
+  public async generateAccountLink(accountId: string) {
+    try {
+      return await this.stripe().accountLinks.create({
+        account: accountId,
+        refresh_url: `${config.client_Url}/reauth`,
+        return_url: `${config.client_Url}/onboarding-success`,
+        type: 'account_onboarding',
+      });
+    } catch (error) {
+      this.handleError(error, 'Error generating account link');
+    }
+  }
+
+  // ✅ Create Stripe Customer
   public async createCustomer(email: string, name: string) {
     try {
-      return await this.stripe().customers.create({
-        email,
-        name: String(name),
-      });
+      return await this.stripe().customers.create({ email, name });
     } catch (error) {
       this.handleError(error, 'Customer creation failed');
     }
   }
 
+  // ✅ Create Checkout Session (Destination Charge for Vendor)
   public async getCheckoutSession(
-    products: IProduct[] | IProduct,
+    products: IProduct[],
     success_url: string,
     cancel_url: string,
-    currency: string = 'usd',
-    customer: string = '',
-    payment_method_types: Array<'card' | 'paypal' | 'ideal'> = ['card'],
+    currency: string,
+    customer: string,
+    vendorAccountId?: string, // ✅ Vendor's Connected Account ID
+    platformFeePercent: number = 10, // ✅ 10% commission
   ) {
     try {
-      const items = Array.isArray(products) ? products : [products];
       return await this.stripe().checkout.sessions.create({
-        line_items: items,
+        line_items: products,
         mode: 'payment',
         success_url,
         cancel_url,
         customer,
-        payment_method_types,
+        payment_intent_data: vendorAccountId
+          ? {
+              transfer_data: {
+                destination: vendorAccountId, // ✅ Vendor’s account gets payout
+              },
+              application_fee_amount: Math.round(
+                (products[0].price_data.unit_amount * platformFeePercent) / 100,
+              ),
+            }
+          : undefined,
         invoice_creation: { enabled: true },
       });
     } catch (error) {
@@ -64,17 +104,7 @@ class StripeService {
     }
   }
 
-  public async refund(payment_intent: string, amount?: number) {
-    try {
-      return await this.stripe().refunds.create({
-        payment_intent,
-        ...(amount ? { amount: Math.round(Number(amount) * 100) } : {}),
-      });
-    } catch (error) {
-      this.handleError(error, 'Error processing refund');
-    }
-  }
-
+  // ✅ Retrieve Session
   public async getPaymentSession(session_id: string) {
     try {
       return await this.stripe().checkout.sessions.retrieve(session_id);
@@ -83,6 +113,7 @@ class StripeService {
     }
   }
 
+  // ✅ Check Payment Status
   public async isPaymentSuccess(session_id: string) {
     try {
       const session =
@@ -90,6 +121,18 @@ class StripeService {
       return session.payment_status === 'paid';
     } catch (error) {
       this.handleError(error, 'Error checking payment status');
+    }
+  }
+
+  // ✅ Refund Payment
+  public async refund(payment_intent: string, amount?: number) {
+    try {
+      return await this.stripe().refunds.create({
+        payment_intent,
+        ...(amount ? { amount: Math.round(Number(amount) * 100) } : {}),
+      });
+    } catch (error) {
+      this.handleError(error, 'Error processing refund');
     }
   }
 }
