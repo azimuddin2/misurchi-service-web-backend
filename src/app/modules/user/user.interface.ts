@@ -5,6 +5,8 @@ export type TRole = 'user' | 'vendor' | 'admin';
 
 export type TStatus = 'ongoing' | 'confirmed' | 'blocked';
 
+export type TSubscribed = 'advance' | 'basic';
+
 export type TUser = {
   _id: ObjectId;
   firstName: string;
@@ -27,6 +29,8 @@ export type TUser = {
     expiresAt: Date;
     status: boolean;
   };
+  isSubscribed: boolean;
+  subscribed?: TSubscribed;
   // 🔹 Stripe customer ID for payments
   stripeCustomerId?: string;
 };

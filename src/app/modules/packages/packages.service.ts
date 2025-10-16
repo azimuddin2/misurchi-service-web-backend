@@ -47,9 +47,27 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
 };
 
 const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
-  const packagesQuery = new QueryBuilder(
-    Packages.find({ isDeleted: false }).populate('vendor'),
-    query,
+  // Extract service type before passing to QueryBuilder
+  const { type, ...restQuery } = query;
+
+  // Base query
+  let mongoFilter: Record<string, unknown> = { isDeleted: false };
+
+  // ✅ Handle productType filter
+  if (type) {
+    const types = String(type)
+      .split(',')
+      .map((type) => type.trim())
+      .filter(Boolean)
+      .map((type) => new RegExp(type, 'i'));
+
+    mongoFilter.type = { $in: types };
+  }
+
+  // 🔧 Pass the rest of the query (pagination, sorting, etc.)
+  const serviceQuery = new QueryBuilder(
+    Packages.find(mongoFilter).populate('vendor'),
+    restQuery,
   )
     .search(packageSearchableFields)
     .filter()
@@ -57,8 +75,8 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     .paginate()
     .fields();
 
-  const meta = await packagesQuery.countTotal();
-  const result = await packagesQuery.modelQuery;
+  const meta = await serviceQuery.countTotal();
+  const result = await serviceQuery.modelQuery;
 
   return { meta, result };
 };

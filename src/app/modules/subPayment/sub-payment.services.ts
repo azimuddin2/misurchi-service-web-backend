@@ -10,6 +10,8 @@ import SubPayment from './sub-payment.module';
 import { Plan } from '../plan/plan.model';
 import { createCheckoutSession } from './sub-payment.utils';
 import { Request } from 'express';
+import { Subscribed } from '../vendor/vendor.constant';
+import { Subscription } from '../subscription/subscription.model';
 
 export const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -102,6 +104,49 @@ const confirmPayment = async (query: Record<string, any>) => {
         $set: {
           isPaid: true,
           paidAt: new Date(),
+        },
+      },
+      { new: true, session }, // <-- 🔥 include session here
+    );
+
+    const userId = updatedPayment?.user;
+    const subscriptionId = updatedPayment?.subscription;
+
+    // ✅ Verify user record exists
+    const isUserExist = await User.findById(userId).session(session);
+    if (!isUserExist) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User record not found!');
+    }
+
+    // ✅ Update user inside the info
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          isSubscribed: true,
+          subscribed: 'advance',
+        },
+      },
+      { new: true, session }, // <-- 🔥 include session here
+    );
+
+    // ✅ Verify subscription record exists
+    const isSubscriptionExist =
+      await Subscription.findById(subscriptionId).session(session);
+    if (!isSubscriptionExist) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        'Subscription record not found!',
+      );
+    }
+
+    // ✅ Update subscription inside the info
+    await Subscription.findByIdAndUpdate(
+      subscriptionId,
+      {
+        $set: {
+          isPaid: true,
+          status: 'active',
         },
       },
       { new: true, session }, // <-- 🔥 include session here

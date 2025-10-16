@@ -1,6 +1,5 @@
 import { Types } from 'mongoose';
 
-export type TSubscribed = 'advance' | 'basic';
 export type TChooseOffer = 'services' | 'products' | 'both';
 
 export type TVendor = {
@@ -23,5 +22,4 @@ export type TVendor = {
   confirmPassword: string;
   stripeAccountId?: string;
   chooseOffer?: TChooseOffer;
-  isSubscribed?: TSubscribed;
 };

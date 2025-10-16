@@ -86,13 +86,6 @@ const vendorSchema = new Schema<TVendor>(
         message: '{VALUE} is not valid',
       },
     },
-    isSubscribed: {
-      type: String,
-      enum: {
-        values: Subscribed,
-        message: '{VALUE} is not valid',
-      },
-    },
   },
   { timestamps: true },
 );

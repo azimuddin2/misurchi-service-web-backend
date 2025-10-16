@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { TUser, UserModel } from './user.interface';
 import config from '../../config';
-import { UserRole, UserStatus } from './user.constant';
+import { Subscribed, UserRole, UserStatus } from './user.constant';
 
 const userSchema = new Schema<TUser, UserModel>(
   {
@@ -114,6 +114,20 @@ const userSchema = new Schema<TUser, UserModel>(
         default: false,
         select: 0,
       },
+    },
+    isSubscribed: {
+      type: Boolean,
+      default: false,
+    },
+    subscribed: {
+      type: String,
+      enum: {
+        values: Subscribed,
+        message: '{VALUE} is not valid',
+      },
+    },
+    stripeCustomerId: {
+      type: String,
     },
   },
   {

@@ -7,7 +7,6 @@ const SubPaymentSchema = new Schema<TSubPayment>(
     user: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      // required: true,
     },
     plan: {
       type: Schema.Types.ObjectId,
