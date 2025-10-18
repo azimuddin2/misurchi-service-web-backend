@@ -13,6 +13,32 @@ const getAdminDashboardStats = catchAsync(async (req, res) => {
   });
 });
 
+const getAdminUserOverviewChart = catchAsync(async (req, res) => {
+  const year = req.query.year ? Number(req.query.year) : undefined;
+
+  const result = await DashboardService.getAdminUserOverviewChart(year);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Admin user yearly overview chart retrieved successfully',
+    data: result,
+  });
+});
+
+const getAdminEarningOverviewChart = catchAsync(async (req, res) => {
+  const year = req.query.year ? Number(req.query.year) : undefined;
+
+  const result = await DashboardService.getAdminEarningOverviewChart(year);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Admin earning yearly overview chart retrieved successfully',
+    data: result,
+  });
+});
+
 const getVendorDashboardStats = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await DashboardService.getVendorDashboardStats(id);
@@ -41,6 +67,8 @@ const getVendorSalesOverviewChart = catchAsync(async (req, res) => {
 
 export const DashboardControllers = {
   getAdminDashboardStats,
+  getAdminUserOverviewChart,
+  getAdminEarningOverviewChart,
   getVendorDashboardStats,
   getVendorSalesOverviewChart,
 };
