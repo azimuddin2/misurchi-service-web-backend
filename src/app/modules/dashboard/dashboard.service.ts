@@ -336,10 +336,65 @@ const getVendorSalesOverviewChart = async (vendorId: string, year?: number) => {
   };
 };
 
+export const getAppointmentsOverviewRate = async (
+  vendorId: string,
+  month?: number,
+) => {
+  const vendorObjectId = new Types.ObjectId(vendorId);
+  const currentYear = new Date().getFullYear();
+
+  // Use current month if not provided
+  const targetMonth = month ?? new Date().getMonth() + 1;
+
+  // Start and end of the month
+  const startDate = new Date(currentYear, targetMonth - 1, 1);
+  const endDate = new Date(currentYear, targetMonth, 0, 23, 59, 59);
+
+  // Aggregate total + completed bookings
+  const stats = await Booking.aggregate([
+    {
+      $match: {
+        vendor: vendorObjectId,
+        isDeleted: false,
+        date: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        completed: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        total: 1,
+        completed: 1,
+        completionRate: {
+          $cond: [
+            { $eq: ['$total', 0] },
+            0,
+            { $multiply: [{ $divide: ['$completed', '$total'] }, 100] },
+          ],
+        },
+      },
+    },
+  ]);
+
+  // Default if no data
+  return stats[0] || { total: 0, completed: 0, completionRate: 0 };
+};
+
 export const DashboardService = {
   getAdminDashboardStats,
   getAdminUserOverviewChart,
   getAdminEarningOverviewChart,
   getVendorDashboardStats,
   getVendorSalesOverviewChart,
+  getAppointmentsOverviewRate,
 };

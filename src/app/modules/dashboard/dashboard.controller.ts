@@ -65,10 +65,29 @@ const getVendorSalesOverviewChart = catchAsync(async (req, res) => {
   });
 });
 
+const getAppointmentsOverviewRate = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { month } = req.query;
+
+  const result = await DashboardService.getAppointmentsOverviewRate(
+    id,
+    month ? Number(month) : undefined,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message:
+      'Vendor monthly appointment completion rate retrieved successfully',
+    data: result,
+  });
+});
+
 export const DashboardControllers = {
   getAdminDashboardStats,
   getAdminUserOverviewChart,
   getAdminEarningOverviewChart,
   getVendorDashboardStats,
   getVendorSalesOverviewChart,
+  getAppointmentsOverviewRate,
 };
