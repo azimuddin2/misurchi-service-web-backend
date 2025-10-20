@@ -44,6 +44,10 @@ const OrderRequestSchema = new Schema(
 // Main Schema
 const orderSchema = new Schema<TOrder>(
   {
+    orderId: {
+      type: String,
+      required: true,
+    },
     products: {
       type: [orderProductSchema],
       required: true,

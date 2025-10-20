@@ -336,7 +336,7 @@ const getVendorSalesOverviewChart = async (vendorId: string, year?: number) => {
   };
 };
 
-export const getAppointmentsOverviewRate = async (
+const getAppointmentsOverviewRate = async (
   vendorId: string,
   month?: number,
 ) => {
@@ -390,6 +390,101 @@ export const getAppointmentsOverviewRate = async (
   return stats[0] || { total: 0, completed: 0, completionRate: 0 };
 };
 
+const getVendorDashboardDataFromDB = async (vendorId: string) => {
+  // --- Validate vendor existence ---
+  const vendorExists = await Vendor.findById({
+    _id: vendorId,
+    isDeleted: false,
+  });
+
+  if (!vendorExists) {
+    throw new Error('Vendor not found');
+  }
+
+  const vendorObjectId = new Types.ObjectId(vendorId);
+
+  // --- Prepare queries ---
+  const pendingOrdersPromise = Order.find({
+    vendor: vendorObjectId,
+    status: 'pending',
+    isDeleted: false,
+  })
+    .select('customerName orderId totalPrice status createdAt')
+    .sort({ createdAt: -1 })
+    .limit(3); // limit to 3
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayBookingsPromise = Booking.find({
+    vendor: vendorObjectId,
+    date: today,
+    isDeleted: false,
+  })
+    .select('name serviceName time status createdAt')
+    .sort({ time: 1 })
+    .limit(3); // limit to 3
+
+  const recentOrdersPromise = Order.find({
+    vendor: vendorObjectId,
+    isDeleted: false,
+  })
+    .select('customerName orderId totalPrice status createdAt')
+    .sort({ createdAt: -1 })
+    .limit(3); // limit to 3
+
+  const recentBookingsPromise = Booking.find({
+    vendor: vendorObjectId,
+    isDeleted: false,
+  })
+    .select('name serviceName date time status createdAt')
+    .sort({ createdAt: -1 })
+    .limit(3); // limit to 3
+
+  // --- Run queries in parallel ---
+  const [pendingOrders, todayBookings, recentOrders, recentBookings] =
+    await Promise.all([
+      pendingOrdersPromise,
+      todayBookingsPromise,
+      recentOrdersPromise,
+      recentBookingsPromise,
+    ]);
+
+  // --- Merge recent activity and limit to 3 items ---
+  const recentActivity = [
+    ...recentOrders.map((item) => ({
+      id: item._id,
+      type: 'order',
+      orderId: item.orderId,
+      name: item.customerName,
+      amount: item.totalPrice,
+      status: item.status,
+      createdAt: item.createdAt,
+    })),
+    ...recentBookings.map((item) => ({
+      id: item._id,
+      type: 'booking',
+      name: item.name,
+      service: item.serviceName,
+      date: item.date,
+      time: item.time,
+      status: item.status,
+      createdAt: item.createdAt,
+    })),
+  ]
+    .sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 3);
+
+  // --- Return structured dashboard data ---
+  return {
+    pendingOrders,
+    todayBookings,
+    recentActivity,
+  };
+};
+
 export const DashboardService = {
   getAdminDashboardStats,
   getAdminUserOverviewChart,
@@ -397,4 +492,5 @@ export const DashboardService = {
   getVendorDashboardStats,
   getVendorSalesOverviewChart,
   getAppointmentsOverviewRate,
+  getVendorDashboardDataFromDB,
 };

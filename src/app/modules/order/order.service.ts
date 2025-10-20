@@ -11,8 +11,12 @@ import {
 } from '../../utils/awsS3FileUploader';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { orderSearchableFields } from './order.constant';
+import { generateOrderId } from './order.utils';
 
 const createOrderIntoDB = async (payload: TOrder) => {
+  // Assign backend-specific order id
+  payload.orderId = generateOrderId();
+
   // 1️⃣ Validate ObjectIds
   if (!Types.ObjectId.isValid(payload?.vendor)) {
     throw new AppError(400, 'Invalid Vendor ID');

@@ -28,6 +28,7 @@ export type TOrderProduct = {
 };
 
 export type TOrder = {
+  orderId: string;
   products: TOrderProduct[];
   vendor: Types.ObjectId;
   buyer: Types.ObjectId;
@@ -44,9 +45,11 @@ export type TOrder = {
   billingDetails: {
     country: string;
     city?: string;
-    state: string;
+    state?: string;
     zipCode: string;
     address: string;
   };
   isDeleted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };

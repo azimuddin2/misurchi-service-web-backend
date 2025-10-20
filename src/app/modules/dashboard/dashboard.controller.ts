@@ -83,6 +83,18 @@ const getAppointmentsOverviewRate = catchAsync(async (req, res) => {
   });
 });
 
+const getVendorDashboardData = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await DashboardService.getVendorDashboardDataFromDB(id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Vendor dashboard data fetched successfully',
+    data: result,
+  });
+});
+
 export const DashboardControllers = {
   getAdminDashboardStats,
   getAdminUserOverviewChart,
@@ -90,4 +102,5 @@ export const DashboardControllers = {
   getVendorDashboardStats,
   getVendorSalesOverviewChart,
   getAppointmentsOverviewRate,
+  getVendorDashboardData,
 };

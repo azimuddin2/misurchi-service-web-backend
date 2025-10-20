@@ -43,4 +43,7 @@ export type TBooking = {
 
   // Request field for cancel/reschedule
   request?: IBookingRequest;
+
+  createdAt?: string;
+  updatedAt?: string;
 };

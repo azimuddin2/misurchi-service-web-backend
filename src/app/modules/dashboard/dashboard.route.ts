@@ -40,4 +40,10 @@ router.get(
   DashboardControllers.getAppointmentsOverviewRate,
 );
 
+router.get(
+  '/vendor-data/:id',
+  auth('vendor'),
+  DashboardControllers.getVendorDashboardData,
+);
+
 export const DashboardRoutes = router;
