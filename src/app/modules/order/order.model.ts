@@ -88,6 +88,7 @@ const orderSchema = new Schema<TOrder>(
     request: { type: OrderRequestSchema, default: () => ({}) },
 
     isPaid: { type: Boolean, default: false },
+    trnId: { type: String },
 
     billingDetails: {
       country: { type: String, required: true },

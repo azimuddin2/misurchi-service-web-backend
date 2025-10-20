@@ -104,6 +104,8 @@ const bookingSchema = new Schema<TBooking>(
       type: Boolean,
       default: false,
     },
+    isPaid: { type: Boolean, default: false },
+    trnId: { type: String },
     assignedTo: {
       type: String,
     },

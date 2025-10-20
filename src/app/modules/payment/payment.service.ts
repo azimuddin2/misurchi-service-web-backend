@@ -1,4 +1,3 @@
-// payment.service.ts
 import mongoose, { startSession } from 'mongoose';
 import { PAYMENT_MODEL_TYPE, TPayment } from './payment.interface';
 import { Order } from '../order/order.model';
@@ -12,7 +11,6 @@ import StripePaymentService from '../../class/stripe';
 import { Product } from '../product/product.model';
 import { PAYMENT_STATUS } from './payment.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
-import { Vendor } from '../vendor/vendor.model';
 
 // 🔹 Helper → calculate commission split (10% admin, 90% vendor)
 const calculateAmounts = (price: number) => ({
@@ -198,7 +196,7 @@ const confirmPayment = async (query: Record<string, any>) => {
     if (payment.modelType === 'Order') {
       referenceDoc = await Order.findByIdAndUpdate(
         payment.reference,
-        { status: 'ongoing', tnxId: payment.trnId, isPaid: true },
+        { trnId: payment.trnId, isPaid: true },
         { new: true, session },
       );
 
@@ -212,7 +210,7 @@ const confirmPayment = async (query: Record<string, any>) => {
     } else if (payment.modelType === 'Booking') {
       referenceDoc = await Booking.findByIdAndUpdate(
         payment.reference,
-        { status: 'confirmed', isPaid: true },
+        { status: 'confirmed', trnId: payment.trnId, isPaid: true },
         { new: true, session },
       );
     }
@@ -251,6 +249,13 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
   let paymentQuery = Payment.find({ vendor, isDeleted: false })
     .populate('vendor')
     .populate('user');
+  // .populate({
+  //   path: 'reference', // 👈 dynamic populate
+  //   populate: [
+  //     { path: 'orders', model: 'Order' }, // if inside Booking
+  //     { path: 'bookings', model: 'Booking' }, // if inside Order
+  //   ],
+  // });
 
   const queryBuilder = new QueryBuilder(paymentQuery, filters)
     .search([''])

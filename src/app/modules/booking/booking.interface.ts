@@ -39,6 +39,9 @@ export type TBooking = {
   paymentStatus: TPaymentStatus;
   isDeleted: boolean;
 
+  isPaid: boolean;
+  trnId?: string;
+
   assignedTo: string;
 
   // Request field for cancel/reschedule
