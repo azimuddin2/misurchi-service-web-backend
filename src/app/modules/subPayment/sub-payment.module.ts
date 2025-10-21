@@ -8,6 +8,10 @@ const SubPaymentSchema = new Schema<TSubPayment>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'Vendor',
+    },
     plan: {
       type: Schema.Types.ObjectId,
       ref: 'Plan',

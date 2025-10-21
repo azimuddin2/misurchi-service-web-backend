@@ -14,18 +14,6 @@ router.get('/confirm-sub-payment', SubPaymentsController.confirmPayment);
 
 router.post('/webhook', SubPaymentsController.webhook);
 
-// router.get(
-//   '/dashboard-data',
-//   // auth(USER_ROLE.admin),
-//   SubPaymentsController.dashboardData,
-// );
-
-// router.get(
-//   '/earnings',
-//   // auth(USER_ROLE.admin),
-//   SubPaymentsController.getEarnings,
-// );
-
-// router.get('/dashboard-data', SubPaymentsController.);
+router.get('/', auth('admin'), SubPaymentsController.getAllSubPayment);
 
 export const SubPaymentsRoutes = router;

@@ -268,8 +268,34 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+const getAllPaymentByAdminFromDB = async (query: Record<string, unknown>) => {
+  const { ...filters } = query;
+
+  // Base query -> always exclude deleted payments
+  let paymentQuery = Payment.find({ isDeleted: false })
+    .populate('vendor', 'businessName email')
+    .populate('user')
+    .populate({
+      path: 'reference',
+      select: 'orderId bookingId',
+    });
+
+  const queryBuilder = new QueryBuilder(paymentQuery, filters)
+    .search([''])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery;
+
+  return { meta, result };
+};
+
 export const PaymentService = {
   createPayment,
   confirmPayment,
   getAllPaymentFromDB,
+  getAllPaymentByAdminFromDB,
 };

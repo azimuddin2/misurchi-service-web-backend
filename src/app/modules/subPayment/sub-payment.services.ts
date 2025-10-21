@@ -10,10 +10,11 @@ import SubPayment from './sub-payment.module';
 import { Plan } from '../plan/plan.model';
 import { createCheckoutSession } from './sub-payment.utils';
 import { Request } from 'express';
-import { Subscribed } from '../vendor/vendor.constant';
 import { Subscription } from '../subscription/subscription.model';
+import { VendorServices } from '../vendor/vendor.service';
+import QueryBuilder from '../../builder/QueryBuilder';
 
-export const stripe = new Stripe(config.stripe_api_secret as string, {
+const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
   typescript: true,
 });
@@ -25,6 +26,11 @@ const subPayCheckout = async (payload: TSubPayment) => {
   const user = await User.findById(payload.user);
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
+
+  const vendor = await VendorServices.getVendorProfileFromDB(user?.email);
+  if (!vendor) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
   }
 
   // 2️⃣ Validate Plan
@@ -43,6 +49,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
   // 3️⃣ Create Payment Entry
   const modifyPayload: Partial<TSubPayment> = {
     ...payload,
+    vendor: vendor?._id as any,
     tranId,
     amount: plan.cost || 0,
   };
@@ -227,8 +234,30 @@ const webhook = async (req: Request) => {
   }
 };
 
+const getAllSubPaymentFromDB = async (query: Record<string, unknown>) => {
+  const { ...filters } = query;
+
+  // Base query -> always exclude deleted payments
+  let subPaymentQuery = SubPayment.find({ isDeleted: false })
+    .populate('vendor', 'businessName email chooseOffer')
+    .populate('user');
+
+  const queryBuilder = new QueryBuilder(subPaymentQuery, filters)
+    .search([''])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery;
+
+  return { meta, result };
+};
+
 export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
   webhook,
+  getAllSubPaymentFromDB,
 };

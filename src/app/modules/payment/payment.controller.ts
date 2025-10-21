@@ -32,8 +32,21 @@ const getAllPayment = catchAsync(async (req, res) => {
   });
 });
 
+const getAllPaymentByAdmin = catchAsync(async (req, res) => {
+  const result = await PaymentService.getAllPaymentByAdminFromDB(req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Payment retrieved successfully',
+    meta: result.meta,
+    data: result.result,
+  });
+});
+
 export const PaymentController = {
   createPayment,
   confirmPayment,
   getAllPayment,
+  getAllPaymentByAdmin,
 };

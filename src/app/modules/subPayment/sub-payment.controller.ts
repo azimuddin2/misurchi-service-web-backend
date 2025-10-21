@@ -26,8 +26,21 @@ const webhook = catchAsync(async (req: Request, res: Response) => {
   await SubPaymentsService.webhook(req);
 });
 
+const getAllSubPayment = catchAsync(async (req, res) => {
+  const result = await SubPaymentsService.getAllSubPaymentFromDB(req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Subscription Payment retrieved successfully',
+    meta: result.meta,
+    data: result.result,
+  });
+});
+
 export const SubPaymentsController = {
   subPayCheckout,
   confirmPayment,
   webhook,
+  getAllSubPayment,
 };
