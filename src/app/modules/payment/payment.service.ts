@@ -11,6 +11,7 @@ import StripePaymentService from '../../class/stripe';
 import { Product } from '../product/product.model';
 import { PAYMENT_STATUS } from './payment.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { generateTrxId } from './payment.utils';
 
 // 🔹 Helper → calculate commission split (10% admin, 90% vendor)
 const calculateAmounts = (price: number) => ({
@@ -42,7 +43,7 @@ const createPayment = async (payload: TPayment) => {
     }
 
     // STEP 2: Reuse or Create Payment
-    const trnId = Math.random().toString(36).substring(2, 12);
+    const trnId = generateTrxId();
     let payment = await Payment.findOne({
       reference: payload.reference,
       modelType: payload.modelType,
@@ -247,15 +248,12 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
 
   // Base query -> always exclude deleted payments
   let paymentQuery = Payment.find({ vendor, isDeleted: false })
-    .populate('vendor')
-    .populate('user');
-  // .populate({
-  //   path: 'reference', // 👈 dynamic populate
-  //   populate: [
-  //     { path: 'orders', model: 'Order' }, // if inside Booking
-  //     { path: 'bookings', model: 'Booking' }, // if inside Order
-  //   ],
-  // });
+    .populate('vendor', 'businessName email')
+    .populate('user')
+    .populate({
+      path: 'reference',
+      select: 'orderId bookingId',
+    });
 
   const queryBuilder = new QueryBuilder(paymentQuery, filters)
     .search([''])

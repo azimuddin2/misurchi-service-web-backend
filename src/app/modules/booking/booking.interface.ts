@@ -21,6 +21,7 @@ export interface IBookingRequest {
 }
 
 export type TBooking = {
+  bookingId: string;
   vendor: Types.ObjectId;
   user: Types.ObjectId;
   serviceId: string;

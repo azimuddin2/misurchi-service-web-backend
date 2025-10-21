@@ -17,6 +17,10 @@ const BookingRequestSchema = new Schema<IBookingRequest>({
 
 const bookingSchema = new Schema<TBooking>(
   {
+    bookingId: {
+      type: String,
+      required: true,
+    },
     vendor: {
       type: Schema.Types.ObjectId,
       required: [true, 'Vendor Id is required'],

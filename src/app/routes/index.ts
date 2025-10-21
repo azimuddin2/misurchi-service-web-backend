@@ -23,6 +23,7 @@ import { SupportRoutes } from '../modules/support/support.route';
 import { NotificationRoutes } from '../modules/notification/notification.route';
 import { SubPaymentsRoutes } from '../modules/subPayment/sub-payment.route';
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route';
+import { RecommendedTypeRoutes } from '../modules/recommendedType/recommendedType.route';
 
 const router = Router();
 
@@ -54,6 +55,10 @@ const moduleRoutes = [
   {
     path: '/service-type',
     route: ServiceTypeRoutes,
+  },
+  {
+    path: '/recommended-type',
+    route: RecommendedTypeRoutes,
   },
   {
     path: '/services',

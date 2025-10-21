@@ -8,9 +8,13 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { bookingSearchableFields } from './booking.constant';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
+import { generateBookingId } from './booking.utils';
 
 const createBookingIntoDB = async (payload: TBooking) => {
   const { service, serviceItemId, date, time } = payload;
+
+  // Assign backend-specific booking id
+  payload.bookingId = generateBookingId();
 
   // 1️⃣ Validate service ObjectId
   if (!Types.ObjectId.isValid(service))
