@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import AppError from '../../errors/AppError';
 import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
 import { User } from '../user/user.model';
@@ -6,6 +6,9 @@ import { TVendor } from './vendor.interface';
 import { Vendor } from './vendor.model';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { vendorSearchableFields } from './vendor.constant';
+import { Product } from '../product/product.model';
+import { Packages } from '../packages/packages.model';
+import { Payment } from '../payment/payment.model';
 
 const getAllVendorsFromDB = async (query: Record<string, unknown>) => {
   const vendorQuery = new QueryBuilder(Vendor.find(), query)
@@ -103,10 +106,64 @@ const chooseOfferIntoDB = async (
   return result;
 };
 
+const getVendorSummaryFromDB = async (vendorId: string) => {
+  // 1️⃣ Check vendor existence
+  const vendorExists = await Vendor.findById({
+    _id: vendorId,
+    isDeleted: false,
+  });
+
+  if (!vendorExists) {
+    throw new Error('Vendor not found');
+  }
+
+  const vendorObjectId = new Types.ObjectId(vendorId);
+
+  // 2️⃣ Total products count
+  const totalProducts = await Product.countDocuments({
+    vendor: vendorObjectId,
+    isDeleted: false,
+  });
+
+  // 3️⃣ Total services count
+  const totalServices = await Packages.countDocuments({
+    vendor: vendorObjectId,
+    isDeleted: false,
+  });
+
+  // 4️⃣ Total earnings from Payment collection
+  const earningsData = await Payment.aggregate([
+    {
+      $match: {
+        vendor: vendorObjectId,
+        status: 'paid',
+        isDeleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalEarnings: { $sum: '$vendorAmount' },
+      },
+    },
+  ]);
+
+  const totalEarnings = earningsData.length ? earningsData[0].totalEarnings : 0;
+
+  // 5️⃣ Return vendor summary
+  return {
+    vendorId,
+    totalProducts,
+    totalServices,
+    totalEarnings,
+  };
+};
+
 export const VendorServices = {
   getAllVendorsFromDB,
   getVendorProfileFromDB,
   getVendorUserByIdFromDB,
   updateVendorProfileIntoDB,
   chooseOfferIntoDB,
+  getVendorSummaryFromDB,
 };

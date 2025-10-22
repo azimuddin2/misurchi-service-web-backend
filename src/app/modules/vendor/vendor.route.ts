@@ -15,7 +15,7 @@ router.get('/:id', VendorControllers.getVendorUserById);
 
 router.get(
   '/profile/:email',
-  auth('vendor', 'admin'),
+  auth('vendor', 'admin', 'user'),
   VendorControllers.getVendorProfile,
 );
 
@@ -33,6 +33,12 @@ router.put(
   auth('vendor'),
   validateRequest(VendorValidations.chooseOfferValidationSchema),
   VendorControllers.chooseOffer,
+);
+
+router.get(
+  '/summary-data/:id',
+  auth('vendor', 'admin'),
+  VendorControllers.getVendorSummary,
 );
 
 export const VendorRoutes = router;

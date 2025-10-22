@@ -66,10 +66,23 @@ const chooseOffer = catchAsync(async (req, res) => {
   });
 });
 
+const getVendorSummary = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await VendorServices.getVendorSummaryFromDB(id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Vendor summary data fetched successfully',
+    data: result,
+  });
+});
+
 export const VendorControllers = {
   getAllVendors,
   getVendorProfile,
   getVendorUserById,
   updateVendorProfile,
   chooseOffer,
+  getVendorSummary,
 };
