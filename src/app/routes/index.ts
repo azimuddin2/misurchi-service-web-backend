@@ -24,6 +24,7 @@ import { NotificationRoutes } from '../modules/notification/notification.route';
 import { SubPaymentsRoutes } from '../modules/subPayment/sub-payment.route';
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route';
 import { RecommendedTypeRoutes } from '../modules/recommendedType/recommendedType.route';
+import { FollowRoutes } from '../modules/follow/follow.route';
 
 const router = Router();
 
@@ -127,6 +128,10 @@ const moduleRoutes = [
   {
     path: '/subscriptions',
     route: SubscriptionRoutes,
+  },
+  {
+    path: '/follow',
+    route: FollowRoutes,
   },
 ];
 
