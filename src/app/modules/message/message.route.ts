@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-// import multer, { memoryStorage } from 'multer';
+import multer, { memoryStorage } from 'multer';
 import auth from '../../middlewares/auth';
 import { USER_ROLE } from '../user/user.constant';
 import parseData from '../../middlewares/parseData';

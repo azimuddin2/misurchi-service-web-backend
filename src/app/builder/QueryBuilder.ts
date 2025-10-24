@@ -29,17 +29,6 @@ class QueryBuilder<T> {
     const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
     excludeFields.forEach((field) => delete queryObj[field]);
 
-    // Price range
-    if (queryObj.minPrice || queryObj.maxPrice) {
-      queryObj.price = {} as { $gte?: number; $lte?: number };
-
-      if (queryObj.minPrice) queryObj.price.$gte = Number(queryObj.minPrice);
-      if (queryObj.maxPrice) queryObj.price.$lte = Number(queryObj.maxPrice);
-
-      delete queryObj.minPrice;
-      delete queryObj.maxPrice;
-    }
-
     // CreatedAt date filtering — filter by entire day
     if (queryObj.createdAt && typeof queryObj.createdAt === 'string') {
       const parsedDate = new Date(queryObj.createdAt);

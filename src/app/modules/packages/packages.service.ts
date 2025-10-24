@@ -53,7 +53,7 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
   // Base query
   let mongoFilter: Record<string, unknown> = { isDeleted: false };
 
-  // ✅ Handle productType filter
+  // ✅ Handle service type filter
   if (type) {
     const types = String(type)
       .split(',')

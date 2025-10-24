@@ -44,37 +44,115 @@ const createProductIntoDB = async (payload: TProduct, files: any) => {
   return result;
 };
 
+
 const getAllProductFromDB = async (query: Record<string, unknown>) => {
-  // Extract productType before passing to QueryBuilder
-  const { productType, ...restQuery } = query;
+  const {
+    minPrice,
+    maxPrice,
+    minDiscount,
+    maxDiscount,
+    productType,
+    ...restQuery
+  } = query;
 
-  // Base query
-  let mongoFilter: Record<string, unknown> = { isDeleted: false };
+  // ✅ Base filter
+  const mongoFilter: Record<string, any> = { isDeleted: false };
 
-  // ✅ Handle productType filter
+  // ✅ Product type filter
   if (productType) {
     const types = String(productType)
       .split(',')
       .map((type) => type.trim())
       .filter(Boolean)
       .map((type) => new RegExp(type, 'i'));
-
     mongoFilter.productType = { $in: types };
   }
 
-  // 🔧 Pass the rest of the query (pagination, sorting, etc.)
-  const productQuery = new QueryBuilder(
-    Product.find(mongoFilter).populate('vendor'),
-    restQuery,
-  )
+  // ✅ Step 1: Run aggregation to get IDs matching price/discount filters
+  const priceDiscountFilters: any[] = [];
+
+  // Price filters
+  if (minPrice) {
+    priceDiscountFilters.push({
+      $gte: [{ $toDouble: '$price' }, Number(minPrice)],
+    });
+  }
+  if (maxPrice) {
+    priceDiscountFilters.push({
+      $lte: [{ $toDouble: '$price' }, Number(maxPrice)],
+    });
+  }
+
+  // Discount filters
+  if (minDiscount) {
+    priceDiscountFilters.push({
+      $gte: [
+        {
+          $toDouble: {
+            $replaceAll: {
+              input: '$discountPrice',
+              find: '%',
+              replacement: '',
+            },
+          },
+        },
+        Number(minDiscount),
+      ],
+    });
+  }
+  if (maxDiscount) {
+    priceDiscountFilters.push({
+      $lte: [
+        {
+          $toDouble: {
+            $replaceAll: {
+              input: '$discountPrice',
+              find: '%',
+              replacement: '',
+            },
+          },
+        },
+        Number(maxDiscount),
+      ],
+    });
+  }
+
+  let matchedProductIds: string[] = [];
+
+  if (priceDiscountFilters.length > 0) {
+    const matchStage: any = {
+      isDeleted: false,
+      $expr:
+        priceDiscountFilters.length === 1
+          ? priceDiscountFilters[0]
+          : { $and: priceDiscountFilters },
+    };
+
+    const matchedDocs = await Product.aggregate([
+      { $match: matchStage },
+      { $project: { _id: 1 } },
+    ]);
+
+    matchedProductIds = matchedDocs.map((doc) => doc._id);
+  }
+
+  // ✅ Step 2: Build normal Mongoose find query
+  const productQuery = Product.find({
+    ...mongoFilter,
+    ...(matchedProductIds.length > 0 && { _id: { $in: matchedProductIds } }),
+  }).populate('vendor');
+
+  // ✅ Step 3: Apply QueryBuilder (search, filter, sort, paginate, fields)
+  const queryBuilder = new QueryBuilder(productQuery, restQuery)
     .search(productSearchableFields)
     .filter()
     .sort()
     .paginate()
     .fields();
 
-  const meta = await productQuery.countTotal();
-  const result = await productQuery.modelQuery;
+  // ✅ Step 4: Execute QueryBuilder
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery;
 
   return { meta, result };
 };
