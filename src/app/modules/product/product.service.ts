@@ -44,7 +44,6 @@ const createProductIntoDB = async (payload: TProduct, files: any) => {
   return result;
 };
 
-
 const getAllProductFromDB = async (query: Record<string, unknown>) => {
   const {
     minPrice,
