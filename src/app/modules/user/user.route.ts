@@ -26,14 +26,17 @@ router.get('/', auth('admin', 'user', 'vendor'), UserControllers.getAllUsers);
 
 router.get(
   '/profile/:email',
-  auth('user', 'admin'),
+  auth('user', 'vendor', 'admin'),
   UserControllers.getUserProfile,
 );
 
 router.patch(
   '/profile/:email',
   auth('user', 'admin'),
-  upload.single('profile'),
+  upload.fields([
+    { name: 'profile', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 },
+  ]),
   parseData(),
   validateRequest(UserValidations.updateUserValidationSchema),
   UserControllers.updateUserProfile,

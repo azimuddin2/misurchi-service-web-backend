@@ -289,10 +289,13 @@ const getUserProfileFromDB = async (email: string) => {
 const updateUserProfileIntoDB = async (
   email: string,
   payload: Partial<TUser>,
-  file?: Express.Multer.File,
+  profileFile?: Express.Multer.File,
+  coverFile?: Express.Multer.File,
 ) => {
   // 🔍 Step 1: Check if user exists & get email
-  const existingUser = await User.findOne({ email }).select('userId image');
+  const existingUser = await User.findOne({ email }).select(
+    'userId image coverImage',
+  );
   if (!existingUser) {
     throw new AppError(404, 'User not found');
   }
@@ -301,29 +304,47 @@ const updateUserProfileIntoDB = async (
   session.startTransaction();
 
   try {
-    // 📸 Step 2: Handle image upload
-    if (file) {
-      const uploadedUrl = await uploadToS3({
-        file,
+    // 📸 Step 2: Handle profile image upload
+    if (profileFile) {
+      const uploadedProfileUrl = await uploadToS3({
+        file: profileFile,
         fileName: `images/user/profile/${Date.now()}-${Math.floor(
           1000 + Math.random() * 9000,
         )}`,
       });
 
-      // 🧹 Delete old image if exists
+      // 🧹 Delete old profile image if exists
       if (existingUser.image) {
         await deleteFromS3(existingUser.image);
       }
 
-      payload.image = uploadedUrl as string;
+      payload.image = uploadedProfileUrl as string;
     }
 
-    // 📝 Step 3: Update linked User
+    // 📸 Step 3: Handle cover image upload
+    if (coverFile) {
+      const uploadedCoverUrl = await uploadToS3({
+        file: coverFile,
+        fileName: `images/user/cover/${Date.now()}-${Math.floor(
+          1000 + Math.random() * 9000,
+        )}`,
+      });
+
+      // 🧹 Delete old cover image if exists
+      if (existingUser.coverImage) {
+        await deleteFromS3(existingUser.coverImage);
+      }
+
+      payload.coverImage = uploadedCoverUrl as string;
+    }
+
+    // 📝 Step 4: Update linked User
     const updatedUser = await User.findByIdAndUpdate(
-      existingUser._id, // ✅ correct user reference
+      existingUser._id,
       { $set: { ...payload } },
       { new: true, runValidators: true, session },
     );
+
     if (!updatedUser) {
       throw new AppError(400, 'Failed to update user');
     }

@@ -50,16 +50,26 @@ const getUserProfile = catchAsync(async (req, res) => {
 
 const updateUserProfile = catchAsync(async (req, res) => {
   const { email } = req.params;
+
+  // Access files from multer
+  const profileFile = (
+    req.files as { [fieldname: string]: Express.Multer.File[] }
+  )?.['profile']?.[0];
+  const coverFile = (
+    req.files as { [fieldname: string]: Express.Multer.File[] }
+  )?.['coverImage']?.[0];
+
   const result = await UserServices.updateUserProfileIntoDB(
     email,
     req.body,
-    req.file,
+    profileFile,
+    coverFile,
   );
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Profile has been updated successfully.',
+    message: 'Profile updated successfully.',
     data: result,
   });
 });

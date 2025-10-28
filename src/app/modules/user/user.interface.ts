@@ -20,6 +20,7 @@ export type TUser = {
   passwordChangeAt?: Date;
   role: TRole;
   image?: string;
+  coverImage?: string;
   country?: string;
   status: TStatus;
   isDeleted: boolean;

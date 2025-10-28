@@ -80,6 +80,10 @@ const userSchema = new Schema<TUser, UserModel>(
       type: String,
       trim: true,
     },
+    coverImage: {
+      type: String,
+      trim: true,
+    },
     country: {
       type: String,
       trim: true,
