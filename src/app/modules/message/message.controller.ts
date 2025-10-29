@@ -10,17 +10,9 @@ import Chat from '../chat/chat.model';
 import { chatService } from '../chat/chat.service';
 import { io } from '../../../server';
 import httpStatus from 'http-status';
-import { storeFile } from '../../utils/fileHelper';
 
 const createMessages = catchAsync(async (req: Request, res: Response) => {
-  const id = `${Math.floor(100000 + Math.random() * 900000)}${Date.now()}`;
-  req.body.id = id;
-  if (req?.file) {
-    req.body.imageUrl = storeFile('messages', req?.file?.filename);
-  }
-
   req.body.sender = req.user.userId;
-
   const result = await MessagesService.createMessages(req.body);
 
   sendResponse(res, {

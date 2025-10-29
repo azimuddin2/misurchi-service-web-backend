@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 import { TVendor } from './vendor.interface';
 import config from '../../config';
 import bcrypt from 'bcrypt';
-import { ChooseOffer, Subscribed } from './vendor.constant';
+import { ChooseOffer } from './vendor.constant';
 
 const vendorSchema = new Schema<TVendor>(
   {
@@ -54,6 +54,10 @@ const vendorSchema = new Schema<TVendor>(
       type: String,
       trim: true,
     },
+    coverImage: {
+      type: String,
+      trim: true,
+    },
     firstName: {
       type: String,
       required: [true, 'Contact person’s first name is required'],
@@ -84,6 +88,13 @@ const vendorSchema = new Schema<TVendor>(
       enum: {
         values: ChooseOffer,
         message: '{VALUE} is not valid',
+      },
+    },
+    location: {
+      streetAddress: { type: String },
+      coordinates: {
+        lat: { type: Number },
+        lng: { type: Number },
       },
     },
   },

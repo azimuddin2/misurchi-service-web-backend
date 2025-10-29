@@ -37,10 +37,13 @@ const getVendorUserByIdFromDB = async (id: string) => {
 const updateVendorProfileIntoDB = async (
   email: string,
   payload: Partial<TVendor>,
-  file?: Express.Multer.File,
+  profileFile?: Express.Multer.File,
+  coverFile?: Express.Multer.File,
 ) => {
   // 🔍 Step 1: Check if vendor exists & get userId
-  const existingVendor = await Vendor.findOne({ email }).select('userId image');
+  const existingVendor = await Vendor.findOne({ email }).select(
+    'userId image coverImage',
+  );
   if (!existingVendor) {
     throw new AppError(404, 'Vendor not found');
   }
@@ -49,34 +52,52 @@ const updateVendorProfileIntoDB = async (
   session.startTransaction();
 
   try {
-    // 📸 Step 2: Handle image upload
-    if (file) {
-      const uploadedUrl = await uploadToS3({
-        file,
-        fileName: `images/vendor/profile/${Date.now()}-${Math.floor(
+    // 📸 Step 2: Handle profile image upload
+    if (profileFile) {
+      const uploadedProfileUrl = await uploadToS3({
+        file: profileFile,
+        fileName: `images/user/profile/${Date.now()}-${Math.floor(
           1000 + Math.random() * 9000,
         )}`,
       });
 
-      // 🧹 Delete old image if exists
+      // 🧹 Delete old profile image if exists
       if (existingVendor.image) {
         await deleteFromS3(existingVendor.image);
       }
 
-      payload.image = uploadedUrl;
+      payload.image = uploadedProfileUrl as string;
     }
 
-    // 📝 Step 3: Update linked User
+    // 📸 Step 3: Handle cover image upload
+    if (coverFile) {
+      const uploadedCoverUrl = await uploadToS3({
+        file: coverFile,
+        fileName: `images/user/cover/${Date.now()}-${Math.floor(
+          1000 + Math.random() * 9000,
+        )}`,
+      });
+
+      // 🧹 Delete old cover image if exists
+      if (existingVendor.coverImage) {
+        await deleteFromS3(existingVendor.coverImage);
+      }
+
+      payload.coverImage = uploadedCoverUrl as string;
+    }
+
+    // 📝 Step 4: Update linked User
     const updatedUser = await User.findByIdAndUpdate(
-      existingVendor.userId, // ✅ correct user reference
-      { $set: { ...payload, role: 'vendor' } },
+      existingVendor.userId,
+      { $set: { ...payload } },
       { new: true, runValidators: true, session },
     );
+
     if (!updatedUser) {
-      throw new AppError(400, 'Failed to update user');
+      throw new AppError(400, 'Failed to update Vendor');
     }
 
-    // 📝 Step 4: Update Vendor
+    // 📝 Step 5: Update Vendor
     const updatedVendor = await Vendor.findOneAndUpdate(
       { email },
       { $set: payload },
@@ -86,11 +107,11 @@ const updateVendorProfileIntoDB = async (
       throw new AppError(400, 'Failed to update vendor');
     }
 
-    // ✅ Step 5: Commit transaction
+    // ✅ Step 6: Commit transaction
     await session.commitTransaction();
     session.endSession();
 
-    return updatedVendor;
+    return updatedUser;
   } catch (error: any) {
     await session.abortTransaction();
     session.endSession();

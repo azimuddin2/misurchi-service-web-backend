@@ -40,16 +40,26 @@ const getVendorUserById = catchAsync(async (req, res) => {
 
 const updateVendorProfile = catchAsync(async (req, res) => {
   const { email } = req.params;
+
+  // Access files from multer
+  const profileFile = (
+    req.files as { [fieldname: string]: Express.Multer.File[] }
+  )?.['profile']?.[0];
+  const coverFile = (
+    req.files as { [fieldname: string]: Express.Multer.File[] }
+  )?.['coverImage']?.[0];
+
   const result = await VendorServices.updateVendorProfileIntoDB(
     email,
     req.body,
-    req.file,
+    profileFile,
+    coverFile,
   );
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Profile has been updated successfully.',
+    message: 'Profile updated successfully.',
     data: result,
   });
 });

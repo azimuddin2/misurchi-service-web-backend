@@ -22,7 +22,10 @@ router.get(
 router.patch(
   '/profile/:email',
   auth('vendor'),
-  upload.single('profile'),
+  upload.fields([
+    { name: 'profile', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 },
+  ]),
   parseData(),
   validateRequest(VendorValidations.updateVendorUserValidationSchema),
   VendorControllers.updateVendorProfile,

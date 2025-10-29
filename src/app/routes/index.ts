@@ -25,6 +25,7 @@ import { SubPaymentsRoutes } from '../modules/subPayment/sub-payment.route';
 import { SubscriptionRoutes } from '../modules/subscription/subscription.route';
 import { RecommendedTypeRoutes } from '../modules/recommendedType/recommendedType.route';
 import { FollowRoutes } from '../modules/follow/follow.route';
+import { ImageUploadRoutes } from '../modules/imageUpload/imageUpload.route';
 
 const router = Router();
 
@@ -132,6 +133,10 @@ const moduleRoutes = [
   {
     path: '/follow',
     route: FollowRoutes,
+  },
+  {
+    path: '/upload-images',
+    route: ImageUploadRoutes,
   },
 ];
 

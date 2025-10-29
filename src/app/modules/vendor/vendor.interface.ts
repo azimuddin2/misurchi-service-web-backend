@@ -15,6 +15,7 @@ export type TVendor = {
   timeZone: string;
   workHours: string;
   image?: string | null;
+  coverImage?: string;
   firstName: string;
   lastName: string;
   description?: string;
@@ -22,4 +23,11 @@ export type TVendor = {
   confirmPassword: string;
   stripeAccountId?: string;
   chooseOffer?: TChooseOffer;
+  location?: {
+    streetAddress?: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  };
 };
