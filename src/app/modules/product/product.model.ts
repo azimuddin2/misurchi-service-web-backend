@@ -17,6 +17,11 @@ const productSchema = new Schema<TProduct>(
       required: [true, 'Vendor Id is required'],
       ref: 'Vendor',
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'User Id is required'],
+      ref: 'User',
+    },
     name: {
       type: String,
       required: true,

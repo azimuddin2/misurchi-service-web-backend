@@ -26,6 +26,7 @@ import { SubscriptionRoutes } from '../modules/subscription/subscription.route';
 import { RecommendedTypeRoutes } from '../modules/recommendedType/recommendedType.route';
 import { FollowRoutes } from '../modules/follow/follow.route';
 import { ImageUploadRoutes } from '../modules/imageUpload/imageUpload.route';
+import { StripeRoutes } from '../modules/stripe/stripe.route';
 
 const router = Router();
 
@@ -137,6 +138,10 @@ const moduleRoutes = [
   {
     path: '/upload-images',
     route: ImageUploadRoutes,
+  },
+  {
+    path: '/stripe',
+    route: StripeRoutes,
   },
 ];
 

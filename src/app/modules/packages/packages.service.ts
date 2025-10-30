@@ -11,8 +11,28 @@ import { TPackages, TServiceSlots, TSlot } from './packages.interface';
 import { Packages } from './packages.model';
 import { generateServiceId, generateTimeSlots } from './packages.utils';
 import { Booking } from '../booking/booking.model';
+import { Vendor } from '../vendor/vendor.model';
+import { User } from '../user/user.model';
 
 const createPackagesIntoDB = async (payload: TPackages, files: any) => {
+  // Check vendor existence
+  const vendorExists = await Vendor.findById({
+    _id: payload.vendor,
+    isDeleted: false,
+  });
+  if (!vendorExists) {
+    throw new Error('Vendor not found');
+  }
+
+  // Check user existence
+  const userExists = await User.findById({
+    _id: payload.user,
+    isDeleted: false,
+  });
+  if (!userExists) {
+    throw new Error('User not found');
+  }
+
   // Assign backend-specific service code
   payload.serviceId = generateServiceId();
 
@@ -66,7 +86,7 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
 
   // 🔧 Pass the rest of the query (pagination, sorting, etc.)
   const serviceQuery = new QueryBuilder(
-    Packages.find(mongoFilter).populate('vendor'),
+    Packages.find(mongoFilter).populate('vendor').populate('user'),
     restQuery,
   )
     .search(packageSearchableFields)
@@ -89,9 +109,9 @@ const getAllPackagesByUserFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted packages service
-  let packagesQuery = Packages.find({ vendor, isDeleted: false }).populate(
-    'vendor',
-  );
+  let packagesQuery = Packages.find({ vendor, isDeleted: false })
+    .populate('vendor')
+    .populate('user');
 
   const queryBuilder = new QueryBuilder(packagesQuery, filters)
     .search(packageSearchableFields)
@@ -107,10 +127,13 @@ const getAllPackagesByUserFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getPackagesByIdFromDB = async (id: string) => {
-  const result = await Packages.findById(id).populate('vendor').populate({
-    path: 'reviews',
-    select: '_id rating review user', // include the fields you need
-  });
+  const result = await Packages.findById(id)
+    .populate('vendor')
+    .populate('user')
+    .populate({
+      path: 'reviews',
+      select: '_id rating review user', // include the fields you need
+    });
 
   if (!result) {
     throw new AppError(404, 'This service not found');

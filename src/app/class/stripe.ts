@@ -32,7 +32,7 @@ class StripeService {
     }
   }
 
-  // ✅ Create Express Connected Account
+  // ✅ Create Express Connected Account (Vendor)
   public async createConnectAccount(email: string) {
     try {
       return await this.stripe().accounts.create({
@@ -47,7 +47,7 @@ class StripeService {
     }
   }
 
-  // ✅ Generate Onboarding Link
+  // ✅ Generate Onboarding Link for Vendor
   public async generateAccountLink(accountId: string) {
     try {
       return await this.stripe().accountLinks.create({
@@ -61,7 +61,25 @@ class StripeService {
     }
   }
 
-  // ✅ Create Stripe Customer
+  // ✅ Retrieve Connected Account Details
+  public async retrieveAccount(accountId: string) {
+    try {
+      return await this.stripe().accounts.retrieve(accountId);
+    } catch (error) {
+      this.handleError(error, 'Error retrieving account details');
+    }
+  }
+
+  // ✅ Update Connected Account Status (optional)
+  public async updateAccount(accountId: string, data: any) {
+    try {
+      return await this.stripe().accounts.update(accountId, data);
+    } catch (error) {
+      this.handleError(error, 'Error updating account');
+    }
+  }
+
+  // ✅ Create Stripe Customer (Buyer)
   public async createCustomer(email: string, name: string) {
     try {
       return await this.stripe().customers.create({ email, name });
@@ -81,8 +99,13 @@ class StripeService {
     platformFeePercent: number = 10, // ✅ 10% commission
   ) {
     try {
+      const lineItems = products.map((p) => ({
+        price_data: p.price_data,
+        quantity: p.quantity,
+      }));
+
       return await this.stripe().checkout.sessions.create({
-        line_items: products,
+        line_items: lineItems,
         mode: 'payment',
         success_url,
         cancel_url,
@@ -93,7 +116,8 @@ class StripeService {
                 destination: vendorAccountId, // ✅ Vendor’s account gets payout
               },
               application_fee_amount: Math.round(
-                (products[0].price_data.unit_amount * platformFeePercent) / 100,
+                (lineItems[0].price_data.unit_amount * platformFeePercent) /
+                  100,
               ),
             }
           : undefined,
@@ -104,7 +128,7 @@ class StripeService {
     }
   }
 
-  // ✅ Retrieve Session
+  // ✅ Retrieve Payment Session
   public async getPaymentSession(session_id: string) {
     try {
       return await this.stripe().checkout.sessions.retrieve(session_id);

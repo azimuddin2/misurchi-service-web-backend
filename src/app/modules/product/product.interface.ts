@@ -15,6 +15,7 @@ export type THighlightStatus = 'Highlighted' | 'Highlight';
 
 export type TProduct = {
   vendor: Types.ObjectId;
+  user: Types.ObjectId;
   name: string;
   productCode: string;
   images: TProductImage[];

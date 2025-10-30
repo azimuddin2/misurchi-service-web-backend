@@ -37,6 +37,11 @@ const packagesSchema = new Schema<TPackages>(
       required: [true, 'Vendor Id is required'],
       ref: 'Vendor',
     },
+    user: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'User Id is required'],
+      ref: 'User',
+    },
     deleteKey: [{ type: String, required: true }],
     serviceId: { type: String, required: true },
     name: { type: String, required: true },

@@ -10,8 +10,28 @@ import { productSearchableFields } from './product.constant';
 import { TProduct } from './product.interface';
 import { Product } from './product.model';
 import { generateProductCode } from './product.utils';
+import { Vendor } from '../vendor/vendor.model';
+import { User } from '../user/user.model';
 
 const createProductIntoDB = async (payload: TProduct, files: any) => {
+  // Check vendor existence
+  const vendorExists = await Vendor.findById({
+    _id: payload.vendor,
+    isDeleted: false,
+  });
+  if (!vendorExists) {
+    throw new Error('Vendor not found');
+  }
+
+  // Check user existence
+  const userExists = await User.findById({
+    _id: payload.user,
+    isDeleted: false,
+  });
+  if (!userExists) {
+    throw new Error('User not found');
+  }
+
   // Assign backend-specific product code
   payload.productCode = generateProductCode();
 
@@ -139,7 +159,9 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
   const productQuery = Product.find({
     ...mongoFilter,
     ...(matchedProductIds.length > 0 && { _id: { $in: matchedProductIds } }),
-  }).populate('vendor');
+  })
+    .populate('vendor')
+    .populate('user');
 
   // ✅ Step 3: Apply QueryBuilder (search, filter, sort, paginate, fields)
   const queryBuilder = new QueryBuilder(productQuery, restQuery)
@@ -164,9 +186,9 @@ const getAllProductByUserFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted products
-  let productQuery = Product.find({ vendor, isDeleted: false }).populate(
-    'vendor',
-  );
+  let productQuery = Product.find({ vendor, isDeleted: false })
+    .populate('vendor')
+    .populate('user');
 
   const queryBuilder = new QueryBuilder(productQuery, filters)
     .search(productSearchableFields)
@@ -182,10 +204,13 @@ const getAllProductByUserFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getProductByIdFromDB = async (id: string) => {
-  const result = await Product.findById(id).populate('vendor').populate({
-    path: 'reviews',
-    select: '_id rating review user', // include the fields you need
-  });
+  const result = await Product.findById(id)
+    .populate('vendor')
+    .populate('user')
+    .populate({
+      path: 'reviews',
+      select: '_id rating review user', // include the fields you need
+    });
 
   if (!result) {
     throw new AppError(404, 'This product not found');

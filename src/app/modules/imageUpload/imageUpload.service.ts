@@ -12,18 +12,11 @@ const createImageUploadIntoDB = async (files: UploadedFiles) => {
     // ✅ Match product logic — consistent folder
     const uploadConfigs = files.images.map((image) => ({
       file: image,
-      path: 'message/images', // use the same type of subfolder you used for products
+      path: 'message/images',
     }));
 
     // ✅ Upload all files
     const uploadedResults = await uploadManyToS3(uploadConfigs);
-    /**
-     * Expect each to return:
-     * {
-     *   url: "https://crystalcleaner.s3.eu-west-1.amazonaws.com/images/user/cover/1730202846572-image.jpg",
-     *   key: "images/user/cover/1730202846572-image.jpg"
-     * }
-     */
 
     if (!uploadedResults?.length) {
       throw new AppError(500, 'Image upload failed');
