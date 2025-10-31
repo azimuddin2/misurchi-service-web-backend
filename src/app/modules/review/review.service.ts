@@ -1,4 +1,4 @@
-import { ClientSession, startSession } from 'mongoose';
+import mongoose, { ClientSession, startSession } from 'mongoose';
 import { TReview } from './review.interface';
 import { Product } from '../product/product.model';
 import { Packages } from '../packages/packages.model';
@@ -88,7 +88,31 @@ const getAllReviewsFromDB = async (query: Record<string, any>) => {
   };
 };
 
+const getAllReviewByUserFromDB = async (query: Record<string, unknown>) => {
+  const { vendor, ...filters } = query;
+
+  if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  // Base query -> always exclude deleted reviews
+  let reviewQuery = Review.find({ vendor, isDeleted: false });
+
+  const queryBuilder = new QueryBuilder(reviewQuery, filters)
+    .search([''])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery;
+
+  return { meta, result };
+};
+
 export const ReviewService = {
   createReviewIntoDB,
   getAllReviewsFromDB,
+  getAllReviewByUserFromDB,
 };

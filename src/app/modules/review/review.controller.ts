@@ -25,7 +25,20 @@ const getAllReviews = catchAsync(async (req, res) => {
   });
 });
 
+const getAllReviewByUser = catchAsync(async (req, res) => {
+  const result = await ReviewService.getAllReviewByUserFromDB(req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Review retrieved successfully',
+    meta: result.meta,
+    data: result.result,
+  });
+});
+
 export const ReviewController = {
   createReview,
   getAllReviews,
+  getAllReviewByUser,
 };

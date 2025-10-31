@@ -14,5 +14,6 @@ router.post(
 );
 
 router.get('/', ReviewController.getAllReviews);
+router.get('/', ReviewController.getAllReviewByUser);
 
 export const ReviewRoutes = router;
