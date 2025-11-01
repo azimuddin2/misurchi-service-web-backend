@@ -74,6 +74,18 @@ const updateUserProfile = catchAsync(async (req, res) => {
   });
 });
 
+const getUserById = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await UserServices.getUserByIdFromDB(id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User retrieved successfully',
+    data: result,
+  });
+});
+
 const changeStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -93,5 +105,6 @@ export const UserControllers = {
   getAllUsers,
   getUserProfile,
   updateUserProfile,
+  getUserById,
   changeStatus,
 };

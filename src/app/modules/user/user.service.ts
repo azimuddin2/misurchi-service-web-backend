@@ -361,6 +361,16 @@ const updateUserProfileIntoDB = async (
   }
 };
 
+const getUserByIdFromDB = async (id: string) => {
+  const result = await User.findById(id);
+
+  if (!result) {
+    throw new AppError(404, 'This user not found');
+  }
+
+  return result;
+};
+
 const changeStatusIntoDB = async (id: string, payload: { status: string }) => {
   const result = await User.findByIdAndUpdate(id, payload, { new: true });
 
@@ -377,5 +387,6 @@ export const UserServices = {
   getAllUsersFromDB,
   getUserProfileFromDB,
   updateUserProfileIntoDB,
+  getUserByIdFromDB,
   changeStatusIntoDB,
 };

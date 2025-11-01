@@ -91,9 +91,9 @@ const initializeSocketIO = (server: HttpServer) => {
 
           const payload = {
             _id: receiverDetails?._id,
-            name: receiverDetails?.fullName,
+            fullName: receiverDetails?.fullName,
             email: receiverDetails?.email,
-            profile: receiverDetails?.image,
+            image: receiverDetails?.image,
             role: receiverDetails?.role,
           };
           const userSocket = getSocketId(user?._id?.toString());

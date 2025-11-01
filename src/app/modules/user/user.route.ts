@@ -42,6 +42,12 @@ router.patch(
   UserControllers.updateUserProfile,
 );
 
+router.get(
+  '/:id',
+  auth('user', 'vendor', 'admin'),
+  UserControllers.getUserById,
+);
+
 router.put(
   '/change-status/:id',
   auth('admin'),
