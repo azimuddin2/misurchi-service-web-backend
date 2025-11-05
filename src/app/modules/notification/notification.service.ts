@@ -38,6 +38,21 @@ const getAllNotificationsFromDB = async (query: Record<string, any>) => {
   };
 };
 
+// Get single notification by ID
+const getNotificationByIdFromDB = async (id: string) => {
+  const notification = await Notification.findByIdAndUpdate(
+    id,
+    { $set: { read: true } },
+    { new: true },
+  );
+
+  if (!notification) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Notification not found');
+  }
+
+  return notification;
+};
+
 // Mark notifications as read
 const markAsDone = async (id: string) => {
   const result = await Notification.updateMany(
@@ -61,6 +76,7 @@ const deleteNotificationFromDB = async (id: string) => {
 export const NotificationServices = {
   insertNotificationIntoDB,
   getAllNotificationsFromDB,
+  getNotificationByIdFromDB,
   markAsDone,
   deleteNotificationFromDB,
 };

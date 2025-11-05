@@ -13,6 +13,12 @@ router.get(
   notificationControllers.getAllNotifications,
 );
 
+router.get(
+  '/:id',
+  auth(USER_ROLE.user, USER_ROLE.vendor, USER_ROLE.admin),
+  notificationControllers.getNotificationById,
+);
+
 router.patch(
   '/',
   auth(USER_ROLE.user, USER_ROLE.vendor, USER_ROLE.admin),

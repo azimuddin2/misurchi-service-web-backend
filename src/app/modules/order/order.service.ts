@@ -12,6 +12,8 @@ import {
 import QueryBuilder from '../../builder/QueryBuilder';
 import { orderSearchableFields } from './order.constant';
 import { generateOrderId } from './order.utils';
+import { NotificationServices } from '../notification/notification.service';
+import { ModeType } from '../notification/notification.interface';
 
 const createOrderIntoDB = async (payload: TOrder) => {
   // Assign backend-specific order id
@@ -57,6 +59,23 @@ const createOrderIntoDB = async (payload: TOrder) => {
       $inc: { quantity: -item.quantity },
     });
   }
+
+  // 6️⃣ Send notifications
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: order.buyer,
+    message: 'Order Placed Successfully',
+    description: `Your order (${order.orderId}) has been placed successfully. You will be notified once it’s processed.`,
+    reference: order._id,
+    model_type: ModeType.Order,
+  });
+
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: order.vendor,
+    message: 'New Order Received',
+    description: `You have received a new order (${order.orderId}) from a customer. Please review and prepare for fulfillment.`,
+    reference: order._id,
+    model_type: ModeType.Order,
+  });
 
   return order;
 };
@@ -197,6 +216,20 @@ const requestOrderIntoDB = async (
       throw new AppError(400, 'Order request update failed');
     }
 
+    //  🔔 Notify vendor
+    if (requestData.type === 'cancelled' || requestData.type === 'return') {
+      await NotificationServices.insertNotificationIntoDB({
+        receiver: updatedOrder.vendor,
+        message:
+          requestData.type === 'cancelled'
+            ? 'Order Cancellation Request'
+            : 'Order Return Request',
+        description: `Customer has requested to ${requestData.type} order (${updatedOrder.orderId}). Please review the request.`,
+        reference: updatedOrder._id,
+        model_type: ModeType.Order,
+      });
+    }
+
     return updatedOrder;
   } catch (error) {
     throw new AppError(500, 'Order request update failed');
@@ -214,6 +247,16 @@ const updateOrderStatusIntoDB = async (
   }
 
   const result = await Order.findByIdAndUpdate(id, payload, { new: true });
+
+  // 🔔 Notify buyer
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: isOrderExists.buyer,
+    message: 'Order Status Updated',
+    description: `The status of your order (${isOrderExists.orderId}) has been updated to "${payload.status}".`,
+    reference: result?._id,
+    model_type: ModeType.Order,
+  });
+
   return result;
 };
 
@@ -237,6 +280,25 @@ const orderApprovedRequestIntoDB = async (
 
   // 4️⃣ Save the updated order
   const updatedOrder = await order.save();
+
+  //  🔔 Notify buyer
+  if (vendorApproved) {
+    await NotificationServices.insertNotificationIntoDB({
+      receiver: order.buyer,
+      message: 'Order Request Approved',
+      description: `Your ${order.request.type} request for order (${order.orderId}) has been approved by the vendor.`,
+      reference: order._id,
+      model_type: ModeType.Order,
+    });
+  } else {
+    await NotificationServices.insertNotificationIntoDB({
+      receiver: order.buyer,
+      message: 'Order Request Declined',
+      description: `Your ${order.request.type} request for order (${order.orderId}) has been declined by the vendor.`,
+      reference: order._id,
+      model_type: ModeType.Order,
+    });
+  }
 
   return updatedOrder;
 };

@@ -17,7 +17,11 @@ const insertNotification = catchAsync(async (req: Request, res: Response) => {
 
 const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   const query = { ...req.query };
-  query['receiver'] = req?.user?.userId;
+
+  console.log('Receiver', req.query.receiver);
+
+  // Use userId from query if provided, otherwise fallback to logged-in user
+  query['receiver'] = req.query.receiver;
 
   const result = await NotificationServices.getAllNotificationsFromDB(query);
 
@@ -27,6 +31,18 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
     message: 'Notifications retrieved successfully',
     data: result?.data,
     meta: result?.meta,
+  });
+});
+
+const getNotificationById = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await NotificationServices.getNotificationByIdFromDB(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Notification retrieved successfully',
+    data: result,
   });
 });
 
@@ -57,6 +73,7 @@ const deleteNotification = catchAsync(async (req: Request, res: Response) => {
 export const notificationControllers = {
   insertNotification,
   getAllNotifications,
+  getNotificationById,
   markAsDone,
   deleteNotification,
 };

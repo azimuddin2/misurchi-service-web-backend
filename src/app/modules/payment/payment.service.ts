@@ -96,26 +96,6 @@ const createPayment = async (payload: TPayment) => {
       }).session(session);
     }
 
-    // STEP 4: Vendor Stripe Connect Account
-    // const vendor = await Vendor.findById(payment.vendor).session(session);
-    // if (!vendor) throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
-
-    // let vendorAccountId = vendor.stripeAccountId;
-    // if (!vendorAccountId) {
-    //   const connectAccount = await StripePaymentService.createConnectAccount(
-    //     vendor.email!,
-    //   );
-    //   vendorAccountId = connectAccount.id;
-    //   await User.findByIdAndUpdate(vendor._id, {
-    //     stripeAccountId: vendorAccountId,
-    //   }).session(session);
-
-    //   // Optional: send onboarding link
-    //   const accountLink =
-    //     await StripePaymentService.generateAccountLink(vendorAccountId);
-    //   return { onboardingUrl: accountLink.url };
-    // }
-
     // STEP 5: Prepare Stripe line items
     const lineItems: any[] = [];
     if (payload.modelType === PAYMENT_MODEL_TYPE.Order) {

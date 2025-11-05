@@ -10,7 +10,7 @@ export type TNotification = {
   receiver: ObjectId;
   message: string;
   description?: string;
-  refference: ObjectId;
+  reference: ObjectId;
   model_type: ModeType;
   date?: Date;
   read: boolean;

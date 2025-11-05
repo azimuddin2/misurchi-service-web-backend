@@ -70,6 +70,23 @@ const createBookingIntoDB = async (payload: TBooking) => {
   // 6️⃣ Create booking
   const booking = await Booking.create(payload);
 
+  // 7️⃣ Send personal notifications
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: booking.user,
+    message: 'Booking Confirmation',
+    description: `Your booking for ${serviceData.name} on ${date} at ${time} has been successfully placed.`,
+    reference: booking._id,
+    model_type: ModeType.Booking,
+  });
+
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: booking.vendor,
+    message: 'New Booking Alert',
+    description: `You’ve received a new booking for ${serviceData.name} scheduled on ${date} at ${time}.`,
+    reference: booking._id,
+    model_type: ModeType.Booking,
+  });
+
   return booking;
 };
 
@@ -203,7 +220,7 @@ const updateBookingRequestIntoDB = async (
     receiver: booking?.user,
     message: 'Booking Cancellation Confirmation',
     description: `Your booking with Name: ${booking.serviceName} has been successfully cancelled. If you have any questions or require further assistance, please contact our support team.`,
-    refference: booking?._id,
+    reference: booking?._id,
     model_type: ModeType.Booking,
   });
 
@@ -211,7 +228,7 @@ const updateBookingRequestIntoDB = async (
     receiver: booking?.vendor,
     message: 'Booking Cancellation Alert',
     description: `A booking has been cancelled. Booking Name: ${booking.serviceName}. Please update your availability accordingly. If you need further details, please access your management dashboard or contact our support team.`,
-    refference: booking?._id,
+    reference: booking?._id,
     model_type: ModeType.Booking,
   });
 
@@ -239,6 +256,25 @@ const bookingApprovedRequestIntoDB = async (
   // 4️⃣ Save the updated booking
   const updatedBooking = await booking.save();
 
+  // 5️⃣ Notify user based on approval
+  if (vendorApproved) {
+    await NotificationServices.insertNotificationIntoDB({
+      receiver: booking.user,
+      message: 'Request Approved',
+      description: `Your booking ${booking.serviceName} request (${booking.request.type}) has been approved by the vendor.`,
+      reference: booking._id,
+      model_type: ModeType.Booking,
+    });
+  } else {
+    await NotificationServices.insertNotificationIntoDB({
+      receiver: booking.user,
+      message: 'Request Declined',
+      description: `Your booking ${booking.serviceName} request (${booking.request.type}) has been declined.`,
+      reference: booking._id,
+      model_type: ModeType.Booking,
+    });
+  }
+
   return updatedBooking;
 };
 
@@ -254,6 +290,15 @@ const bookingAssignedToMemberIntoDB = async (
 
   // Update assignedTo field (works for add or edit)
   const result = await Booking.findByIdAndUpdate(id, payload, { new: true });
+
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: payload.assignedTo,
+    message: 'New Booking Assigned',
+    description: `You’ve been assigned to a booking for ${isBookingExists.serviceName}. Please review the details.`,
+    reference: result?._id,
+    model_type: ModeType.Booking,
+  });
+
   return result;
 };
 
@@ -268,6 +313,15 @@ const updateBookingStatusIntoDB = async (
   }
 
   const result = await Booking.findByIdAndUpdate(id, payload, { new: true });
+
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: isBookingExists.user,
+    message: `Booking Status Updated`,
+    description: `Your booking for ${isBookingExists.serviceName} is now marked as ${payload.status}.`,
+    reference: result?._id,
+    model_type: ModeType.Booking,
+  });
+
   return result;
 };
 
