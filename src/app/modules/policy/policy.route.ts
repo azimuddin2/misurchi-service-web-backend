@@ -6,7 +6,7 @@ import { PolicyController } from './policy.controller';
 
 const router = express.Router();
 
-router.get('/', auth('user', 'vendor', 'admin'), PolicyController.getPolicy);
+router.get('/', PolicyController.getPolicy);
 
 router.post(
   '/',
