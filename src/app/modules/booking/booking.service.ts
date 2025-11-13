@@ -291,13 +291,13 @@ const bookingAssignedToMemberIntoDB = async (
   // Update assignedTo field (works for add or edit)
   const result = await Booking.findByIdAndUpdate(id, payload, { new: true });
 
-  await NotificationServices.insertNotificationIntoDB({
-    receiver: payload.assignedTo,
-    message: 'New Booking Assigned',
-    description: `You’ve been assigned to a booking for ${isBookingExists.serviceName}. Please review the details.`,
-    reference: result?._id,
-    model_type: ModeType.Booking,
-  });
+  // await NotificationServices.insertNotificationIntoDB({
+  //   receiver: payload.assignedTo,
+  //   message: 'New Booking Assigned',
+  //   description: `You’ve been assigned to a booking for ${isBookingExists.serviceName}. Please review the details.`,
+  //   reference: result?._id,
+  //   model_type: ModeType.Booking,
+  // });
 
   return result;
 };

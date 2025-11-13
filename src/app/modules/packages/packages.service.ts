@@ -67,26 +67,116 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
 };
 
 const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
-  // Extract service type before passing to QueryBuilder
-  const { type, ...restQuery } = query;
+  const {
+    minPrice,
+    maxPrice,
+    minDiscount,
+    maxDiscount,
+    type,
+    page = 1,
+    limit = 10,
+    ...restQuery
+  } = query;
 
-  // Base query
-  let mongoFilter: Record<string, unknown> = { isDeleted: false };
+  // Base filter
+  const mongoFilter: Record<string, any> = { isDeleted: false };
 
-  // ✅ Handle service type filter
+  // ✅ Filter by service type
   if (type) {
     const types = String(type)
       .split(',')
-      .map((type) => type.trim())
-      .filter(Boolean)
-      .map((type) => new RegExp(type, 'i'));
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-    mongoFilter.type = { $in: types };
+    if (types.length > 0) {
+      mongoFilter.type = { $in: types.map((t) => new RegExp(t, 'i')) };
+    }
   }
 
-  // 🔧 Pass the rest of the query (pagination, sorting, etc.)
-  const serviceQuery = new QueryBuilder(
-    Packages.find(mongoFilter).populate('vendor').populate('user'),
+  // ✅ Filter by price & discount (savedServices)
+  const exprConditions: any[] = [];
+
+  const priceExpr = {
+    $cond: [
+      { $eq: [{ $type: '$savedServices.price' }, 'string'] },
+      { $toDouble: '$savedServices.price' },
+      { $ifNull: ['$savedServices.price', 0] },
+    ],
+  };
+
+  if (minPrice && String(minPrice).trim() !== '') {
+    exprConditions.push({ $gte: [priceExpr, Number(minPrice)] });
+  }
+  if (maxPrice && String(maxPrice).trim() !== '') {
+    exprConditions.push({ $lte: [priceExpr, Number(maxPrice)] });
+  }
+
+  const discountExpr = {
+    $cond: [
+      { $regexMatch: { input: '$savedServices.discount', regex: /%/ } },
+      {
+        $toDouble: {
+          $replaceAll: {
+            input: { $ifNull: ['$savedServices.discount', '0%'] },
+            find: '%',
+            replacement: '',
+          },
+        },
+      },
+      { $toDouble: { $ifNull: ['$savedServices.discount', 0] } },
+    ],
+  };
+
+  if (minDiscount && String(minDiscount).trim() !== '') {
+    exprConditions.push({ $gte: [discountExpr, Number(minDiscount)] });
+  }
+  if (maxDiscount && String(maxDiscount).trim() !== '') {
+    exprConditions.push({ $lte: [discountExpr, Number(maxDiscount)] });
+  }
+
+  // ✅ Run aggregation if price/discount filter exists
+  let matchedPackageIds: string[] | null = null;
+  if (exprConditions.length > 0) {
+    const matchStage = {
+      isDeleted: false,
+      $expr:
+        exprConditions.length === 1
+          ? exprConditions[0]
+          : { $and: exprConditions },
+    };
+
+    const matchedDocs = await Packages.aggregate([
+      { $unwind: '$savedServices' },
+      { $match: matchStage },
+      { $project: { _id: 1 } },
+    ]);
+
+    matchedPackageIds = matchedDocs
+      .map((d) => d._id?.toString())
+      .filter(Boolean);
+
+    if (matchedPackageIds.length === 0) {
+      return {
+        meta: {
+          page: Number(page),
+          limit: Number(limit),
+          totalDoc: 0,
+          totalPage: 0,
+        },
+        result: [],
+      };
+    }
+  }
+
+  // ✅ Final Mongo filter
+  const finalFindFilter: any = {
+    ...mongoFilter,
+    ...(matchedPackageIds ? { _id: { $in: matchedPackageIds } } : {}),
+  };
+
+  // Build query with QueryBuilder (search, sort, pagination, fields)
+  const packageQuery = new QueryBuilder(
+    Packages.find(finalFindFilter).populate('vendor').populate('user'),
     restQuery,
   )
     .search(packageSearchableFields)
@@ -95,8 +185,8 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     .paginate()
     .fields();
 
-  const meta = await serviceQuery.countTotal();
-  const result = await serviceQuery.modelQuery;
+  const meta = await packageQuery.countTotal();
+  const result = await packageQuery.modelQuery;
 
   return { meta, result };
 };
@@ -148,14 +238,13 @@ const updatePackagesIntoDB = async (
   files: any,
 ) => {
   const isPackagesExists = await Packages.findById(id);
+  if (!isPackagesExists) throw new AppError(404, 'This service is not found');
 
-  if (!isPackagesExists) {
-    throw new AppError(404, 'This service is not found');
-  }
+  const { deleteKey, images, ...updateData } = payload;
 
-  const { deleteKey, ...updateData } = payload; // color isn't used, so removed it
+  let uploadedImages: { url: string; key: string }[] = [];
 
-  // Handle image upload to S3
+  // ✅ Handle new uploads
   if (files) {
     const { images } = files as UploadedFiles;
 
@@ -165,59 +254,41 @@ const updatePackagesIntoDB = async (
         path: `images/service`,
       }));
 
-      try {
-        payload.images = await uploadManyToS3(imgsArray); // Await all uploads before proceeding
-      } catch (error) {
-        throw new AppError(500, 'Image upload failed');
-      }
+      uploadedImages = await uploadManyToS3(imgsArray);
+      console.log(uploadedImages, { id }, 'Uploaded to S3 ✅');
     }
   }
 
-  // Handle image deletions (if any)
+  // ✅ Handle deletions
   if (deleteKey && deleteKey.length > 0) {
     const newKey = deleteKey.map((key: any) => `images/service/${key}`);
 
-    if (newKey.length > 0) {
-      await deleteManyFromS3(newKey); // Delete images from S3
-      // Remove deleted images from the product
-      await Packages.findByIdAndUpdate(
-        id,
-        {
-          $pull: { images: { key: { $in: deleteKey } } },
-        },
-        { new: true },
-      );
-    }
+    await deleteManyFromS3(newKey);
+    await Packages.findByIdAndUpdate(
+      id,
+      { $pull: { images: { key: { $in: deleteKey } } } },
+      { new: true },
+    );
   }
 
-  // If new images are provided, push them to the product
-  if (payload?.images && payload.images.length > 0) {
-    try {
-      await Packages.findByIdAndUpdate(
-        id,
-        { $addToSet: { images: { $each: payload.images } } }, // Push new images to the product
-        { new: true },
-      );
-      delete payload.images; // Remove images from the payload after pushing
-    } catch (error) {
-      throw new AppError(400, 'Failed to update images');
-    }
+  // ✅ Add new uploaded images to DB
+  if (uploadedImages.length > 0) {
+    await Packages.findByIdAndUpdate(
+      id,
+      { $push: { images: { $each: uploadedImages } } },
+      { new: true },
+    );
   }
 
-  // Update other product details
-  try {
-    const result = await Packages.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
-    if (!result) {
-      throw new AppError(400, 'Service update failed');
-    }
+  // ✅ Update other fields
+  console.log('UPDATE Data ----------', updateData);
+  const result = await Packages.findByIdAndUpdate(id, updateData, {
+    new: true,
+  });
 
-    return result;
-  } catch (error: any) {
-    console.log(error);
-    throw new AppError(500, 'Service update failed');
-  }
+  if (!result) throw new AppError(400, 'Service update failed');
+
+  return result;
 };
 
 const deletePackagesFromDB = async (id: string) => {

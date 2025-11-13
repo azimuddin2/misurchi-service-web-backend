@@ -93,7 +93,7 @@ const orderSchema = new Schema<TOrder>(
     billingDetails: {
       country: { type: String, required: true },
       city: { type: String },
-      state: { type: String, required: true },
+      state: { type: String },
       zipCode: { type: String, required: true },
       address: { type: String, required: true },
     },

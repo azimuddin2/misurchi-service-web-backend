@@ -57,7 +57,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
       },
     ];
   }
-
+  console.log(errorSources);
   res.status(statusCode).json({
     success: false,
     message,
