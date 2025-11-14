@@ -252,7 +252,7 @@ const getAllPaymentByAdminFromDB = async (query: Record<string, unknown>) => {
   const { ...filters } = query;
 
   // Base query -> always exclude deleted payments
-  let paymentQuery = Payment.find({ isDeleted: false })
+  let paymentQuery = Payment.find({ isDeleted: false, status: 'paid' })
     .populate('vendor', 'businessName email')
     .populate('user')
     .populate({

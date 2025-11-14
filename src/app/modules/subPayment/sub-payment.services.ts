@@ -238,7 +238,7 @@ const getAllSubPaymentFromDB = async (query: Record<string, unknown>) => {
   const { ...filters } = query;
 
   // Base query -> always exclude deleted payments
-  let subPaymentQuery = SubPayment.find({ isDeleted: false })
+  let subPaymentQuery = SubPayment.find({ isDeleted: false, isPaid: true })
     .populate('vendor', 'businessName email chooseOffer')
     .populate('user');
 
