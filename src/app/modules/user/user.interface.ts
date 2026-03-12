@@ -23,7 +23,7 @@ export type TUser = {
   coverImage?: string;
   country?: string;
   status: TStatus;
-  isDeleted: boolean;
+
   isVerified: boolean;
   verification: {
     otp: string | number;
@@ -32,8 +32,22 @@ export type TUser = {
   };
   isSubscribed: boolean;
   subscribed?: TSubscribed;
-  // 🔹 Stripe customer ID for payments
+
+  notifications: boolean;
+
+  location?: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
+    streetAddress?: string;
+  };
+
+  // 🔹 Stripe (Customer)
   stripeCustomerId?: string;
+
+  // 🔹 Stripe (Vendor / Connect)
+  stripeAccountId?: string;
+
+  isDeleted: boolean;
 };
 
 export interface UserModel extends Model<TUser> {

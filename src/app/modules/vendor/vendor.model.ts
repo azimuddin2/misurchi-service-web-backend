@@ -60,11 +60,11 @@ const vendorSchema = new Schema<TVendor>(
     },
     firstName: {
       type: String,
-      required: [true, 'Contact person’s first name is required'],
+      required: [true, 'First name is required'],
     },
     lastName: {
       type: String,
-      required: [true, 'Contact person’s last name is required'],
+      required: [true, 'Last name is required'],
     },
     description: {
       type: String,
@@ -91,10 +91,19 @@ const vendorSchema = new Schema<TVendor>(
       },
     },
     location: {
-      streetAddress: { type: String },
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+        required: false,
+      },
       coordinates: {
-        lat: { type: Number },
-        lng: { type: Number },
+        type: [Number],
+        required: false,
+      },
+      streetAddress: {
+        type: String,
+        required: false,
       },
     },
   },

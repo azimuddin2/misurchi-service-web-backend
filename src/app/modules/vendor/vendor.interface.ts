@@ -21,13 +21,10 @@ export type TVendor = {
   description?: string;
   password: string;
   confirmPassword: string;
-  stripeAccountId?: string;
   chooseOffer?: TChooseOffer;
   location?: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
     streetAddress?: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
   };
 };

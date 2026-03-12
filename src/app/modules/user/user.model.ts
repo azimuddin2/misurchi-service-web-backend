@@ -96,10 +96,6 @@ const userSchema = new Schema<TUser, UserModel>(
       },
       default: 'ongoing',
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -130,8 +126,38 @@ const userSchema = new Schema<TUser, UserModel>(
         message: '{VALUE} is not valid',
       },
     },
+    notifications: {
+      type: Boolean,
+      default: true,
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+        required: false,
+      },
+      coordinates: {
+        type: [Number],
+        required: false,
+      },
+      streetAddress: {
+        type: String,
+        required: false,
+      },
+    },
     stripeCustomerId: {
       type: String,
+      default: null,
+    },
+    stripeAccountId: {
+      type: String,
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {
