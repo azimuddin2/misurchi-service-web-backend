@@ -20,8 +20,8 @@ export const createReviewValidationSchema = z.object({
         .min(12, 'Review must be at least 12 characters long'),
       rating: z
         .number({ required_error: 'Rating is required' })
-        .min(1, 'Rating must be at least 1')
-        .max(5, 'Rating must be at most 5'),
+        .min(1, 'Please select at least 1 star rating')
+        .max(5, 'Rating must be at most 5 stars rating'),
     })
     .refine((data) => data.product || data.service, {
       message: 'Either product or service must be provided',
