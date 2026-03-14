@@ -25,6 +25,8 @@ const createProductValidationSchema = z.object({
       required_error: 'At least one color is required',
     }),
 
+    recommendedType: z.array(z.string()).optional(),
+
     size: z.string({
       required_error: 'Size is required',
     }),
@@ -77,6 +79,8 @@ const updateProductValidationSchema = z.object({
         required_error: 'At least one color is required',
       })
       .optional(),
+
+    recommendedType: z.array(z.string()).optional(),
 
     size: z
       .string({

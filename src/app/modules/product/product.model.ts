@@ -58,6 +58,10 @@ const productSchema = new Schema<TProduct>(
       type: [String],
       required: true,
     },
+    recommendedType: {
+      type: [String],
+      required: false,
+    },
     size: {
       type: String,
       required: true,
