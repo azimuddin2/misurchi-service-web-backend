@@ -43,6 +43,7 @@ export type TPackages = {
   serviceId: string;
   name: string;
   type: string;
+  recommendedType: string[];
   savedServices: TServicePricing[];
   description: string; // optional
   images: TImage[];

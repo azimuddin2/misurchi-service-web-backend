@@ -63,7 +63,7 @@ const productSchema = new Schema<TProduct>(
       required: false,
     },
     size: {
-      type: String,
+      type: [String],
       required: true,
     },
     status: {

@@ -50,6 +50,10 @@ const packagesSchema = new Schema<TPackages>(
       required: true,
     },
     type: { type: String, required: true },
+    recommendedType: {
+      type: [String],
+      required: false,
+    },
     savedServices: { type: [ServicePricingSchema], required: true },
     description: { type: String },
     status: {

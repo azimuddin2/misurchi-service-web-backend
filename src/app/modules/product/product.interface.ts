@@ -25,7 +25,7 @@ export type TProduct = {
   discountPrice?: string | null;
   colors: string[]; // e.g., ["Crimson Red", "Soft Nude"]
   recommendedType: string[];
-  size: string; // e.g., "5 ml"
+  size: string[]; // e.g., "5 ml"
   status: TProductStatus;
   highlightStatus: THighlightStatus;
   description: string;

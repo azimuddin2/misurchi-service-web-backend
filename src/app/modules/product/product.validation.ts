@@ -27,8 +27,8 @@ const createProductValidationSchema = z.object({
 
     recommendedType: z.array(z.string()).optional(),
 
-    size: z.string({
-      required_error: 'Size is required',
+    size: z.array(z.string(), {
+      required_error: 'At least one size is required',
     }),
 
     status: z.enum([...ProductStatus] as [string, ...string[]], {
@@ -83,8 +83,8 @@ const updateProductValidationSchema = z.object({
     recommendedType: z.array(z.string()).optional(),
 
     size: z
-      .string({
-        required_error: 'Size is required',
+      .array(z.string(), {
+        required_error: 'At least one size is required',
       })
       .optional(),
 
