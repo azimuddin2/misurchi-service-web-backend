@@ -25,6 +25,8 @@ export type TOrderProduct = {
   quantity: number;
   price: number;
   discount: number;
+  size: string;
+  color: string;
 };
 
 export type TOrder = {

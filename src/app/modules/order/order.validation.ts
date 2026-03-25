@@ -18,6 +18,8 @@ const orderProductSchema = z.object({
   quantity: z.number().min(1, 'Quantity must be at least 1'),
   price: z.number().min(0, 'Price must be >= 0'),
   discount: z.number().min(0).optional().default(0),
+  size: z.string().min(1, 'Size is required'),
+  color: z.string().min(1, 'Color is required'),
   // 👉 if you allow multi-vendor orders, include vendor here:
   // vendor: z.string().min(1, "Vendor Id is required"),
 });

@@ -14,6 +14,8 @@ const orderProductSchema = new Schema(
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
     discount: { type: Number, default: 0 },
+    size: { type: String, required: true },
+    color: { type: String, required: true },
   },
   { _id: false }, // prevent creating extra _id for each product item
 );
