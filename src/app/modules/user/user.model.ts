@@ -52,14 +52,14 @@ const userSchema = new Schema<TUser, UserModel>(
       required: [true, 'Password is required'],
       trim: true,
       minlength: [8, 'Password can be minimum 8 characters'],
-      maxlength: [20, 'Password can not be more than 20 characters'],
+      // maxlength: [20, 'Password can not be more than 20 characters'],
     },
     confirmPassword: {
       type: String,
       required: [true, 'Password is required'],
       trim: true,
       minlength: [8, 'Password can be minimum 8 characters'],
-      maxlength: [20, 'Password can not be more than 20 characters'],
+      // maxlength: [20, 'Password can not be more than 20 characters'],
     },
     needsPasswordChange: {
       type: Boolean,

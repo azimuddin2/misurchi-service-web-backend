@@ -1,75 +1,133 @@
-// src/modules/stripe/stripe.service.ts
-import AppError from '../../errors/AppError';
-import { Vendor } from '../vendor/vendor.model';
+import config from '../../config';
 import httpStatus from 'http-status';
-import { VendorStripeAccount } from './stripe.model';
-import StripePaymentService from '../../class/stripe';
+import StripeService from '../../class/stripe';
+import AppError from '../../errors/AppError';
+import { User } from '../user/user.model';
 
-const createVendorStripeAccount = async (vendorId: string) => {
-  const vendor = await Vendor.findById({ _id: vendorId });
-  if (!vendor) throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
+// Create Stripe Express account & onboarding link
+const stripLinkAccount = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(400, 'User not found');
+  }
 
-  // check if already exists
-  const existing = await VendorStripeAccount.findOne({ vendor: vendorId });
-  if (existing) {
-    const link = await StripePaymentService.generateAccountLink(
-      existing.stripeAccountId,
+  if (user.role !== 'vendor') {
+    throw new AppError(403, 'Only vendors can connect Stripe accounts');
+  }
+
+  // CASE 1: User already has stripe account
+  if (user.stripeAccountId) {
+    const account = await StripeService.getStripe().accounts.retrieve(
+      user.stripeAccountId,
     );
+
+    // ✅ If onboarding already completed
+    if (account.details_submitted) {
+      return {
+        object: 'already_connected',
+        message: 'Stripe account already connected',
+        accountId: user.stripeAccountId,
+      };
+    }
+
+    // 🔁 Onboarding incomplete → generate new link
+    const refresh_url = `${config.server_url}/api/v1/stripe/refresh/${account.id}?userId=${user._id}`;
+    const return_url = `${config.server_url}/api/v1/stripe/return?userId=${user._id}&stripeAccountId=${account.id}`;
+
+    const accountLink = await StripeService.connectAccount(
+      return_url,
+      refresh_url,
+      account.id,
+    );
+
     return {
-      existing: true,
-      onboardingUrl: link?.url,
-      message: 'Stripe account already exists',
+      object: accountLink.object,
+      url: accountLink.url,
+      expires_at: accountLink.expires_at,
+      accountId: account.id,
     };
   }
 
-  // create connect account
-  const stripeAccount = await StripePaymentService.createConnectAccount(
-    vendor.email,
-  );
-  if (!stripeAccount?.id) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Stripe account creation failed',
-    );
-  }
-
-  // save to DB
-  const newRecord = await VendorStripeAccount.create({
-    vendor: vendorId,
-    stripeAccountId: stripeAccount.id,
-    email: vendor.email,
-    status: 'pending',
+  // CASE 2: No stripe account → create new
+  const account = await StripeService.getStripe().accounts.create({
+    type: 'express',
+    country: 'US',
+    email: user.email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
   });
 
-  const link = await StripePaymentService.generateAccountLink(stripeAccount.id);
+  // Save accountId immediately
+  user.stripeAccountId = account.id;
+  await user.save();
+
+  const refresh_url = `${config.server_url}/api/v1/stripe/refresh/${account.id}?userId=${user._id}`;
+  const return_url = `${config.server_url}/api/v1/stripe/return?userId=${user._id}&stripeAccountId=${account.id}`;
+
+  const accountLink = await StripeService.connectAccount(
+    return_url,
+    refresh_url,
+    account.id,
+  );
 
   return {
-    account: newRecord,
-    onboardingUrl: link?.url,
+    object: accountLink.object,
+    url: accountLink.url,
+    expires_at: accountLink.expires_at,
+    accountId: account.id,
   };
 };
 
-const getVendorStripeAccountStatus = async (vendorId: string) => {
-  const record = await VendorStripeAccount.findOne({ vendor: vendorId });
-  if (!record)
-    throw new AppError(httpStatus.NOT_FOUND, 'Vendor Stripe account not found');
+// Refresh onboarding for incomplete accounts
+const refresh = async (stripeAccountId: string, query: Record<string, any>) => {
+  const user = await User.findById(query.userId);
+  if (!user) throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
 
-  const stripeAccount = await StripePaymentService.retrieveAccount(
-    record.stripeAccountId,
+  const refresh_url = `${config.server_url}/api/v1/stripe/refresh/${stripeAccountId}?userId=${user._id}`;
+  const return_url = `${config.server_url}/api/v1/stripe/return?userId=${user._id}&stripeAccountId=${stripeAccountId}&success=true`;
+
+  const accountLink = await StripeService.connectAccount(
+    return_url,
+    refresh_url,
+    stripeAccountId,
   );
-
-  // update relevant fields
-  record.detailsSubmitted = Boolean((stripeAccount as any)?.details_submitted);
-  record.payoutsEnabled = Boolean((stripeAccount as any)?.payouts_enabled);
-  record.status = (stripeAccount as any)?.payouts_enabled
-    ? 'verified'
-    : 'restricted';
-  await record.save();
-
-  return record;
+  return accountLink.url;
 };
 
-export const StripeService = {
-  createVendorStripeAccount,
-  getVendorStripeAccountStatus,
+// Complete onboarding and save stripeAccountId in DB
+const returnUrl = async (payload: {
+  userId: string;
+  stripeAccountId: string;
+}) => {
+  const account = await StripeService.getStripe().accounts.retrieve(
+    payload.stripeAccountId,
+  );
+
+  // Ensure stripeAccountId saved
+  const user = await User.findByIdAndUpdate(
+    payload.userId,
+    { stripeAccountId: payload.stripeAccountId },
+    { new: true },
+  );
+
+  if (!user) throw new AppError(400, 'User not found');
+
+  return {
+    isCompleted: account.details_submitted,
+  };
+};
+
+// Admin: delete all restricted test accounts
+const deleteAllRestrictedTestAccounts = async () => {
+  const results = await StripeService.deleteAllRestrictedAccounts();
+  return { count: results.length };
+};
+
+export const stripeService = {
+  stripLinkAccount,
+  refresh,
+  returnUrl,
+  deleteAllRestrictedTestAccounts,
 };

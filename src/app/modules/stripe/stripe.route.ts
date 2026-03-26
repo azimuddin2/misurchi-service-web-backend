@@ -1,22 +1,26 @@
-import express from 'express';
+import { Router } from 'express';
+import { stripeController } from './stripe.controller';
 import auth from '../../middlewares/auth';
-import { USER_ROLE } from '../user/user.constant';
-import { StripeController } from './stripe.controller';
 
-const router = express.Router();
+const router = Router();
 
-// Vendor creates stripe connect account
-router.post(
-  '/vendor/create-account',
-  auth(USER_ROLE.vendor),
-  StripeController.createVendorAccount,
+// Create stripe account + onboarding link
+router.patch(
+  '/connect-account',
+  auth('vendor'),
+  stripeController.stripLinkAccount,
 );
 
-// Get vendor account status
-router.post(
-  '/vendor/account-status',
-  auth(USER_ROLE.vendor),
-  StripeController.getVendorAccountStatus,
+// Stripe redirects (GET only)
+router.get('/return', stripeController.returnUrl);
+
+router.get('/refresh/:id', stripeController.refresh);
+
+// Admin utility
+router.delete(
+  '/restricted/delete-all',
+  auth('admin'),
+  stripeController.deleteAllRestricted,
 );
 
-export const StripeRoutes = router;
+export const StripeRoute = router;

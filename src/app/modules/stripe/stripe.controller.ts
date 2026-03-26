@@ -1,36 +1,76 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
+import { stripeService } from './stripe.service';
 import sendResponse from '../../utils/sendResponse';
-import { StripeService } from './stripe.service';
+import httpStatus from 'http-status';
+import config from '../../config';
+import AppError from '../../errors/AppError';
 
-const createVendorAccount = catchAsync(async (req, res) => {
-  const { vendorId } = req.body;
-  if (!vendorId) throw new Error('vendorId is required');
-
-  const result = await StripeService.createVendorStripeAccount(vendorId);
+const stripLinkAccount = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+  const result = await stripeService.stripLinkAccount(userId);
 
   sendResponse(res, {
-    statusCode: 201,
     success: true,
-    message: 'Stripe account created successfully',
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Stripe onboarding link generated',
+  });
+});
+
+const refresh = catchAsync(async (req: Request, res: Response) => {
+  const url = await stripeService.refresh(req.params.id, req.query);
+  return res.redirect(url);
+});
+
+const returnUrl = catchAsync(async (req: Request, res: Response) => {
+  const { userId, stripeAccountId } = req.query;
+
+  if (!userId || !stripeAccountId) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Missing query params');
+  }
+
+  const result = await stripeService.returnUrl({
+    userId: userId as string,
+    stripeAccountId: stripeAccountId as string,
+  });
+
+  // 🔴 Incomplete onboarding
+  if (!result.isCompleted) {
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: false,
+      message: 'Stripe onboarding incomplete',
+      data: {
+        redirectUrl: `${config.client_Url}/seller/stripe-incomplete`,
+      },
+    });
+  }
+
+  // 🟢 Completed onboarding
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Stripe onboarding completed',
+    data: {
+      redirectUrl: `${config.client_Url}/seller/stripe-success`,
+    },
+  });
+});
+
+const deleteAllRestricted = catchAsync(async (req: Request, res: Response) => {
+  const result = await stripeService.deleteAllRestrictedTestAccounts();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Restricted accounts deleted',
     data: result,
   });
 });
 
-const getVendorAccountStatus = catchAsync(async (req, res) => {
-  const { vendorId } = req.body;
-  if (!vendorId) throw new Error('vendorId is required');
-
-  const result = await StripeService.getVendorStripeAccountStatus(vendorId);
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Vendor Stripe account status fetched successfully',
-    data: result,
-  });
-});
-
-export const StripeController = {
-  createVendorAccount,
-  getVendorAccountStatus,
+export const stripeController = {
+  stripLinkAccount,
+  refresh,
+  returnUrl,
+  deleteAllRestricted,
 };
