@@ -1,4 +1,6 @@
 import { Types } from 'mongoose';
+import { TVendor } from '../vendor/vendor.interface';
+import { TUser } from '../user/user.interface';
 
 export type THighlightStatus = 'Highlighted' | 'Highlight';
 
@@ -36,8 +38,8 @@ export type TImage = {
 
 // Main ServiceData type
 export type TPackages = {
-  vendor: Types.ObjectId;
-  user: Types.ObjectId;
+  vendor: Types.ObjectId | TVendor | string;
+  user: Types.ObjectId | TUser | string;
   deleteKey: string[];
   _id?: string;
   serviceId: string;

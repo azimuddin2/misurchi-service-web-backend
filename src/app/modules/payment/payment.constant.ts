@@ -1,6 +1,6 @@
 import { TDeliveryStatus, TStatus } from './payment.interface';
 
-export const Status: TStatus[] = ['pending', 'paid', 'refunded'];
+export const Status: TStatus[] = ['pending', 'paid', 'refunded', 'cancelled'];
 
 export enum PAYMENT_STATUS {
   pending = 'pending',

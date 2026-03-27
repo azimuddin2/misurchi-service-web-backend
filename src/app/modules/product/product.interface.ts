@@ -1,4 +1,6 @@
 import { Types } from 'mongoose';
+import { TVendor } from '../vendor/vendor.interface';
+import { TUser } from '../user/user.interface';
 
 export type TProductImage = {
   url: string;
@@ -14,8 +16,8 @@ export type TProductStatus =
 export type THighlightStatus = 'Highlighted' | 'Highlight';
 
 export type TProduct = {
-  vendor: Types.ObjectId;
-  user: Types.ObjectId;
+  vendor: Types.ObjectId | TVendor | string;
+  user: Types.ObjectId | TUser | string;
   name: string;
   productCode: string;
   images: TProductImage[];

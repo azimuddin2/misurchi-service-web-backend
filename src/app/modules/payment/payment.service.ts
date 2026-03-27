@@ -19,7 +19,6 @@ import {
   upsertPendingPayment,
 } from './payment.utils';
 
-// 🔹 Main
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
   session.startTransaction();
@@ -48,8 +47,8 @@ const createPayment = async (payload: TPayment) => {
     const lineItems = buildLineItems(payload.modelType, referenceDoc, price);
 
     // STEP 6: Checkout URLs
-    const successUrl = `${config.server_url}/payments/confirm-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payment._id}`;
-    const cancelUrl = `${config.server_url}/payments/cancel?paymentId=${payment._id}`;
+    const successUrl = `${config.server_url}/api/v1/payments/confirm-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payment._id}`;
+    const cancelUrl = `${config.server_url}/api/v1/payments/cancel?paymentId=${payment._id}`;
 
     // STEP 7: Create Stripe Checkout Session
     const checkoutSession = await StripePaymentService.getCheckoutSession(
@@ -146,6 +145,35 @@ const confirmPayment = async (query: Record<string, any>) => {
   }
 };
 
+const cancelPayment = async (paymentId: string) => {
+  if (!paymentId || !mongoose.Types.ObjectId.isValid(paymentId))
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid paymentId');
+
+  const session = await startSession();
+  session.startTransaction();
+
+  try {
+    const payment = await Payment.findById(paymentId).session(session);
+    if (!payment) throw new AppError(httpStatus.NOT_FOUND, 'Payment not found');
+    if (payment.status === 'paid')
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Cannot cancel a paid deposit',
+      );
+
+    payment.status = 'cancelled';
+    await payment.save({ session });
+
+    await session.commitTransaction();
+    return payment;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
   const { vendor, ...filters } = query;
 
@@ -203,6 +231,7 @@ const getAllPaymentByAdminFromDB = async (query: Record<string, unknown>) => {
 export const PaymentService = {
   createPayment,
   confirmPayment,
+  cancelPayment,
   getAllPaymentFromDB,
   getAllPaymentByAdminFromDB,
 };

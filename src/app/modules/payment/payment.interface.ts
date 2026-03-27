@@ -28,4 +28,6 @@ export type TPayment = {
   paymentIntentId: string;
   price: number;
   isDeleted: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 };

@@ -28,9 +28,14 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
   const userExists = await User.findById({
     _id: payload.user,
     isDeleted: false,
-  });
+  }).select('role');
+
   if (!userExists) {
     throw new Error('User not found');
+  }
+
+  if (userExists?.role !== 'vendor') {
+    throw new AppError(403, 'Only vendor can perform this action');
   }
 
   // Assign backend-specific service code

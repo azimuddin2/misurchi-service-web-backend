@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { TUser } from '../user/user.interface';
 
 export type TImage = {
   url: string;
@@ -32,8 +33,8 @@ export type TOrderProduct = {
 export type TOrder = {
   orderId: string;
   products: TOrderProduct[];
-  vendor: Types.ObjectId;
-  buyer: Types.ObjectId;
+  vendor: Types.ObjectId | TUser | string;
+  buyer: Types.ObjectId | TUser | string;
 
   customerName: string;
   customerEmail: string;
