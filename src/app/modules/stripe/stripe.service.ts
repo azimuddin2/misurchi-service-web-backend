@@ -105,10 +105,13 @@ const returnUrl = async (payload: {
     payload.stripeAccountId,
   );
 
-  // Ensure stripeAccountId saved
+  // Save Stripe ID and onboarding status
   const user = await User.findByIdAndUpdate(
     payload.userId,
-    { stripeAccountId: payload.stripeAccountId },
+    {
+      stripeAccountId: payload.stripeAccountId,
+      stripeOnboardingComplete: account.details_submitted,
+    },
     { new: true },
   );
 

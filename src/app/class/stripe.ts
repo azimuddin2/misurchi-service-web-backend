@@ -141,14 +141,15 @@ class StripeServices<T> {
     }
   }
 
+  // getCheckoutSession — total থেকে fee calculate
   public async getCheckoutSession(
     products: IProduct[],
     success_url: string,
     cancel_url: string,
     currency: string,
     customer: string,
-    vendorAccountId?: string, // ✅ Vendor's Connected Account ID
-    platformFeePercent: number = 10, // ✅ 10% commission
+    vendorAccountId?: string,
+    platformFeePercent: number = 10,
   ) {
     try {
       const lineItems = products.map((p) => ({
@@ -156,23 +157,29 @@ class StripeServices<T> {
         quantity: p.quantity,
       }));
 
+      // ✅ সব items এর total amount
+      const totalAmount = lineItems.reduce(
+        (sum, item) => sum + item.price_data.unit_amount * (item.quantity ?? 1),
+        0,
+      );
+
+      const applicationFee = Math.round(
+        (totalAmount * platformFeePercent) / 100,
+      );
+
       return await this.stripe().checkout.sessions.create({
         line_items: lineItems,
         mode: 'payment',
         success_url,
         cancel_url,
         customer,
-        payment_intent_data: vendorAccountId
-          ? {
-              transfer_data: {
-                destination: vendorAccountId, // ✅ Vendor’s account gets payout
-              },
-              application_fee_amount: Math.round(
-                (lineItems[0].price_data.unit_amount * platformFeePercent) /
-                  100,
-              ),
-            }
-          : undefined,
+        currency,
+        ...(vendorAccountId && {
+          payment_intent_data: {
+            application_fee_amount: applicationFee, // ✅ platform এ থাকবে
+            transfer_data: { destination: vendorAccountId }, // ✅ vendor এ যাবে
+          },
+        }),
         invoice_creation: { enabled: true },
       });
     } catch (error) {

@@ -1,5 +1,5 @@
 import mongoose, { startSession } from 'mongoose';
-import { PAYMENT_MODEL_TYPE, TPayment } from './payment.interface';
+import { TPayment } from './payment.interface';
 import { Order } from '../order/order.model';
 import { Booking } from '../booking/booking.model';
 import { Payment } from './payment.model';
@@ -11,127 +11,54 @@ import StripePaymentService from '../../class/stripe';
 import { Product } from '../product/product.model';
 import { PAYMENT_STATUS } from './payment.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
-import { generateTrxId } from './payment.utils';
+import {
+  buildLineItems,
+  resolveReferenceDoc,
+  resolveStripeCustomer,
+  resolveVendorStripeAccount,
+  upsertPendingPayment,
+} from './payment.utils';
 
-// 🔹 Helper → calculate commission split (10% admin, 90% vendor)
-const calculateAmounts = (price: number) => ({
-  adminAmount: price * 0.1,
-  vendorAmount: price * 0.9,
-});
-
+// 🔹 Main
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
   session.startTransaction();
 
   try {
-    let referenceDoc: any;
+    // STEP 1: Resolve reference doc + price
+    const { referenceDoc, price } = await resolveReferenceDoc(payload);
+    payload.price = price;
 
-    // STEP 1: Fetch Order or Booking
-    if (payload.modelType === PAYMENT_MODEL_TYPE.Order) {
-      referenceDoc = await Order.findById(payload.reference).lean().exec();
-      if (!referenceDoc)
-        throw new AppError(httpStatus.NOT_FOUND, 'Order not found');
-      payload.price = referenceDoc.totalPrice;
-    } else if (payload.modelType === PAYMENT_MODEL_TYPE.Booking) {
-      referenceDoc = await Booking.findById(payload.reference).lean().exec();
-      if (!referenceDoc)
-        throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
-      payload.price =
-        referenceDoc.paymentType === 'half'
-          ? referenceDoc.price / 2
-          : referenceDoc.price;
-    }
+    // STEP 2: Upsert pending payment
+    const payment = await upsertPendingPayment(payload, price, session);
 
-    // STEP 2: Reuse or Create Payment
-    const trnId = generateTrxId();
-    let payment = await Payment.findOne({
-      reference: payload.reference,
-      modelType: payload.modelType,
-      status: 'pending',
-      isDeleted: false,
-    }).session(session);
+    // STEP 3: Resolve Stripe customer
+    const customerId = await resolveStripeCustomer(
+      payment.user as string,
+      session,
+    );
 
-    const { adminAmount, vendorAmount } = calculateAmounts(payload.price);
+    // STEP 4: Resolve vendor Stripe connected account
+    const vendorStripeAccountId = await resolveVendorStripeAccount(
+      payment.vendor as string,
+      session,
+    );
 
-    if (payment) {
-      payment.trnId = trnId;
-      payment.price = payload.price;
-      payment.adminAmount = adminAmount;
-      payment.vendorAmount = vendorAmount;
-      await payment.save({ session });
-    } else {
-      payment = await Payment.create(
-        [
-          {
-            user: payload.user,
-            vendor: payload.vendor,
-            modelType: payload.modelType,
-            reference: payload.reference,
-            trnId,
-            price: payload.price,
-            adminAmount,
-            vendorAmount,
-          },
-        ],
-        { session },
-      ).then((docs) => docs[0]);
-    }
-
-    if (!payment)
-      throw new AppError(httpStatus.BAD_REQUEST, 'Payment creation failed');
-
-    // STEP 3: Stripe Customer
-    const user = await User.findById(payment.user).session(session);
-    if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await StripePaymentService.createCustomer(
-        user.email!,
-        user.fullName!,
-      );
-      customerId = customer.id;
-      await User.findByIdAndUpdate(user._id, {
-        stripeCustomerId: customerId,
-      }).session(session);
-    }
-
-    // STEP 5: Prepare Stripe line items
-    const lineItems: any[] = [];
-    if (payload.modelType === PAYMENT_MODEL_TYPE.Order) {
-      referenceDoc.products.forEach((p: any) => {
-        lineItems.push({
-          price_data: {
-            currency: config.currency,
-            product_data: { name: p.name || 'Product' },
-            unit_amount: Math.round(Number(p.price) * 100),
-          },
-          quantity: Number(p.quantity) || 1,
-        });
-      });
-    } else {
-      lineItems.push({
-        price_data: {
-          currency: config.currency,
-          product_data: { name: referenceDoc.serviceName || 'Service Booking' },
-          unit_amount: Math.round(payload.price * 100),
-        },
-        quantity: 1,
-      });
-    }
+    // STEP 5: Build line items
+    const lineItems = buildLineItems(payload.modelType, referenceDoc, price);
 
     // STEP 6: Checkout URLs
     const successUrl = `${config.server_url}/payments/confirm-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payment._id}`;
     const cancelUrl = `${config.server_url}/payments/cancel?paymentId=${payment._id}`;
 
-    // STEP 7: Create Stripe Checkout Session (Destination Charge)
+    // STEP 7: Create Stripe Checkout Session
     const checkoutSession = await StripePaymentService.getCheckoutSession(
       lineItems,
       successUrl,
       cancelUrl,
       config.currency,
       customerId,
-      // vendorAccountId, // ✅ Vendor’s connected account
+      vendorStripeAccountId, // ✅ transfer to vendor connected account
     );
 
     await session.commitTransaction();

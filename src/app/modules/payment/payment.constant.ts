@@ -6,11 +6,11 @@ export enum PAYMENT_STATUS {
   pending = 'pending',
   paid = 'paid',
   refunded = 'refunded',
+  cancelled = 'cancelled',
 }
 
 export const DeliveryStatus: TDeliveryStatus[] = [
   'pending',
-  'ongoing',
   'shipped',
   'delivered',
 ];

@@ -46,6 +46,7 @@ export type TUser = {
 
   // 🔹 Stripe (Vendor / Connect)
   stripeAccountId?: string;
+  stripeOnboardingComplete?: boolean;
 
   isDeleted: boolean;
 };

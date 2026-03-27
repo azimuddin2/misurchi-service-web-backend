@@ -154,6 +154,10 @@ const userSchema = new Schema<TUser, UserModel>(
       type: String,
       default: null,
     },
+    stripeOnboardingComplete: {
+      type: Boolean,
+      default: false,
+    },
 
     isDeleted: {
       type: Boolean,
