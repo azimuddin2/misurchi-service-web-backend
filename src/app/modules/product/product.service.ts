@@ -81,84 +81,109 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
     ...restQuery
   } = query;
 
+  const isSet = (val: unknown) =>
+    val !== undefined && String(val).trim() !== '';
+
   const mongoFilter: Record<string, any> = { isDeleted: false };
 
-  // ✅ Product Type filter
+  // ─── productType filter ────────────────────────────────────────
   if (productType) {
     const types = String(productType)
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
+
     if (types.length > 0) {
-      mongoFilter.productType = { $in: types.map((t) => new RegExp(t, 'i')) };
+      mongoFilter.productType = {
+        $in: types.map((t) => new RegExp(`^${t}$`, 'i')),
+      };
     }
   }
 
-  // ✅ Expression conditions for price & discount
-  const exprConditions: any[] = [];
+  const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
+  const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
 
-  // Safe price expression
-  const priceExpr = {
-    $cond: [
-      { $eq: [{ $type: '$price' }, 'string'] },
-      { $toDouble: '$price' },
-      { $ifNull: ['$price', 0] },
-    ],
-  };
+  let matchedProductIds: mongoose.Types.ObjectId[] | null = null;
 
-  if (minPrice && String(minPrice).trim() !== '') {
-    exprConditions.push({ $gte: [priceExpr, Number(minPrice)] });
-  }
-  if (maxPrice && String(maxPrice).trim() !== '') {
-    exprConditions.push({ $lte: [priceExpr, Number(maxPrice)] });
-  }
+  // ─── aggregation (only when price / discount filter needed) ───
+  if (hasPriceFilter || hasDiscountFilter) {
+    const baseMatch: Record<string, any> = { isDeleted: false };
+    if (mongoFilter.productType)
+      baseMatch.productType = mongoFilter.productType;
 
-  // Safe discount expression (handles "30%" or numeric 30)
-  const discountExpr = {
-    $cond: [
-      { $regexMatch: { input: '$discountPrice', regex: /%/ } },
+    const secondMatch: Record<string, any> = {};
+
+    if (isSet(minPrice))
+      secondMatch._calcPrice = {
+        ...secondMatch._calcPrice,
+        $gte: Number(minPrice),
+      };
+    if (isSet(maxPrice))
+      secondMatch._calcPrice = {
+        ...secondMatch._calcPrice,
+        $lte: Number(maxPrice),
+      };
+    if (isSet(minDiscount))
+      secondMatch._calcDiscount = {
+        ...secondMatch._calcDiscount,
+        $gte: Number(minDiscount),
+      };
+    if (isSet(maxDiscount))
+      secondMatch._calcDiscount = {
+        ...secondMatch._calcDiscount,
+        $lte: Number(maxDiscount),
+      };
+
+    const matchedDocs = await Product.aggregate([
+      { $match: baseMatch },
+
       {
-        $toDouble: {
-          $replaceAll: {
-            input: { $ifNull: ['$discountPrice', '0%'] },
-            find: '%',
-            replacement: '',
+        $addFields: {
+          // price — cast if string, otherwise take directly
+          _calcPrice: {
+            $cond: [
+              { $eq: [{ $type: '$price' }, 'string'] },
+              { $toDouble: '$price' },
+              { $ifNull: ['$price', 0] },
+            ],
+          },
+
+          // discount — "none" / "" / null → 0, "30%" → 30, 30 → 30
+          _calcDiscount: {
+            $let: {
+              vars: {
+                raw: { $ifNull: ['$discountPrice', '0'] },
+              },
+              in: {
+                $cond: {
+                  if: {
+                    $or: [{ $eq: ['$$raw', 'none'] }, { $eq: ['$$raw', ''] }],
+                  },
+                  then: 0,
+                  else: {
+                    $toDouble: {
+                      $replaceAll: {
+                        input: '$$raw',
+                        find: '%',
+                        replacement: '',
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
-      { $toDouble: { $ifNull: ['$discountPrice', 0] } },
-    ],
-  };
 
-  if (minDiscount && String(minDiscount).trim() !== '') {
-    exprConditions.push({ $gte: [discountExpr, Number(minDiscount)] });
-  }
-  if (maxDiscount && String(maxDiscount).trim() !== '') {
-    exprConditions.push({ $lte: [discountExpr, Number(maxDiscount)] });
-  }
-
-  // ✅ Run aggregate if price or discount filters exist
-  let matchedProductIds: string[] | null = null;
-
-  if (exprConditions.length > 0) {
-    const matchStage = {
-      isDeleted: false,
-      $expr:
-        exprConditions.length === 1
-          ? exprConditions[0]
-          : { $and: exprConditions },
-    };
-
-    const matchedDocs = await Product.aggregate([
-      { $match: matchStage },
+      { $match: secondMatch },
       { $project: { _id: 1 } },
     ]);
 
-    matchedProductIds = matchedDocs
-      .map((d) => d._id?.toString())
-      .filter(Boolean);
+    matchedProductIds = matchedDocs.map(
+      (d) => new mongoose.Types.ObjectId(d._id),
+    );
 
-    // If no matches found, return empty response early
     if (matchedProductIds.length === 0) {
       return {
         meta: {
@@ -172,17 +197,16 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
     }
   }
 
-  // ✅ Final filter (includes others + matched IDs)
-  const finalFindFilter: any = {
+  // ─── final query ──────────────────────────────────────────────
+  const finalFindFilter: Record<string, any> = {
     ...mongoFilter,
-    ...(matchedProductIds ? { _id: { $in: matchedProductIds } } : {}),
+    ...(matchedProductIds !== null ? { _id: { $in: matchedProductIds } } : {}),
   };
 
-  const productQuery = Product.find(finalFindFilter)
-    .populate('vendor')
-    .populate('user');
-
-  const queryBuilder = new QueryBuilder(productQuery, restQuery)
+  const queryBuilder = new QueryBuilder(
+    Product.find(finalFindFilter).populate('vendor').populate('user'),
+    restQuery,
+  )
     .search(productSearchableFields)
     .filter()
     .sort()
