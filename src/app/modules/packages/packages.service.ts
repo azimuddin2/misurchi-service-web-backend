@@ -83,10 +83,9 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     ...restQuery
   } = query;
 
-  // Base filter
   const mongoFilter: Record<string, any> = { isDeleted: false };
 
-  // ✅ Filter by service type
+  // ─── type filter ───────────────────────────────────────────────
   if (type) {
     const types = String(type)
       .split(',')
@@ -94,72 +93,100 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
       .filter(Boolean);
 
     if (types.length > 0) {
-      mongoFilter.type = { $in: types.map((t) => new RegExp(t, 'i')) };
+      mongoFilter.type = { $in: types.map((t) => new RegExp(`^${t}$`, 'i')) };
     }
   }
 
-  // ✅ Filter by price & discount (savedServices)
-  const exprConditions: any[] = [];
+  // ─── price / discount filter flags ────────────────────────────
+  const isSet = (val: unknown) =>
+    val !== undefined && String(val).trim() !== '';
 
-  const priceExpr = {
-    $cond: [
-      { $eq: [{ $type: '$savedServices.price' }, 'string'] },
-      { $toDouble: '$savedServices.price' },
-      { $ifNull: ['$savedServices.price', 0] },
-    ],
-  };
+  const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
+  const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
 
-  if (minPrice && String(minPrice).trim() !== '') {
-    exprConditions.push({ $gte: [priceExpr, Number(minPrice)] });
-  }
-  if (maxPrice && String(maxPrice).trim() !== '') {
-    exprConditions.push({ $lte: [priceExpr, Number(maxPrice)] });
-  }
+  let matchedPackageIds: mongoose.Types.ObjectId[] | null = null;
 
-  const discountExpr = {
-    $cond: [
-      { $regexMatch: { input: '$savedServices.discount', regex: /%/ } },
+  // ─── aggregation (only when price / discount filter needed) ───
+  if (hasPriceFilter || hasDiscountFilter) {
+    const baseMatch: Record<string, any> = { isDeleted: false };
+    if (mongoFilter.type) baseMatch.type = mongoFilter.type;
+
+    const secondMatch: Record<string, any> = {};
+
+    if (hasPriceFilter) {
+      if (isSet(minPrice))
+        secondMatch._firstPrice = {
+          ...secondMatch._firstPrice,
+          $gte: Number(minPrice),
+        };
+      if (isSet(maxPrice))
+        secondMatch._firstPrice = {
+          ...secondMatch._firstPrice,
+          $lte: Number(maxPrice),
+        };
+    }
+
+    if (hasDiscountFilter) {
+      if (isSet(minDiscount))
+        secondMatch._firstDiscount = {
+          ...secondMatch._firstDiscount,
+          $gte: Number(minDiscount),
+        };
+      if (isSet(maxDiscount))
+        secondMatch._firstDiscount = {
+          ...secondMatch._firstDiscount,
+          $lte: Number(maxDiscount),
+        };
+    }
+
+    // helper: safely get a field from savedServices[0]
+    const firstServiceField = (field: string) => ({
+      $getField: {
+        field,
+        input: { $arrayElemAt: ['$savedServices', 0] },
+      },
+    });
+
+    const matchedDocs = await Packages.aggregate([
+      { $match: baseMatch },
+
       {
-        $toDouble: {
-          $replaceAll: {
-            input: { $ifNull: ['$savedServices.discount', '0%'] },
-            find: '%',
-            replacement: '',
+        $addFields: {
+          // price — stored as string, cast to double
+          _firstPrice: {
+            $toDouble: firstServiceField('price'),
+          },
+
+          // discount — "none" / "" / null  →  0,  "15%"  →  15
+          _firstDiscount: {
+            $cond: {
+              if: {
+                $in: [firstServiceField('discount'), ['none', '', null]],
+              },
+              then: 0,
+              else: {
+                $toInt: {
+                  $replaceAll: {
+                    input: firstServiceField('discount'),
+                    find: '%',
+                    replacement: '',
+                  },
+                },
+              },
+            },
           },
         },
       },
-      { $toDouble: { $ifNull: ['$savedServices.discount', 0] } },
-    ],
-  };
 
-  if (minDiscount && String(minDiscount).trim() !== '') {
-    exprConditions.push({ $gte: [discountExpr, Number(minDiscount)] });
-  }
-  if (maxDiscount && String(maxDiscount).trim() !== '') {
-    exprConditions.push({ $lte: [discountExpr, Number(maxDiscount)] });
-  }
-
-  // ✅ Run aggregation if price/discount filter exists
-  let matchedPackageIds: string[] | null = null;
-  if (exprConditions.length > 0) {
-    const matchStage = {
-      isDeleted: false,
-      $expr:
-        exprConditions.length === 1
-          ? exprConditions[0]
-          : { $and: exprConditions },
-    };
-
-    const matchedDocs = await Packages.aggregate([
-      { $unwind: '$savedServices' },
-      { $match: matchStage },
+      { $match: secondMatch },
       { $project: { _id: 1 } },
     ]);
 
-    matchedPackageIds = matchedDocs
-      .map((d) => d._id?.toString())
-      .filter(Boolean);
+    matchedPackageIds = matchedDocs.map(
+      (d) => new mongoose.Types.ObjectId(d._id),
+    );
 
+    // no documents survived the filter → return early
     if (matchedPackageIds.length === 0) {
       return {
         meta: {
@@ -173,16 +200,15 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     }
   }
 
-  // ✅ Final Mongo filter
-  const finalFindFilter: any = {
+  // ─── final query ───────────────────────────────────────────────
+  const finalFindFilter: Record<string, any> = {
     ...mongoFilter,
-    ...(matchedPackageIds ? { _id: { $in: matchedPackageIds } } : {}),
+    ...(matchedPackageIds !== null ? { _id: { $in: matchedPackageIds } } : {}),
   };
 
-  // Build query with QueryBuilder (search, sort, pagination, fields)
   const packageQuery = new QueryBuilder(
     Packages.find(finalFindFilter).populate('vendor').populate('user'),
-    restQuery,
+    restQuery, // type already handled above — not passed to QueryBuilder
   )
     .search(packageSearchableFields)
     .filter()
@@ -191,12 +217,12 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     .fields();
 
   const meta = await packageQuery.countTotal();
-  const result = await packageQuery.modelQuery;
+  const result = await packageQuery.modelQuery.select('-description');
 
   return { meta, result };
 };
 
-const getAllPackagesByUserFromDB = async (query: Record<string, unknown>) => {
+const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
   const { vendor, ...filters } = query;
 
   if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
@@ -417,7 +443,7 @@ const getAvailabilityFromDB = async (
 export const PackagesServices = {
   createPackagesIntoDB,
   getAllPackagesFromDB,
-  getAllPackagesByUserFromDB,
+  getAllPackagesByVendorFromDB,
   getPackagesByIdFromDB,
   updatePackagesIntoDB,
   deletePackagesFromDB,

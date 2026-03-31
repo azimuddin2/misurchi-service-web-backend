@@ -10,6 +10,9 @@ class QueryBuilder<T> {
     this.modelQuery = modelQuery;
     this.baseModel = modelQuery.model;
     this.query = query;
+
+    // Set initial filter like { isDeleted: false }
+    this.finalFilter = { ...modelQuery.getFilter() };
   }
 
   // Search logic

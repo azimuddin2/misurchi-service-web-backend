@@ -28,8 +28,8 @@ const getAllPackages = catchAsync(async (req, res) => {
   });
 });
 
-const getAllPackagesByUser = catchAsync(async (req, res) => {
-  const result = await PackagesServices.getAllPackagesByUserFromDB(req.query);
+const getAllPackagesByVendor = catchAsync(async (req, res) => {
+  const result = await PackagesServices.getAllPackagesByVendorFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -124,7 +124,7 @@ const getAvailability = catchAsync(async (req, res) => {
 export const PackagesControllers = {
   createPackages,
   getAllPackages,
-  getAllPackagesByUser,
+  getAllPackagesByVendor,
   getPackagesById,
   updatePackages,
   deletePackages,

@@ -84,6 +84,7 @@ export const uploadManyToS3 = async (
     const uploadedUrls = await Promise.all(uploadPromises);
     return uploadedUrls;
   } catch (error) {
+    console.log(error);
     throw new Error('File Upload failed');
   }
 };
