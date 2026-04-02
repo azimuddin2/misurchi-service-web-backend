@@ -33,8 +33,8 @@ export type TOrderProduct = {
 export type TOrder = {
   orderId: string;
   products: TOrderProduct[];
-  vendor: Types.ObjectId | TUser | string;
-  buyer: Types.ObjectId | TUser | string;
+  vendor: Types.ObjectId | string;
+  buyer: Types.ObjectId | string;
 
   customerName: string;
   customerEmail: string;

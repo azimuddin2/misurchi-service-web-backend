@@ -154,6 +154,84 @@ const changePassword = async (
     },
   );
 
+  // 🔒 Security notification email
+  const changedAt = new Date().toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+  });
+
+  const emailHtml = `
+    <div style="background:#f0f4ff; padding:28px; font-family:Arial,sans-serif;">
+      <div style="max-width:560px; margin:auto; background:#ffffff; border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- Top banner -->
+        <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed); padding:32px 36px 28px; text-align:center;">
+          <div style="width:56px; height:56px; background:rgba(255,255,255,0.15); border-radius:50%; margin:0 auto 14px; display:flex; align-items:center; justify-content:center;">
+            🔐
+          </div>
+          <h1 style="margin:0 0 6px; font-size:22px; font-weight:700; color:#fff;">Password Updated Successfully</h1>
+          <p style="margin:0; font-size:14px; color:rgba(255,255,255,0.8);">Your account is secure and up to date</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:32px 36px;">
+
+          <p style="font-size:16px; color:#1a1a1a; margin:0 0 6px; font-weight:600;">Hey ${user.fullName || 'there'}! 👋</p>
+          <p style="font-size:14px; color:#555; line-height:1.8; margin:0 0 24px;">
+            Your password has been updated successfully.<br/>
+            If this was you, you're all good — no further action needed.<br/>
+            If you didn't make this change, please contact us right away so we can protect your account.
+          </p>
+
+          <!-- Time info -->
+          <div style="background:#f8f9ff; border:1px solid #e0e4ff; border-radius:10px; padding:16px 20px; margin-bottom:24px;">
+            <p style="margin:0 0 10px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:.6px; font-weight:600;">Change details</p>
+            <p style="margin:0; font-size:14px; color:#333; font-weight:500;">🕐 ${changedAt}</p>
+          </div>
+
+          <!-- Divider -->
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+            <div style="flex:1; height:1px; background:#f0f0f0;"></div>
+            <span style="font-size:12px; color:#bbb; white-space:nowrap;">Wasn't you?</span>
+            <div style="flex:1; height:1px; background:#f0f0f0;"></div>
+          </div>
+
+          <!-- Warning -->
+          <div style="background:#fffbf0; border:1px solid #ffe4a0; border-radius:10px; padding:16px 20px; margin-bottom:28px;">
+            <p style="margin:0 0 5px; font-size:14px; font-weight:700; color:#92400e;">🔔 Don't worry, we've got you!</p>
+            <p style="margin:0; font-size:13px; color:#78350f; line-height:1.7;">
+              If you didn't make this change, your account might be at risk. Tap the button below and our team will help you right away.
+            </p>
+          </div>
+
+          <!-- CTA button -->
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="${config.client_Url}/contact"
+               style="flex:1; min-width:140px; display:inline-block; background:#f3f4ff; color:#4f46e5; padding:12px 20px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; text-align:center; border:1px solid #ddd;">
+              Contact Support
+            </a>
+          </div>
+
+          <!-- Security tips -->
+          <div style="margin-top:28px; background:#f9fafb; border-radius:10px; padding:16px 20px;">
+            <p style="margin:0 0 12px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:.6px; font-weight:600;">Quick security tips</p>
+            <p style="margin:0 0 8px; font-size:13px; color:#555;">✓ Use a unique password for every account</p>
+            <p style="margin:0 0 8px; font-size:13px; color:#555;">✓ Enable two-factor authentication</p>
+            <p style="margin:0; font-size:13px; color:#555;">✓ Never share your password with anyone</p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f8f9ff; padding:20px 36px; text-align:center; border-top:1px solid #eef0ff;">
+          <p style="margin:0; font-size:12px; color:#bbb;">&copy; ${new Date().getFullYear()} · This is an automated security alert · Please do not reply</p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  await sendEmail(user.email, 'Your password has been changed', emailHtml);
+
   return null;
 };
 
