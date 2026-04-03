@@ -100,6 +100,7 @@ const confirmPayment = async (query: Record<string, any>) => {
     if (!payment) throw new AppError(httpStatus.NOT_FOUND, 'Payment not found');
 
     let referenceDoc: any;
+
     if (payment.modelType === 'Order') {
       referenceDoc = await Order.findByIdAndUpdate(
         payment.reference,
@@ -115,11 +116,61 @@ const confirmPayment = async (query: Record<string, any>) => {
         );
       }
     } else if (payment.modelType === 'Booking') {
-      referenceDoc = await Booking.findByIdAndUpdate(
-        payment.reference,
-        { status: 'confirmed', trnId: payment.trnId, isPaid: true },
-        { new: true, session },
+      const booking = await Booking.findById(payment.reference).session(
+        session,
       );
+      if (!booking)
+        throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
+
+      if (booking.paymentType === 'half') {
+        const isFirstPayment = booking.paymentStatus === 'pending';
+
+        if (isFirstPayment) {
+          // প্রথম ৫০% payment
+          referenceDoc = await Booking.findByIdAndUpdate(
+            payment.reference,
+            {
+              paymentStatus: 'half-paid',
+              paidAmount: booking.price / 2,
+              remainingAmount: booking.price / 2,
+              trnId: payment.trnId,
+              $push: { trnIds: payment.trnId },
+              isPaid: false,
+            },
+            { new: true, session },
+          );
+        } else {
+          // দ্বিতীয় ৫০% payment
+          referenceDoc = await Booking.findByIdAndUpdate(
+            payment.reference,
+            {
+              status: 'confirmed',
+              paymentStatus: 'paid',
+              paidAmount: booking.price,
+              remainingAmount: 0,
+              trnId: payment.trnId,
+              $push: { trnIds: payment.trnId },
+              isPaid: true,
+            },
+            { new: true, session },
+          );
+        }
+      } else {
+        // full / later — সরাসরি paid
+        referenceDoc = await Booking.findByIdAndUpdate(
+          payment.reference,
+          {
+            status: 'confirmed',
+            paymentStatus: 'paid',
+            paidAmount: booking.price,
+            remainingAmount: 0,
+            trnId: payment.trnId,
+            $push: { trnIds: payment.trnId },
+            isPaid: true,
+          },
+          { new: true, session },
+        );
+      }
     }
 
     await User.findByIdAndUpdate(

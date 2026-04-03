@@ -89,8 +89,8 @@ const getAllOrderByUserFromDB = async (query: Record<string, unknown>) => {
 
   // Base query -> always exclude deleted products
   let orderQuery = Order.find({ vendor, isDeleted: false })
-    .populate('vendor')
-    .populate('buyer');
+    .populate('buyer')
+    .populate('vendor');
 
   // ✅ Custom filter for order request type (cancelled | return)
   if (requestType && ['cancelled', 'return'].includes(requestType as string)) {

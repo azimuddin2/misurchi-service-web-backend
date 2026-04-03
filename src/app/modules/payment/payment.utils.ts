@@ -7,6 +7,7 @@ import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
 import config from '../../config';
 import StripePaymentService from '../../class/stripe';
+import { Vendor } from '../vendor/vendor.model';
 
 export const generateTrxId = (): string => {
   // Example: TXN20251020A9F43B
@@ -110,14 +111,23 @@ export const resolveVendorStripeAccount = async (
   vendorId: string,
   session: any,
 ) => {
-  const vendor = await User.findById(vendorId).session(session);
+  const vendor = await Vendor.findById(vendorId)
+    .session(session)
+    .select('userId');
   if (!vendor) throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
-  if (!vendor.stripeAccountId)
+
+  const vendorUser = await User.findById(vendor.userId)
+    .session(session)
+    .select('stripeAccountId');
+  if (!vendorUser)
+    throw new AppError(httpStatus.NOT_FOUND, 'Vendor user not found');
+
+  if (!vendorUser.stripeAccountId)
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Vendor has not completed Stripe onboarding',
     );
-  return vendor.stripeAccountId;
+  return vendorUser.stripeAccountId;
 };
 
 // 🔹 Helper → build Stripe line items

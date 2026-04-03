@@ -20,13 +20,46 @@ const createBookingIntoDB = async (payload: TBooking) => {
   if (!Types.ObjectId.isValid(service))
     throw new AppError(400, 'Invalid service ID');
 
-  // 2️⃣ Fetch service
+  // 2️⃣ Past date & time validation
+  const [slotStartStr, slotEndStr] = time.split(' - ');
+
+  const parseTimeToMinutes = (str: string) => {
+    const [t, modifier] = str.split(' ');
+    const [h, m] = t.split(':').map(Number);
+    let hours = h + (modifier === 'PM' && h !== 12 ? 12 : 0);
+    if (modifier === 'AM' && h === 12) hours = 0;
+    return hours * 60 + (m || 0);
+  };
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const bookingDateStr = new Date(date).toISOString().split('T')[0];
+
+  // Past date check
+  if (bookingDateStr < todayStr) {
+    throw new AppError(400, 'Cannot book a past date');
+  }
+
+  // Same day — past time check
+  if (bookingDateStr === todayStr) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const slotStart = parseTimeToMinutes(slotStartStr);
+
+    if (slotStart <= currentMinutes) {
+      throw new AppError(
+        400,
+        'Cannot book a time slot that has already passed',
+      );
+    }
+  }
+
+  // 3️⃣ Fetch service
   const serviceData = await Packages.findById(service).lean();
   if (!serviceData) {
     throw new AppError(404, 'Service not found');
   }
 
-  // 3️⃣ Check day schedule
+  // 4️⃣ Check day schedule
   const dayOfWeek = new Date(date)
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toLowerCase() as TWeekDay;
@@ -36,26 +69,17 @@ const createBookingIntoDB = async (payload: TBooking) => {
     throw new AppError(400, 'Service not available on this day');
   }
 
-  // 4️⃣ Validate slot within schedule
-  const parseTimeToMinutes = (str: string) => {
-    const [t, modifier] = str.split(' ');
-    const [h, m] = t.split(':').map(Number);
-    let hours = h + (modifier === 'PM' && h !== 12 ? 12 : 0);
-    if (modifier === 'AM' && h === 12) hours = 0;
-    return hours * 60 + (m || 0);
-  };
-
-  const [slotStartStr, slotEndStr] = time.split(' - ');
-  const slotStart = parseTimeToMinutes(slotStartStr);
-  const slotEnd = parseTimeToMinutes(slotEndStr);
+  // 5️⃣ Validate slot within schedule
+  const slotStartMin = parseTimeToMinutes(slotStartStr);
+  const slotEndMin = parseTimeToMinutes(slotEndStr);
   const scheduleStart = parseTimeToMinutes(schedule.startTime);
   const scheduleEnd = parseTimeToMinutes(schedule.endTime);
 
-  if (slotStart < scheduleStart || slotEnd > scheduleEnd) {
+  if (slotStartMin < scheduleStart || slotEndMin > scheduleEnd) {
     throw new AppError(400, 'Selected time is outside service working hours');
   }
 
-  // 5️⃣ Check if slot is already booked
+  // 6️⃣ Check if slot is already booked
   const existingBooking = await Booking.findOne({
     service,
     serviceItemId,
@@ -67,10 +91,10 @@ const createBookingIntoDB = async (payload: TBooking) => {
     throw new AppError(409, 'This time slot is already booked');
   }
 
-  // 6️⃣ Create booking
+  // 7️⃣ Create booking
   const booking = await Booking.create(payload);
 
-  // 7️⃣ Send personal notifications
+  // 8️⃣ Send personal notifications
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.user,
     message: 'Booking Confirmation',
@@ -82,7 +106,7 @@ const createBookingIntoDB = async (payload: TBooking) => {
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.vendor,
     message: 'New Booking Alert',
-    description: `You’ve received a new booking for ${serviceData.name} scheduled on ${date} at ${time}.`,
+    description: `You've received a new booking for ${serviceData.name} scheduled on ${date} at ${time}.`,
     reference: booking._id,
     model_type: ModeType.Booking,
   });

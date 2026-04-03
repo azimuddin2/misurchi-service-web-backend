@@ -7,7 +7,12 @@ export type TBookingStatus =
   | 'ongoing'
   | 'completed';
 export type TPaymentType = 'half' | 'full' | 'later';
-export type TPaymentStatus = 'pending' | 'paid' | 'refunded' | 'failed';
+export type TPaymentStatus =
+  | 'pending'
+  | 'paid'
+  | 'half-paid'
+  | 'refunded'
+  | 'failed';
 
 export type TBookingRequestType = 'none' | 'cancel' | 'reschedule';
 
@@ -41,7 +46,10 @@ export type TBooking = {
   isDeleted: boolean;
 
   isPaid: boolean;
-  trnId?: string;
+  paidAmount?: number; // কত টাকা দেওয়া হয়েছে
+  remainingAmount?: number; // কত বাকি আছে
+  trnId?: string; // শেষ transaction ID
+  trnIds?: string[]; // সব transaction ID
 
   assignedTo: string;
 

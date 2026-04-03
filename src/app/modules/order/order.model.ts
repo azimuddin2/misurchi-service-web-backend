@@ -58,7 +58,7 @@ const orderSchema = new Schema<TOrder>(
     vendor: {
       type: Schema.Types.ObjectId,
       required: [true, 'Vendor Id is required'],
-      ref: 'User',
+      ref: 'Vendor',
     },
 
     buyer: {
