@@ -14,6 +14,12 @@ router.post(
 
 router.get('/', auth('admin'), SupportControllers.getAllSupport);
 
+router.get(
+  '/:email',
+  auth('user', 'vendor'),
+  SupportControllers.getSupportByEmail,
+);
+
 router.get('/:id', auth('admin'), SupportControllers.getSupportById);
 
 router.patch(
@@ -21,6 +27,13 @@ router.patch(
   auth('admin'),
   validateRequest(SupportValidation.replyAdminSupportValidationSchema),
   SupportControllers.updateSupport,
+);
+
+router.patch(
+  '/:id/helpful',
+  auth('user', 'vendor'),
+  validateRequest(SupportValidation.helpfulSupportValidationSchema),
+  SupportControllers.supportMarkHelpful,
 );
 
 router.delete('/:id', auth('admin'), SupportControllers.deleteSupport);

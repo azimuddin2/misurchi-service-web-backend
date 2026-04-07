@@ -4,6 +4,8 @@ export type TSupport = {
   email: string;
   message: string;
   messageReply?: string;
+  status: 'Pending' | 'Reviewed' | 'In Progress' | 'Resolved';
+  isHelpful?: boolean | null;
   follow: boolean;
   isDeleted: boolean;
 };

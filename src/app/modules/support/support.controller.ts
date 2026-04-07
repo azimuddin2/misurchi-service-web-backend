@@ -25,6 +25,22 @@ const getAllSupport = catchAsync(async (req, res) => {
   });
 });
 
+const getSupportByEmail = catchAsync(async (req, res) => {
+  const { email } = req.params;
+  const result = await SupportServices.getSupportByEmailFromDB(
+    email,
+    req.query,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Support messages retrieved successfully',
+    meta: result.meta,
+    data: result.result,
+  });
+});
+
 const getSupportById = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await SupportServices.getSupportByIdFromDB(id);
@@ -49,6 +65,19 @@ const updateSupport = catchAsync(async (req, res) => {
   });
 });
 
+const supportMarkHelpful = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { isHelpful } = req.body;
+  const result = await SupportServices.supportMarkHelpfulIntoDB(id, isHelpful);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Feedback marked successfully',
+    data: result,
+  });
+});
+
 const deleteSupport = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await SupportServices.deleteSupportFromDB(id);
@@ -64,7 +93,9 @@ const deleteSupport = catchAsync(async (req, res) => {
 export const SupportControllers = {
   createSupport,
   getAllSupport,
+  getSupportByEmail,
   getSupportById,
   updateSupport,
+  supportMarkHelpful,
   deleteSupport,
 };
