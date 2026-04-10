@@ -25,8 +25,8 @@ const getAllProduct = catchAsync(async (req, res) => {
   });
 });
 
-const getAllProductByUser = catchAsync(async (req, res) => {
-  const result = await ProductServices.getAllProductByUserFromDB(req.query);
+const getAllProductByVendor = catchAsync(async (req, res) => {
+  const result = await ProductServices.getAllProductByVendorFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -107,7 +107,7 @@ const deleteProduct = catchAsync(async (req, res) => {
 export const ProductControllers = {
   createProduct,
   getAllProduct,
-  getAllProductByUser,
+  getAllProductByVendor,
   getProductById,
   updateProduct,
   updateProductStatus,

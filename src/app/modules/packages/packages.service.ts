@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { PipelineStage } from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import { UploadedFiles } from '../../interface/common.interface';
@@ -78,148 +78,251 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     minDiscount,
     maxDiscount,
     type,
+    recommended,
+    isOnSale,
+    sortBy,
+    sortOrder,
+    searchTerm,
     page = 1,
-    limit = 10,
-    ...restQuery
+    limit = 9,
   } = query;
 
-  const mongoFilter: Record<string, any> = { isDeleted: false };
+  const isSet = (val: unknown) =>
+    val !== undefined && String(val).trim() !== '';
 
-  // ─── type filter ───────────────────────────────────────────────
-  if (type) {
+  // ── Pagination ──
+  const pageNum = Math.max(Number(page), 1);
+  const limitNum = Math.max(Number(limit), 1);
+  const skip = (pageNum - 1) * limitNum;
+
+  // ── Sort ──
+  const sortField =
+    sortBy === 'rating' ? 'avgRating' : String(sortBy || 'createdAt');
+  const sortDir = sortOrder === 'asc' ? 1 : -1;
+
+  // ─────────────────────────────────────────────
+  // Step 1: Base $match
+  // ─────────────────────────────────────────────
+  const baseMatch: Record<string, any> = { isDeleted: false };
+
+  // ✅ type filter (service এ 'type' field)
+  if (isSet(type)) {
     const types = String(type)
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-
     if (types.length > 0) {
-      mongoFilter.type = { $in: types.map((t) => new RegExp(`^${t}$`, 'i')) };
+      baseMatch.type = {
+        $in: types.map((t) => new RegExp(`^${t}$`, 'i')),
+      };
     }
   }
 
-  // ─── price / discount filter flags ────────────────────────────
-  const isSet = (val: unknown) =>
-    val !== undefined && String(val).trim() !== '';
+  // ✅ recommended filter → DB field: "recommendedType" (array)
+  if (isSet(recommended)) {
+    const recs = String(recommended)
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean);
+    if (recs.length > 0) {
+      baseMatch.recommendedType = {
+        $in: recs.map((r) => new RegExp(`^${r}$`, 'i')),
+      };
+    }
+  }
 
+  // ✅ Special Offer → savedServices[0].discount must exist
+  if (isOnSale === 'true' || isOnSale === true) {
+    baseMatch['savedServices'] = {
+      $elemMatch: {
+        discount: {
+          $exists: true,
+          $nin: [null, '', 'none', '0'],
+          $ne: 'none',
+        },
+      },
+    };
+  }
+
+  // searchTerm filter
+  if (isSet(searchTerm)) {
+    const regex = new RegExp(String(searchTerm), 'i');
+    baseMatch.$or = packageSearchableFields.map((field) => ({
+      [field]: { $regex: regex },
+    }));
+  }
+
+  // ─────────────────────────────────────────────
+  // Step 2: Computed fields (only when needed)
+  // ─────────────────────────────────────────────
   const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
+  const needsComputed = hasPriceFilter || hasDiscountFilter;
 
-  let matchedPackageIds: mongoose.Types.ObjectId[] | null = null;
+  // ✅ savedServices[0] থেকে price/discount নেওয়া
+  const firstServiceField = (field: string) => ({
+    $getField: {
+      field,
+      input: { $arrayElemAt: ['$savedServices', 0] },
+    },
+  });
 
-  // ─── aggregation (only when price / discount filter needed) ───
-  if (hasPriceFilter || hasDiscountFilter) {
-    const baseMatch: Record<string, any> = { isDeleted: false };
-    if (mongoFilter.type) baseMatch.type = mongoFilter.type;
-
-    const secondMatch: Record<string, any> = {};
-
-    if (hasPriceFilter) {
-      if (isSet(minPrice))
-        secondMatch._firstPrice = {
-          ...secondMatch._firstPrice,
-          $gte: Number(minPrice),
-        };
-      if (isSet(maxPrice))
-        secondMatch._firstPrice = {
-          ...secondMatch._firstPrice,
-          $lte: Number(maxPrice),
-        };
-    }
-
-    if (hasDiscountFilter) {
-      if (isSet(minDiscount))
-        secondMatch._firstDiscount = {
-          ...secondMatch._firstDiscount,
-          $gte: Number(minDiscount),
-        };
-      if (isSet(maxDiscount))
-        secondMatch._firstDiscount = {
-          ...secondMatch._firstDiscount,
-          $lte: Number(maxDiscount),
-        };
-    }
-
-    // helper: safely get a field from savedServices[0]
-    const firstServiceField = (field: string) => ({
-      $getField: {
-        field,
-        input: { $arrayElemAt: ['$savedServices', 0] },
+  const addComputedFields: PipelineStage = {
+    $addFields: {
+      _calcPrice: {
+        $toDouble: firstServiceField('price'),
       },
-    });
-
-    const matchedDocs = await Packages.aggregate([
-      { $match: baseMatch },
-
-      {
-        $addFields: {
-          // price — stored as string, cast to double
-          _firstPrice: {
-            $toDouble: firstServiceField('price'),
+      _calcDiscount: {
+        $cond: {
+          if: {
+            $in: [firstServiceField('discount'), ['none', '', null]],
           },
-
-          // discount — "none" / "" / null  →  0,  "15%"  →  15
-          _firstDiscount: {
-            $cond: {
-              if: {
-                $in: [firstServiceField('discount'), ['none', '', null]],
-              },
-              then: 0,
-              else: {
-                $toInt: {
-                  $replaceAll: {
-                    input: firstServiceField('discount'),
-                    find: '%',
-                    replacement: '',
-                  },
-                },
+          then: 0,
+          else: {
+            $toInt: {
+              $replaceAll: {
+                input: firstServiceField('discount'),
+                find: '%',
+                replacement: '',
               },
             },
           },
         },
       },
-
-      { $match: secondMatch },
-      { $project: { _id: 1 } },
-    ]);
-
-    matchedPackageIds = matchedDocs.map(
-      (d) => new mongoose.Types.ObjectId(d._id),
-    );
-
-    // no documents survived the filter → return early
-    if (matchedPackageIds.length === 0) {
-      return {
-        meta: {
-          page: Number(page),
-          limit: Number(limit),
-          totalDoc: 0,
-          totalPage: 0,
-        },
-        result: [],
-      };
-    }
-  }
-
-  // ─── final query ───────────────────────────────────────────────
-  const finalFindFilter: Record<string, any> = {
-    ...mongoFilter,
-    ...(matchedPackageIds !== null ? { _id: { $in: matchedPackageIds } } : {}),
+    },
   };
 
-  const packageQuery = new QueryBuilder(
-    Packages.find(finalFindFilter).populate('vendor').populate('user'),
-    restQuery, // type already handled above — not passed to QueryBuilder
-  )
-    .search(packageSearchableFields)
-    .filter()
-    .sort()
-    .paginate()
-    .fields();
+  // ─────────────────────────────────────────────
+  // Step 3: Second $match (on computed fields)
+  // ─────────────────────────────────────────────
+  const computedMatch: Record<string, any> = {};
 
-  const meta = await packageQuery.countTotal();
-  const result = await packageQuery.modelQuery.select('-description');
+  if (hasPriceFilter) {
+    computedMatch._calcPrice = {};
+    if (isSet(minPrice)) computedMatch._calcPrice.$gte = Number(minPrice);
+    if (isSet(maxPrice)) computedMatch._calcPrice.$lte = Number(maxPrice);
+  }
 
-  return { meta, result };
+  if (hasDiscountFilter) {
+    computedMatch._calcDiscount = {};
+    if (isSet(minDiscount))
+      computedMatch._calcDiscount.$gte = Number(minDiscount);
+    if (isSet(maxDiscount))
+      computedMatch._calcDiscount.$lte = Number(maxDiscount);
+  }
+
+  // ─────────────────────────────────────────────
+  // Sensitive fields strip
+  // ─────────────────────────────────────────────
+  const SENSITIVE_FIELDS = [
+    'password',
+    'confirmPassword',
+    'needsPasswordChange',
+  ];
+
+  const stripSensitiveFields = (inputVar: string) => ({
+    $arrayToObject: {
+      $filter: {
+        input: { $objectToArray: inputVar },
+        as: 'field',
+        cond: {
+          $not: { $in: ['$$field.k', SENSITIVE_FIELDS] },
+        },
+      },
+    },
+  });
+
+  // ─────────────────────────────────────────────
+  // Build Pipeline
+  // ─────────────────────────────────────────────
+  const pipeline: PipelineStage[] = [
+    { $match: baseMatch },
+
+    ...(needsComputed ? [addComputedFields] : []),
+    ...(needsComputed && Object.keys(computedMatch).length > 0
+      ? [{ $match: computedMatch } as PipelineStage]
+      : []),
+
+    // Join vendor
+    {
+      $lookup: {
+        from: 'vendors',
+        localField: 'vendor',
+        foreignField: '_id',
+        as: 'vendor',
+      },
+    },
+    {
+      $addFields: {
+        vendor: {
+          $arrayElemAt: [
+            {
+              $map: {
+                input: '$vendor',
+                as: 'v',
+                in: stripSensitiveFields('$$v'),
+              },
+            },
+            0,
+          ],
+        },
+      },
+    },
+
+    // Join user
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    {
+      $addFields: {
+        user: {
+          $arrayElemAt: [
+            {
+              $map: {
+                input: '$user',
+                as: 'u',
+                in: stripSensitiveFields('$$u'),
+              },
+            },
+            0,
+          ],
+        },
+        _calcPrice: '$$REMOVE',
+        _calcDiscount: '$$REMOVE',
+      },
+    },
+
+    { $sort: { [sortField]: sortDir } },
+
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limitNum }],
+        totalCount: [{ $count: 'total' }],
+      },
+    },
+  ];
+
+  const [facetResult] = await Packages.aggregate(pipeline);
+
+  const result = facetResult?.data || [];
+  const total = facetResult?.totalCount?.[0]?.total || 0;
+  const totalPage = Math.ceil(total / limitNum);
+
+  return {
+    meta: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPage,
+      totalDoc: total,
+    },
+    result,
+  };
 };
 
 const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {

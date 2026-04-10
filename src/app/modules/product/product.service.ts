@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { PipelineStage } from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import { UploadedFiles } from '../../interface/common.interface';
@@ -76,150 +76,255 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
     minDiscount,
     maxDiscount,
     productType,
+    recommended,
+    isOnSale,
+    sortBy,
+    sortOrder,
+    searchTerm,
     page = 1,
     limit = 10,
-    ...restQuery
   } = query;
 
   const isSet = (val: unknown) =>
     val !== undefined && String(val).trim() !== '';
 
-  const mongoFilter: Record<string, any> = { isDeleted: false };
+  // ── Pagination ──
+  const pageNum = Math.max(Number(page), 1);
+  const limitNum = Math.max(Number(limit), 1);
+  const skip = (pageNum - 1) * limitNum;
 
-  // ─── productType filter ────────────────────────────────────────
-  if (productType) {
+  // ── Sort ──
+  // "Top Rated" → sortBy=rating → sort by avgRating (actual DB field name)
+  // default → createdAt desc
+  const sortField =
+    sortBy === 'rating' ? 'avgRating' : String(sortBy || 'createdAt');
+  const sortDir = sortOrder === 'asc' ? 1 : -1;
+
+  // ─────────────────────────────────────────────
+  // Step 1: Base $match (cheap, index-friendly)
+  // ─────────────────────────────────────────────
+  const baseMatch: Record<string, any> = { isDeleted: false };
+
+  // productType filter
+  if (isSet(productType)) {
     const types = String(productType)
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-
     if (types.length > 0) {
-      mongoFilter.productType = {
+      baseMatch.productType = {
         $in: types.map((t) => new RegExp(`^${t}$`, 'i')),
       };
     }
   }
 
+  // ⭐ recommended filter → actual DB field is "recommendedType" (array field)
+  // e.g. ["New Arrivals", "Black Friday Deal"]
+  // $in on an array field checks if ANY element matches
+  if (isSet(recommended)) {
+    const recs = String(recommended)
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean);
+    if (recs.length > 0) {
+      baseMatch.recommendedType = {
+        $in: recs.map((r) => new RegExp(`^${r}$`, 'i')),
+      };
+    }
+  }
+
+  // ⭐ Special Offer → discountPrice must exist and not be empty/none/0
+  if (isOnSale === 'true' || isOnSale === true) {
+    baseMatch.discountPrice = {
+      $exists: true,
+      $nin: [null, '', 'none', '0', 0],
+    };
+  }
+
+  // searchTerm filter
+  if (isSet(searchTerm)) {
+    const regex = new RegExp(String(searchTerm), 'i');
+    baseMatch.$or = productSearchableFields.map((field) => ({
+      [field]: { $regex: regex },
+    }));
+  }
+
+  // ─────────────────────────────────────────────
+  // Step 2: Computed fields (only when needed)
+  // ─────────────────────────────────────────────
   const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
+  const needsComputed = hasPriceFilter || hasDiscountFilter;
 
-  let matchedProductIds: mongoose.Types.ObjectId[] | null = null;
-
-  // ─── aggregation (only when price / discount filter needed) ───
-  if (hasPriceFilter || hasDiscountFilter) {
-    const baseMatch: Record<string, any> = { isDeleted: false };
-    if (mongoFilter.productType)
-      baseMatch.productType = mongoFilter.productType;
-
-    const secondMatch: Record<string, any> = {};
-
-    if (isSet(minPrice))
-      secondMatch._calcPrice = {
-        ...secondMatch._calcPrice,
-        $gte: Number(minPrice),
-      };
-    if (isSet(maxPrice))
-      secondMatch._calcPrice = {
-        ...secondMatch._calcPrice,
-        $lte: Number(maxPrice),
-      };
-    if (isSet(minDiscount))
-      secondMatch._calcDiscount = {
-        ...secondMatch._calcDiscount,
-        $gte: Number(minDiscount),
-      };
-    if (isSet(maxDiscount))
-      secondMatch._calcDiscount = {
-        ...secondMatch._calcDiscount,
-        $lte: Number(maxDiscount),
-      };
-
-    const matchedDocs = await Product.aggregate([
-      { $match: baseMatch },
-
-      {
-        $addFields: {
-          // price — cast if string, otherwise take directly
-          _calcPrice: {
-            $cond: [
-              { $eq: [{ $type: '$price' }, 'string'] },
-              { $toDouble: '$price' },
-              { $ifNull: ['$price', 0] },
-            ],
-          },
-
-          // discount — "none" / "" / null → 0, "30%" → 30, 30 → 30
-          _calcDiscount: {
-            $let: {
-              vars: {
-                raw: { $ifNull: ['$discountPrice', '0'] },
+  const addComputedFields: PipelineStage = {
+    $addFields: {
+      _calcPrice: {
+        $cond: [
+          { $eq: [{ $type: '$price' }, 'string'] },
+          { $toDouble: '$price' },
+          { $ifNull: ['$price', 0] },
+        ],
+      },
+      _calcDiscount: {
+        $let: {
+          vars: { raw: { $ifNull: ['$discountPrice', '0'] } },
+          in: {
+            $cond: {
+              if: {
+                $or: [{ $eq: ['$$raw', 'none'] }, { $eq: ['$$raw', ''] }],
               },
-              in: {
-                $cond: {
-                  if: {
-                    $or: [{ $eq: ['$$raw', 'none'] }, { $eq: ['$$raw', ''] }],
-                  },
-                  then: 0,
-                  else: {
-                    $toDouble: {
-                      $replaceAll: {
-                        input: '$$raw',
-                        find: '%',
-                        replacement: '',
-                      },
-                    },
-                  },
+              then: 0,
+              else: {
+                $toDouble: {
+                  $replaceAll: { input: '$$raw', find: '%', replacement: '' },
                 },
               },
             },
           },
         },
       },
-
-      { $match: secondMatch },
-      { $project: { _id: 1 } },
-    ]);
-
-    matchedProductIds = matchedDocs.map(
-      (d) => new mongoose.Types.ObjectId(d._id),
-    );
-
-    if (matchedProductIds.length === 0) {
-      return {
-        meta: {
-          page: Number(page),
-          limit: Number(limit),
-          totalDoc: 0,
-          totalPage: 0,
-        },
-        result: [],
-      };
-    }
-  }
-
-  // ─── final query ──────────────────────────────────────────────
-  const finalFindFilter: Record<string, any> = {
-    ...mongoFilter,
-    ...(matchedProductIds !== null ? { _id: { $in: matchedProductIds } } : {}),
+    },
   };
 
-  const queryBuilder = new QueryBuilder(
-    Product.find(finalFindFilter).populate('vendor').populate('user'),
-    restQuery,
-  )
-    .search(productSearchableFields)
-    .filter()
-    .sort()
-    .paginate()
-    .fields();
+  // ─────────────────────────────────────────────
+  // Step 3: Second $match (on computed fields)
+  // ─────────────────────────────────────────────
+  const computedMatch: Record<string, any> = {};
 
-  const meta = await queryBuilder.countTotal();
-  const result = await queryBuilder.modelQuery;
+  if (hasPriceFilter) {
+    computedMatch._calcPrice = {};
+    if (isSet(minPrice)) computedMatch._calcPrice.$gte = Number(minPrice);
+    if (isSet(maxPrice)) computedMatch._calcPrice.$lte = Number(maxPrice);
+  }
 
-  return { meta, result };
+  if (hasDiscountFilter) {
+    computedMatch._calcDiscount = {};
+    if (isSet(minDiscount))
+      computedMatch._calcDiscount.$gte = Number(minDiscount);
+    if (isSet(maxDiscount))
+      computedMatch._calcDiscount.$lte = Number(maxDiscount);
+  }
+
+  // ─────────────────────────────────────────────
+  // Sensitive fields to strip from vendor & user
+  // ─────────────────────────────────────────────
+  const SENSITIVE_FIELDS = [
+    'password',
+    'confirmPassword',
+    'needsPasswordChange',
+  ];
+
+  const stripSensitiveFields = (inputVar: string) => ({
+    $arrayToObject: {
+      $filter: {
+        input: { $objectToArray: inputVar },
+        as: 'field',
+        cond: {
+          $not: { $in: ['$$field.k', SENSITIVE_FIELDS] },
+        },
+      },
+    },
+  });
+
+  // ─────────────────────────────────────────────
+  // Build Pipeline
+  // ─────────────────────────────────────────────
+  const pipeline: PipelineStage[] = [
+    // Step 1: filter on registration model
+    { $match: baseMatch },
+
+    // Step 2: computed price/discount (only if needed)
+    ...(needsComputed ? [addComputedFields] : []),
+    ...(needsComputed && Object.keys(computedMatch).length > 0
+      ? [{ $match: computedMatch } as PipelineStage]
+      : []),
+
+    // Step 3: Join vendor + strip sensitive fields
+    {
+      $lookup: {
+        from: 'vendors',
+        localField: 'vendor',
+        foreignField: '_id',
+        as: 'vendor',
+      },
+    },
+    {
+      $addFields: {
+        vendor: {
+          $arrayElemAt: [
+            {
+              $map: {
+                input: '$vendor',
+                as: 'v',
+                in: stripSensitiveFields('$$v'),
+              },
+            },
+            0,
+          ],
+        },
+      },
+    },
+
+    // Step 4: Join user + strip sensitive fields
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    {
+      $addFields: {
+        user: {
+          $arrayElemAt: [
+            {
+              $map: {
+                input: '$user',
+                as: 'u',
+                in: stripSensitiveFields('$$u'),
+              },
+            },
+            0,
+          ],
+        },
+        // Remove internal computed fields from output
+        _calcPrice: '$$REMOVE',
+        _calcDiscount: '$$REMOVE',
+      },
+    },
+
+    // Step 5: Sort
+    { $sort: { [sortField]: sortDir } },
+
+    // Step 6: $facet → paginated data + total count in ONE round-trip
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limitNum }],
+        totalCount: [{ $count: 'total' }],
+      },
+    },
+  ];
+
+  const [facetResult] = await Product.aggregate(pipeline);
+
+  const result = facetResult?.data || [];
+  const total = facetResult?.totalCount?.[0]?.total || 0;
+  const totalPage = Math.ceil(total / limitNum);
+
+  return {
+    meta: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPage,
+      totalDoc: total,
+    },
+    result,
+  };
 };
 
-const getAllProductByUserFromDB = async (query: Record<string, unknown>) => {
+const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
   const { vendor, ...filters } = query;
 
   if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
@@ -388,7 +493,7 @@ const deleteProductFromDB = async (id: string) => {
 export const ProductServices = {
   createProductIntoDB,
   getAllProductFromDB,
-  getAllProductByUserFromDB,
+  getAllProductByVendorFromDB,
   getProductByIdFromDB,
   updateProductIntoDB,
   updateProductStatusIntoDB,

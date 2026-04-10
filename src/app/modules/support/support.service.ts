@@ -47,10 +47,6 @@ const getSupportByEmailFromDB = async (
   const meta = await supportQuery.countTotal();
   const result = await supportQuery.modelQuery;
 
-  if (!result.length) {
-    throw new AppError(404, 'No support messages found for this email');
-  }
-
   return { meta, result };
 };
 

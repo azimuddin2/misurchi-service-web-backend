@@ -73,7 +73,7 @@ const supportMarkHelpful = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Feedback marked successfully',
+    message: 'Support message marked as helpful successfully.',
     data: result,
   });
 });
