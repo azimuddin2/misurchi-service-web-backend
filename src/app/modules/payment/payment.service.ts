@@ -18,6 +18,8 @@ import {
   resolveVendorStripeAccount,
   upsertPendingPayment,
 } from './payment.utils';
+import { NotificationServices } from '../notification/notification.service';
+import { ModeType } from '../notification/notification.interface';
 
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
@@ -101,6 +103,7 @@ const confirmPayment = async (query: Record<string, any>) => {
 
     let referenceDoc: any;
 
+    // ─── Order ───────────────────────────────────────────────
     if (payment.modelType === 'Order') {
       referenceDoc = await Order.findByIdAndUpdate(
         payment.reference,
@@ -115,6 +118,25 @@ const confirmPayment = async (query: Record<string, any>) => {
           { session },
         );
       }
+
+      // 🔔 Order Payment Notifications
+      await NotificationServices.insertNotificationIntoDB({
+        receiver: payment.user,
+        message: '✅ Payment Successful!',
+        description: `Your payment of $${payment.price} for your order has been confirmed. Your order is now being processed.`,
+        reference: payment._id,
+        model_type: ModeType.Payment,
+      });
+
+      await NotificationServices.insertNotificationIntoDB({
+        receiver: payment.vendor,
+        message: '💰 Payment Received for an Order',
+        description: `A payment of $${payment.vendorAmount} has been received for a new order. Please check your dashboard to start processing.`,
+        reference: payment._id,
+        model_type: ModeType.Payment,
+      });
+
+      // ─── Booking ──────────────────────────────────────────────
     } else if (payment.modelType === 'Booking') {
       const booking = await Booking.findById(payment.reference).session(
         session,
@@ -126,7 +148,7 @@ const confirmPayment = async (query: Record<string, any>) => {
         const isFirstPayment = booking.paymentStatus === 'pending';
 
         if (isFirstPayment) {
-          // প্রথম ৫০% payment
+          // First 50% payment
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
@@ -139,8 +161,25 @@ const confirmPayment = async (query: Record<string, any>) => {
             },
             { new: true, session },
           );
+
+          // 🔔 Half Payment (First 50%) Notifications
+          await NotificationServices.insertNotificationIntoDB({
+            receiver: payment.user,
+            message: '💳 First Payment Confirmed!',
+            description: `Your first payment of $${booking.price / 2} for "${booking.serviceName}" has been received. Please complete the remaining $${booking.price / 2} to fully confirm your booking.`,
+            reference: payment._id,
+            model_type: ModeType.Payment,
+          });
+
+          await NotificationServices.insertNotificationIntoDB({
+            receiver: payment.vendor,
+            message: '💰 First Half Payment Received',
+            description: `A partial payment of $${booking.price / 2} has been made for "${booking.serviceName}". The remaining balance of $${booking.price / 2} is still pending.`,
+            reference: payment._id,
+            model_type: ModeType.Payment,
+          });
         } else {
-          // দ্বিতীয় ৫০% payment
+          // Second 50% payment
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
@@ -154,9 +193,26 @@ const confirmPayment = async (query: Record<string, any>) => {
             },
             { new: true, session },
           );
+
+          // 🔔 Half Payment (Final 50%) Notifications
+          await NotificationServices.insertNotificationIntoDB({
+            receiver: payment.user,
+            message: '🎉 Booking Fully Paid & Confirmed!',
+            description: `Your final payment of $${booking.price / 2} for "${booking.serviceName}" has been received. Your booking is now fully confirmed. We look forward to serving you!`,
+            reference: payment._id,
+            model_type: ModeType.Payment,
+          });
+
+          await NotificationServices.insertNotificationIntoDB({
+            receiver: payment.vendor,
+            message: '✅ Full Payment Received — Booking Confirmed',
+            description: `The final payment of $${booking.price / 2} for "${booking.serviceName}" has been completed. The booking is now fully confirmed. Please be ready to deliver your best service!`,
+            reference: payment._id,
+            model_type: ModeType.Payment,
+          });
         }
       } else {
-        // full / later — সরাসরি paid
+        // Full / later payment
         referenceDoc = await Booking.findByIdAndUpdate(
           payment.reference,
           {
@@ -170,6 +226,23 @@ const confirmPayment = async (query: Record<string, any>) => {
           },
           { new: true, session },
         );
+
+        // 🔔 Full Payment Notifications
+        await NotificationServices.insertNotificationIntoDB({
+          receiver: payment.user,
+          message: '🎉 Payment Successful — Booking Confirmed!',
+          description: `Your full payment of $${booking.price} for "${booking.serviceName}" has been received. Your booking is confirmed and we can't wait to serve you!`,
+          reference: payment._id,
+          model_type: ModeType.Payment,
+        });
+
+        await NotificationServices.insertNotificationIntoDB({
+          receiver: payment.vendor,
+          message: '💰 Full Payment Received — Booking Confirmed',
+          description: `A full payment of $${payment.vendorAmount} has been received for "${booking.serviceName}". The booking is confirmed — please prepare accordingly.`,
+          reference: payment._id,
+          model_type: ModeType.Payment,
+        });
       }
     }
 

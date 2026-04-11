@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { VendorServices } from './vendor.service';
 
-const getAllVendors = catchAsync(async (req, res) => {
+const getAllVendors = catchAsync(async (req: Request, res: Response) => {
   const result = await VendorServices.getAllVendorsFromDB(req.query);
 
   sendResponse(res, {
@@ -14,7 +15,7 @@ const getAllVendors = catchAsync(async (req, res) => {
   });
 });
 
-const getVendorProfile = catchAsync(async (req, res) => {
+const getVendorProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
   const result = await VendorServices.getVendorProfileFromDB(email);
 
@@ -26,7 +27,7 @@ const getVendorProfile = catchAsync(async (req, res) => {
   });
 });
 
-const getVendorUserById = catchAsync(async (req, res) => {
+const getVendorUserById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await VendorServices.getVendorUserByIdFromDB(id);
 
@@ -38,7 +39,7 @@ const getVendorUserById = catchAsync(async (req, res) => {
   });
 });
 
-const updateVendorProfile = catchAsync(async (req, res) => {
+const updateVendorProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
 
   // Access files from multer
@@ -64,7 +65,7 @@ const updateVendorProfile = catchAsync(async (req, res) => {
   });
 });
 
-const chooseOffer = catchAsync(async (req, res) => {
+const chooseOffer = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await VendorServices.chooseOfferIntoDB(id, req.body);
 
@@ -76,7 +77,7 @@ const chooseOffer = catchAsync(async (req, res) => {
   });
 });
 
-const getVendorSummary = catchAsync(async (req, res) => {
+const getVendorSummary = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await VendorServices.getVendorSummaryFromDB(id);
 
@@ -88,6 +89,70 @@ const getVendorSummary = catchAsync(async (req, res) => {
   });
 });
 
+const getVendorDashboardStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await VendorServices.getVendorDashboardStats(id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Vendor Dashboard Stats retrieved successfully',
+      data: result,
+    });
+  },
+);
+
+const getVendorSalesOverviewChart = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+
+    const result = await VendorServices.getVendorSalesOverviewChart(id, year);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Vendor yearly sales overview chart retrieved successfully',
+      data: result,
+    });
+  },
+);
+
+const getAppointmentsOverviewRate = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { month } = req.query;
+
+    const result = await VendorServices.getAppointmentsOverviewRate(
+      id,
+      month ? Number(month) : undefined,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message:
+        'Vendor monthly appointment completion rate retrieved successfully',
+      data: result,
+    });
+  },
+);
+
+const getVendorDashboardData = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await VendorServices.getVendorDashboardDataFromDB(id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Vendor dashboard data fetched successfully',
+      data: result,
+    });
+  },
+);
+
 export const VendorControllers = {
   getAllVendors,
   getVendorProfile,
@@ -95,4 +160,8 @@ export const VendorControllers = {
   updateVendorProfile,
   chooseOffer,
   getVendorSummary,
+  getVendorDashboardStats,
+  getVendorSalesOverviewChart,
+  getAppointmentsOverviewRate,
+  getVendorDashboardData,
 };

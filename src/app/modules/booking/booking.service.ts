@@ -97,16 +97,16 @@ const createBookingIntoDB = async (payload: TBooking) => {
   // 8️⃣ Send personal notifications
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.user,
-    message: 'Booking Confirmation',
-    description: `Your booking for ${serviceData.name} on ${date} at ${time} has been successfully placed.`,
+    message: '🎉 Booking Confirmed!',
+    description: `Your booking for "${serviceData.name}" is all set for ${date} at ${time}. We look forward to serving you!`,
     reference: booking._id,
     model_type: ModeType.Booking,
   });
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.vendor,
-    message: 'New Booking Alert',
-    description: `You've received a new booking for ${serviceData.name} scheduled on ${date} at ${time}.`,
+    message: "📅 You've Got a New Booking!",
+    description: `Great news! A new booking for "${serviceData.name}" has been made for ${date} at ${time}. Please be ready to provide your best service.`,
     reference: booking._id,
     model_type: ModeType.Booking,
   });
@@ -242,16 +242,16 @@ const updateBookingRequestIntoDB = async (
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking?.user,
-    message: 'Booking Cancellation Confirmation',
-    description: `Your booking with Name: ${booking.serviceName} has been successfully cancelled. If you have any questions or require further assistance, please contact our support team.`,
+    message: '❌ Booking Cancelled',
+    description: `Your booking for "${booking.serviceName}" has been successfully cancelled. If you didn't request this or need help, please reach out to our support team.`,
     reference: booking?._id,
     model_type: ModeType.Booking,
   });
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking?.vendor,
-    message: 'Booking Cancellation Alert',
-    description: `A booking has been cancelled. Booking Name: ${booking.serviceName}. Please update your availability accordingly. If you need further details, please access your management dashboard or contact our support team.`,
+    message: '⚠️ A Booking Has Been Cancelled',
+    description: `The booking for "${booking.serviceName}" has been cancelled by the user. Please update your availability and check your dashboard for details.`,
     reference: booking?._id,
     model_type: ModeType.Booking,
   });
@@ -284,7 +284,7 @@ const bookingApprovedRequestIntoDB = async (
   if (vendorApproved) {
     await NotificationServices.insertNotificationIntoDB({
       receiver: booking.user,
-      message: 'Request Approved',
+      message: '✅ Your Request Has Been Approved!',
       description: `Your booking ${booking.serviceName} request (${booking.request.type}) has been approved by the vendor.`,
       reference: booking._id,
       model_type: ModeType.Booking,
@@ -292,7 +292,7 @@ const bookingApprovedRequestIntoDB = async (
   } else {
     await NotificationServices.insertNotificationIntoDB({
       receiver: booking.user,
-      message: 'Request Declined',
+      message: '❌ Your Request Was Not Approved',
       description: `Your booking ${booking.serviceName} request (${booking.request.type}) has been declined.`,
       reference: booking._id,
       model_type: ModeType.Booking,

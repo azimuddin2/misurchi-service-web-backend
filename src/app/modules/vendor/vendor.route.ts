@@ -44,4 +44,28 @@ router.get(
   VendorControllers.getVendorSummary,
 );
 
+router.get(
+  '/vendor-stats/:id',
+  auth('vendor'),
+  VendorControllers.getVendorDashboardStats,
+);
+
+router.get(
+  '/vendor-sales-overview/:id',
+  auth('vendor'),
+  VendorControllers.getVendorSalesOverviewChart,
+);
+
+router.get(
+  '/appointments-overview/:id',
+  auth('vendor'),
+  VendorControllers.getAppointmentsOverviewRate,
+);
+
+router.get(
+  '/vendor-data/:id',
+  auth('vendor'),
+  VendorControllers.getVendorDashboardData,
+);
+
 export const VendorRoutes = router;

@@ -22,28 +22,4 @@ router.get(
   DashboardControllers.getAdminEarningOverviewChart,
 );
 
-router.get(
-  '/vendor-stats/:id',
-  auth('vendor'),
-  DashboardControllers.getVendorDashboardStats,
-);
-
-router.get(
-  '/vendor-sales-overview/:id',
-  auth('vendor'),
-  DashboardControllers.getVendorSalesOverviewChart,
-);
-
-router.get(
-  '/appointments-overview/:id',
-  auth('vendor'),
-  DashboardControllers.getAppointmentsOverviewRate,
-);
-
-router.get(
-  '/vendor-data/:id',
-  auth('vendor'),
-  DashboardControllers.getVendorDashboardData,
-);
-
 export const DashboardRoutes = router;
