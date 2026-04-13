@@ -55,4 +55,11 @@ router.put(
   UserControllers.changeStatus,
 );
 
+router.patch(
+  '/update-notifications',
+  auth('admin', 'user', 'vendor'),
+  validateRequest(UserValidations.notificationSettingsValidationSchema),
+  UserControllers.updateNotificationSettings,
+);
+
 export const UserRoutes = router;

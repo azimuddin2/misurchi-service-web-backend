@@ -122,7 +122,7 @@ const confirmPayment = async (query: Record<string, any>) => {
       // 🔔 Order Payment Notifications
       await NotificationServices.insertNotificationIntoDB({
         receiver: payment.user,
-        message: '✅ Payment Successful!',
+        message: '💰 Payment Successful!',
         description: `Your payment of $${payment.price} for your order has been confirmed. Your order is now being processed.`,
         reference: payment._id,
         model_type: ModeType.Payment,
@@ -183,7 +183,7 @@ const confirmPayment = async (query: Record<string, any>) => {
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
-              status: 'confirmed',
+              status: 'pending',
               paymentStatus: 'paid',
               paidAmount: booking.price,
               remainingAmount: 0,
@@ -205,7 +205,7 @@ const confirmPayment = async (query: Record<string, any>) => {
 
           await NotificationServices.insertNotificationIntoDB({
             receiver: payment.vendor,
-            message: '✅ Full Payment Received — Booking Confirmed',
+            message: '💰 Full Payment Received — Booking Confirmed',
             description: `The final payment of $${booking.price / 2} for "${booking.serviceName}" has been completed. The booking is now fully confirmed. Please be ready to deliver your best service!`,
             reference: payment._id,
             model_type: ModeType.Payment,
@@ -216,7 +216,7 @@ const confirmPayment = async (query: Record<string, any>) => {
         referenceDoc = await Booking.findByIdAndUpdate(
           payment.reference,
           {
-            status: 'confirmed',
+            status: 'pending',
             paymentStatus: 'paid',
             paidAmount: booking.price,
             remainingAmount: 0,

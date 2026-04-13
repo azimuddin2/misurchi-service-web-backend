@@ -27,4 +27,20 @@ export type TVendor = {
     coordinates: [number, number]; // [longitude, latitude]
     streetAddress?: string;
   };
+
+  isDeleted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type TMetricWithChange = {
+  count: number;
+  changePercent: number;
+};
+
+export type TDashboardStats = {
+  totalTransactions: TMetricWithChange;
+  totalBookings: TMetricWithChange;
+  pendingOrders: TMetricWithChange;
+  pendingBookings: TMetricWithChange;
 };

@@ -60,22 +60,24 @@ const createOrderIntoDB = async (payload: TOrder) => {
     });
   }
 
-  // 6️⃣ Send notifications
-  await NotificationServices.insertNotificationIntoDB({
-    receiver: order.buyer,
-    message: 'Order Placed Successfully',
-    description: `Your order (${order.orderId}) has been placed successfully. You will be notified once it’s processed.`,
-    reference: order._id,
-    model_type: ModeType.Order,
-  });
+  // 6️⃣ Send notifications — buyer & vendor
+  await Promise.all([
+    NotificationServices.insertNotificationIntoDB({
+      receiver: order.buyer,
+      message: '🛍️ Order Confirmed — Payment Required',
+      description: `Your order #${order.orderId} has been successfully placed. Please complete your payment to proceed. Orders are processed only after payment confirmation.`,
+      reference: order._id,
+      model_type: ModeType.Order,
+    }),
 
-  await NotificationServices.insertNotificationIntoDB({
-    receiver: order.vendor,
-    message: 'New Order Received',
-    description: `You have received a new order (${order.orderId}) from a customer. Please review and prepare for fulfillment.`,
-    reference: order._id,
-    model_type: ModeType.Order,
-  });
+    NotificationServices.insertNotificationIntoDB({
+      receiver: order.vendor,
+      message: '📦 New Order Received',
+      description: `You have a new order #${order.orderId}. Please review and prepare for fulfillment once payment is confirmed.`,
+      reference: order._id,
+      model_type: ModeType.Order,
+    }),
+  ]);
 
   return order;
 };

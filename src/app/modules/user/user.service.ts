@@ -381,6 +381,40 @@ const changeStatusIntoDB = async (id: string, payload: { status: string }) => {
   return result;
 };
 
+const updateNotificationSettingsIntoDB = async (
+  email: string,
+  notifications: boolean,
+) => {
+  // 🔍 Step 1: Check if user exists & get email
+  const existingUser = await User.findOne({ email }).select('');
+  if (!existingUser) {
+    throw new AppError(404, 'User not found');
+  }
+
+  if (existingUser?.isDeleted === true) {
+    throw new AppError(403, 'This user account is deleted!');
+  }
+
+  if (existingUser?.status === 'blocked') {
+    throw new AppError(403, 'This user is blocked!');
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { email: email },
+    { notifications },
+    {
+      new: true,
+      runValidators: true,
+    },
+  ).select('email notifications fullName');
+
+  if (!updatedUser) {
+    throw new AppError(400, 'Notification settings update failed');
+  }
+
+  return updatedUser;
+};
+
 export const UserServices = {
   registerUserIntoDB,
   vendorRegisterUserIntoDB,
@@ -389,4 +423,5 @@ export const UserServices = {
   updateUserProfileIntoDB,
   getUserByIdFromDB,
   changeStatusIntoDB,
+  updateNotificationSettingsIntoDB,
 };

@@ -18,8 +18,6 @@ const insertNotification = catchAsync(async (req: Request, res: Response) => {
 const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   const query = { ...req.query };
 
-  console.log('Receiver', req.query.receiver);
-
   // Use userId from query if provided, otherwise fallback to logged-in user
   query['receiver'] = req.query.receiver;
 

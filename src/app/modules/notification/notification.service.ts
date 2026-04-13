@@ -4,7 +4,6 @@ import moment from 'moment';
 import AppError from '../../errors/AppError';
 import QueryBuilder from '../../builder/QueryBuilder';
 
-// Insert notifications into the database
 const insertNotificationIntoDB = async (payload: any) => {
   const result = await Notification.insertMany(payload);
   if (!result) {
@@ -20,7 +19,6 @@ const insertNotificationIntoDB = async (payload: any) => {
   return result;
 };
 
-// Get all notifications
 const getAllNotificationsFromDB = async (query: Record<string, any>) => {
   const notificationQuery = new QueryBuilder(Notification.find(), query)
     .search([])
@@ -38,7 +36,6 @@ const getAllNotificationsFromDB = async (query: Record<string, any>) => {
   };
 };
 
-// Get single notification by ID
 const getNotificationByIdFromDB = async (id: string) => {
   const notification = await Notification.findByIdAndUpdate(
     id,
@@ -53,7 +50,6 @@ const getNotificationByIdFromDB = async (id: string) => {
   return notification;
 };
 
-// Mark notifications as read
 const markAsDone = async (id: string) => {
   const result = await Notification.updateMany(
     { receiver: id },
@@ -67,7 +63,6 @@ const markAsDone = async (id: string) => {
   return result;
 };
 
-// Delete many notification
 const deleteNotificationFromDB = async (id: string) => {
   const result = await Notification.deleteMany({ receiver: id });
   return result;

@@ -2,16 +2,16 @@ import mongoose, { Types } from 'mongoose';
 import AppError from '../../errors/AppError';
 import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
 import { User } from '../user/user.model';
-import { TVendor } from './vendor.interface';
+import { TDashboardStats, TVendor } from './vendor.interface';
 import { Vendor } from './vendor.model';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { vendorSearchableFields } from './vendor.constant';
 import { Product } from '../product/product.model';
 import { Packages } from '../packages/packages.model';
 import { Payment } from '../payment/payment.model';
-
 import { Booking } from '../booking/booking.model';
 import { Order } from '../order/order.model';
+import { calcChangePercent } from './vendor.utils';
 
 const getAllVendorsFromDB = async (query: Record<string, unknown>) => {
   const vendorQuery = new QueryBuilder(Vendor.find(), query)
@@ -183,76 +183,135 @@ const getVendorSummaryFromDB = async (vendorId: string) => {
   };
 };
 
-const getVendorDashboardStats = async (vendorId: string) => {
-  // --- Validate vendor existence ---
-  const vendorExists = await Vendor.findById({
-    _id: vendorId,
-    isDeleted: false,
-  });
-  if (!vendorExists) {
-    throw new Error('Vendor not found');
+const getVendorDashboardStats = async (
+  vendorId: string,
+): Promise<TDashboardStats> => {
+  const vendor = await Vendor.findById(vendorId);
+  if (!vendor) {
+    throw new AppError(404, 'Vendor not found');
   }
 
   const vendorObjectId = new Types.ObjectId(vendorId);
 
-  // Count pending orders
-  const pendingOrdersCountPromise = Order.countDocuments({
-    vendor: vendorObjectId,
-    status: 'pending',
-    isDeleted: false,
-  });
+  // ── Date ranges ──────────────────────────────────────────────────────
+  const now = new Date();
 
-  // Count pending bookings
-  const pendingBookingsCountPromise = Booking.countDocuments({
-    vendor: vendorObjectId,
-    status: 'pending',
-    isDeleted: false,
-  });
+  const currentFrom = new Date();
+  currentFrom.setDate(now.getDate() - 30);
 
-  // Count total schedule (pending + confirmed + ongoing bookings)
-  const totalScheduleCountPromise = Booking.countDocuments({
-    vendor: vendorObjectId,
-    status: { $in: ['pending', 'confirmed', 'ongoing'] },
-    isDeleted: false,
-  });
+  const previousTo = new Date();
+  previousTo.setDate(now.getDate() - 30);
 
-  // Aggregate total sales
-  const totalSalesPromise = Payment.aggregate([
-    {
-      $match: {
-        vendor: vendorObjectId,
-        isDeleted: false,
-        status: 'paid',
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalSales: { $sum: '$vendorAmount' },
-      },
-    },
-  ]);
+  const previousFrom = new Date();
+  previousFrom.setDate(now.getDate() - 60);
 
-  // Run in parallel for performance
+  const currentDateFilter = { $gte: currentFrom, $lte: now };
+  const previousDateFilter = { $gte: previousFrom, $lte: previousTo };
+
+  // ── Current period ───────────────────────────────────────────────────
   const [
-    pendingOrdersCount,
-    pendingBookingsCount,
-    totalScheduleCount,
-    totalSalesAgg,
+    currentPendingOrders,
+    currentPendingBookings,
+    currentTotalBookings,
+    currentTransactionsAgg,
   ] = await Promise.all([
-    pendingOrdersCountPromise,
-    pendingBookingsCountPromise,
-    totalScheduleCountPromise,
-    totalSalesPromise,
+    Order.countDocuments({
+      vendor: vendorObjectId,
+      status: 'pending',
+      isDeleted: false,
+      createdAt: currentDateFilter,
+    }),
+
+    Booking.countDocuments({
+      vendor: vendorObjectId,
+      status: 'pending',
+      isDeleted: false,
+      createdAt: currentDateFilter,
+    }),
+
+    Booking.countDocuments({
+      vendor: vendorObjectId,
+      isDeleted: false,
+      createdAt: currentDateFilter,
+    }),
+
+    Payment.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          status: 'paid',
+          isDeleted: false,
+          createdAt: currentDateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$vendorAmount' } } },
+    ]),
   ]);
 
-  const totalSales = totalSalesAgg[0]?.totalSales || 0;
+  // ── Previous period ──────────────────────────────────────────────────
+  const [
+    prevPendingOrders,
+    prevPendingBookings,
+    prevTotalBookings,
+    prevTransactionsAgg,
+  ] = await Promise.all([
+    Order.countDocuments({
+      vendor: vendorObjectId,
+      status: 'pending',
+      isDeleted: false,
+      createdAt: previousDateFilter,
+    }),
+
+    Booking.countDocuments({
+      vendor: vendorObjectId,
+      status: 'pending',
+      isDeleted: false,
+      createdAt: previousDateFilter,
+    }),
+
+    Booking.countDocuments({
+      vendor: vendorObjectId,
+      isDeleted: false,
+      createdAt: previousDateFilter,
+    }),
+
+    Payment.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          status: 'paid',
+          isDeleted: false,
+          createdAt: previousDateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$vendorAmount' } } },
+    ]),
+  ]);
+
+  // ── Compute results ──────────────────────────────────────────────────
+  const currentTransactions = currentTransactionsAgg[0]?.total ?? 0;
+  const prevTransactions = prevTransactionsAgg[0]?.total ?? 0;
 
   return {
-    pendingOrders: pendingOrdersCount,
-    pendingBookings: pendingBookingsCount,
-    totalSchedule: totalScheduleCount,
-    totalSales,
+    totalTransactions: {
+      count: currentTransactions,
+      changePercent: calcChangePercent(currentTransactions, prevTransactions),
+    },
+    totalBookings: {
+      count: currentTotalBookings,
+      changePercent: calcChangePercent(currentTotalBookings, prevTotalBookings),
+    },
+    pendingOrders: {
+      count: currentPendingOrders,
+      changePercent: calcChangePercent(currentPendingOrders, prevPendingOrders),
+    },
+    pendingBookings: {
+      count: currentPendingBookings,
+      changePercent: calcChangePercent(
+        currentPendingBookings,
+        prevPendingBookings,
+      ),
+    },
   };
 };
 
@@ -309,70 +368,119 @@ const getAppointmentsOverviewRate = async (
   vendorId: string,
   month?: number,
 ) => {
+  const vendorExists = await Vendor.findById(vendorId);
+  if (!vendorExists || vendorExists.isDeleted) {
+    throw new Error('Vendor not found');
+  }
+
   const vendorObjectId = new Types.ObjectId(vendorId);
   const currentYear = new Date().getFullYear();
-
-  // Use current month if not provided
   const targetMonth = month ?? new Date().getMonth() + 1;
 
-  // Start and end of the month
   const startDate = new Date(currentYear, targetMonth - 1, 1);
   const endDate = new Date(currentYear, targetMonth, 0, 23, 59, 59);
 
-  // Aggregate total + completed bookings
-  const stats = await Booking.aggregate([
-    {
-      $match: {
-        vendor: vendorObjectId,
-        isDeleted: false,
-        date: { $gte: startDate.toISOString(), $lte: endDate.toISOString() },
+  const dateFilter = {
+    $gte: startDate,
+    $lte: endDate,
+  };
+
+  const [bookingStats, orderStats] = await Promise.all([
+    Booking.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          isDeleted: false,
+          createdAt: dateFilter,
+        },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: 1 },
-        completed: {
-          $sum: {
-            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0],
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0],
+            },
           },
         },
       },
-    },
-    {
-      $project: {
-        _id: 0,
-        total: 1,
-        completed: 1,
-        completionRate: {
-          $cond: [
-            { $eq: ['$total', 0] },
-            0,
-            { $multiply: [{ $divide: ['$completed', '$total'] }, 100] },
-          ],
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          completed: 1,
+          completionRate: {
+            $cond: [
+              { $eq: ['$total', 0] },
+              0,
+              {
+                $round: [
+                  { $multiply: [{ $divide: ['$completed', '$total'] }, 100] },
+                  1,
+                ],
+              },
+            ],
+          },
         },
       },
-    },
+    ]),
+
+    Order.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          isDeleted: false,
+          createdAt: dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          completed: 1,
+          completionRate: {
+            $cond: [
+              { $eq: ['$total', 0] },
+              0,
+              {
+                $round: [
+                  { $multiply: [{ $divide: ['$completed', '$total'] }, 100] },
+                  1,
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ]),
   ]);
 
-  // Default if no data
-  return stats[0] || { total: 0, completed: 0, completionRate: 0 };
+  return {
+    bookings: bookingStats[0] || { total: 0, completed: 0, completionRate: 0 },
+    orders: orderStats[0] || { total: 0, completed: 0, completionRate: 0 },
+  };
 };
 
 const getVendorDashboardDataFromDB = async (vendorId: string) => {
-  // --- Validate vendor existence ---
-  const vendorExists = await Vendor.findById({
-    _id: vendorId,
-    isDeleted: false,
-  });
-
-  if (!vendorExists) {
+  const vendorExists = await Vendor.findById(vendorId);
+  if (!vendorExists || vendorExists.isDeleted) {
     throw new Error('Vendor not found');
   }
 
   const vendorObjectId = new Types.ObjectId(vendorId);
 
-  // --- Prepare queries ---
   const pendingOrdersPromise = Order.find({
     vendor: vendorObjectId,
     status: 'pending',
@@ -380,17 +488,17 @@ const getVendorDashboardDataFromDB = async (vendorId: string) => {
   })
     .select('customerName orderId totalPrice status createdAt')
     .sort({ createdAt: -1 })
-    .limit(3); // limit to 3
+    .limit(3);
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayBookingsPromise = Booking.find({
+  // todayBookings → pendingBookings
+  const pendingBookingsPromise = Booking.find({
     vendor: vendorObjectId,
-    date: today,
+    status: 'pending',
     isDeleted: false,
   })
-    .select('name serviceName time status createdAt')
-    .sort({ time: 1 })
-    .limit(3); // limit to 3
+    .select('name serviceName time date status createdAt')
+    .sort({ createdAt: -1 })
+    .limit(3);
 
   const recentOrdersPromise = Order.find({
     vendor: vendorObjectId,
@@ -398,7 +506,7 @@ const getVendorDashboardDataFromDB = async (vendorId: string) => {
   })
     .select('customerName orderId totalPrice status createdAt')
     .sort({ createdAt: -1 })
-    .limit(3); // limit to 3
+    .limit(3);
 
   const recentBookingsPromise = Booking.find({
     vendor: vendorObjectId,
@@ -406,18 +514,16 @@ const getVendorDashboardDataFromDB = async (vendorId: string) => {
   })
     .select('name serviceName date time status createdAt')
     .sort({ createdAt: -1 })
-    .limit(3); // limit to 3
+    .limit(3);
 
-  // --- Run queries in parallel ---
-  const [pendingOrders, todayBookings, recentOrders, recentBookings] =
+  const [pendingOrders, pendingBookings, recentOrders, recentBookings] =
     await Promise.all([
       pendingOrdersPromise,
-      todayBookingsPromise,
+      pendingBookingsPromise,
       recentOrdersPromise,
       recentBookingsPromise,
     ]);
 
-  // --- Merge recent activity and limit to 3 items ---
   const recentActivity = [
     ...recentOrders.map((item) => ({
       id: item._id,
@@ -446,10 +552,9 @@ const getVendorDashboardDataFromDB = async (vendorId: string) => {
     })
     .slice(0, 3);
 
-  // --- Return structured dashboard data ---
   return {
     pendingOrders,
-    todayBookings,
+    pendingBookings,
     recentActivity,
   };
 };

@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserServices } from './user.service';
 
-const registerUser = catchAsync(async (req, res) => {
+const registerUser = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.registerUserIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const registerUser = catchAsync(async (req, res) => {
   });
 });
 
-const vendorRegisterUser = catchAsync(async (req, res) => {
+const vendorRegisterUser = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.vendorRegisterUserIntoDB(req.body);
 
   sendResponse(res, {
@@ -24,7 +25,7 @@ const vendorRegisterUser = catchAsync(async (req, res) => {
   });
 });
 
-const getAllUsers = catchAsync(async (req, res) => {
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.getAllUsersFromDB(req.query);
 
   sendResponse(res, {
@@ -36,7 +37,7 @@ const getAllUsers = catchAsync(async (req, res) => {
   });
 });
 
-const getUserProfile = catchAsync(async (req, res) => {
+const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
   const result = await UserServices.getUserProfileFromDB(email);
 
@@ -48,7 +49,7 @@ const getUserProfile = catchAsync(async (req, res) => {
   });
 });
 
-const updateUserProfile = catchAsync(async (req, res) => {
+const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
 
   // Access files from multer
@@ -74,7 +75,7 @@ const updateUserProfile = catchAsync(async (req, res) => {
   });
 });
 
-const getUserById = catchAsync(async (req, res) => {
+const getUserById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await UserServices.getUserByIdFromDB(id);
 
@@ -86,7 +87,7 @@ const getUserById = catchAsync(async (req, res) => {
   });
 });
 
-const changeStatus = catchAsync(async (req, res) => {
+const changeStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const result = await UserServices.changeStatusIntoDB(id, req.body);
@@ -99,6 +100,27 @@ const changeStatus = catchAsync(async (req, res) => {
   });
 });
 
+const updateNotificationSettings = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email } = req.user;
+    const { notifications } = req.body;
+
+    console.log('Received notification setting:', notifications);
+
+    const result = await UserServices.updateNotificationSettingsIntoDB(
+      email,
+      notifications,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Notification settings updated successfully.',
+      data: result,
+    });
+  },
+);
+
 export const UserControllers = {
   registerUser,
   vendorRegisterUser,
@@ -107,4 +129,5 @@ export const UserControllers = {
   updateUserProfile,
   getUserById,
   changeStatus,
+  updateNotificationSettings,
 };

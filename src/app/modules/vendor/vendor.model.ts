@@ -106,6 +106,10 @@ const vendorSchema = new Schema<TVendor>(
         required: false,
       },
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );
