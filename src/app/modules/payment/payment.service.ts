@@ -9,7 +9,7 @@ import httpStatus from 'http-status';
 import config from '../../config';
 import StripePaymentService from '../../class/stripe';
 import { Product } from '../product/product.model';
-import { PAYMENT_STATUS } from './payment.constant';
+import { PAYMENT_STATUS, paymentSearchableFields } from './payment.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
 import {
   buildLineItems,
@@ -305,21 +305,42 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
     throw new AppError(400, 'Invalid Vendor ID');
   }
 
-  // Base query -> always exclude deleted payments
-  let paymentQuery = Payment.find({ vendor, isDeleted: false })
+  //✅ If searchTerm is present, find matching user IDs based on email or fullName
+  let matchingUserIds: any = [];
+  if (filters.searchTerm) {
+    const matchingUsers = await User.find({
+      $or: [
+        { email: { $regex: filters.searchTerm, $options: 'i' } },
+        { fullName: { $regex: filters.searchTerm, $options: 'i' } },
+      ],
+    }).select('_id');
+    matchingUserIds = matchingUsers.map((u) => u._id);
+  }
+
+  const paymentQuery = Payment.find({ vendor, isDeleted: false })
     .populate('vendor', 'businessName email')
-    .populate('user')
-    .populate({
-      path: 'reference',
-      select: 'orderId bookingId',
-    });
+    .populate('user', 'fullName email phone image role')
+    .populate({ path: 'reference', select: 'orderId bookingId' });
 
   const queryBuilder = new QueryBuilder(paymentQuery, filters)
-    .search([''])
+    .search(paymentSearchableFields)
     .filter()
     .sort()
     .paginate()
     .fields();
+
+  // ✅ user ids filtering logic
+  if (matchingUserIds.length > 0) {
+    const existing$or = (queryBuilder.finalFilter.$or as any[]) || [];
+    queryBuilder.finalFilter.$or = [
+      ...existing$or,
+      { user: { $in: matchingUserIds } },
+    ];
+    // ✅ updated filter application to the query
+    queryBuilder.modelQuery = queryBuilder.modelQuery.find({
+      ...queryBuilder.finalFilter,
+    });
+  }
 
   const meta = await queryBuilder.countTotal();
   const result = await queryBuilder.modelQuery;

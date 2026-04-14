@@ -14,3 +14,10 @@ export const DeliveryStatus: TDeliveryStatus[] = [
   'shipped',
   'delivered',
 ];
+
+export const paymentSearchableFields = [
+  'trnId',
+  'deliveryStatus',
+  'status',
+  'modelType',
+];

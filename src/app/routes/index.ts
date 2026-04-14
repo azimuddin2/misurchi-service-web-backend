@@ -27,6 +27,8 @@ import { RecommendedTypeRoutes } from '../modules/recommendedType/recommendedTyp
 import { FollowRoutes } from '../modules/follow/follow.route';
 import { ImageUploadRoutes } from '../modules/imageUpload/imageUpload.route';
 import { StripeRoute } from '../modules/stripe/stripe.route';
+import { CancellationPolicyRoutes } from '../modules/cancellationPolicy/cancellationPolicy.route';
+import { ReturnPolicyRoutes } from '../modules/returnPolicy/returnPolicy.route';
 
 const router = Router();
 
@@ -110,6 +112,14 @@ const moduleRoutes = [
   {
     path: '/policy',
     route: PolicyRoutes,
+  },
+  {
+    path: '/cancellation-policy',
+    route: CancellationPolicyRoutes,
+  },
+  {
+    path: '/return-policy',
+    route: ReturnPolicyRoutes,
   },
   {
     path: '/plans',

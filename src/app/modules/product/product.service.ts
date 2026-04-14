@@ -325,14 +325,14 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
-  const { vendor, ...filters } = query;
+  const { vendorId, ...filters } = query;
 
-  if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId as string)) {
     throw new AppError(400, 'Invalid Vendor ID');
   }
 
   // Base query -> always exclude deleted products
-  let productQuery = Product.find({ vendor, isDeleted: false })
+  let productQuery = Product.find({ vendor: vendorId, isDeleted: false })
     .populate('vendor')
     .populate('user');
 

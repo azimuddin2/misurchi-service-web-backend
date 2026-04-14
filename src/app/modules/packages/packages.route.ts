@@ -21,7 +21,7 @@ router.post(
 router.get('/availability', PackagesControllers.getAvailability);
 
 router.get('/', PackagesControllers.getAllPackages);
-router.get('/', PackagesControllers.getAllPackagesByVendor);
+router.get('/vendor', PackagesControllers.getAllPackagesByVendor);
 router.get('/:id', PackagesControllers.getPackagesById);
 
 router.patch(

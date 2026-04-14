@@ -326,14 +326,14 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
-  const { vendor, ...filters } = query;
+  const { vendorId, ...filters } = query;
 
-  if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId as string)) {
     throw new AppError(400, 'Invalid Vendor ID');
   }
 
   // Base query -> always exclude deleted packages service
-  let packagesQuery = Packages.find({ vendor, isDeleted: false })
+  let packagesQuery = Packages.find({ vendor: vendorId, isDeleted: false })
     .populate('vendor')
     .populate('user');
 
