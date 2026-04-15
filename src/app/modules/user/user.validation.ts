@@ -54,7 +54,13 @@ const registerUserValidationSchema = z.object({
       role: z.enum([...UserRole] as [string, ...string[]]).default('user'),
 
       image: z.string().optional(),
-      location: z.string().optional(),
+      location: z
+        .object({
+          type: z.string(),
+          coordinates: z.array(z.number()),
+          streetAddress: z.string().optional(),
+        })
+        .optional(),
 
       status: z
         .enum([...UserStatus] as [string, ...string[]])
@@ -111,7 +117,13 @@ const updateUserValidationSchema = z.object({
       .optional(),
 
     image: z.string().optional(),
-    location: z.string().optional(),
+    location: z
+      .object({
+        type: z.string(),
+        coordinates: z.array(z.number()),
+        streetAddress: z.string().optional(),
+      })
+      .optional(),
 
     status: z
       .enum([...UserStatus] as [string, ...string[]])

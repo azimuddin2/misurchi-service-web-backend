@@ -135,15 +135,13 @@ const userSchema = new Schema<TUser, UserModel>(
         type: String,
         enum: ['Point'],
         default: 'Point',
-        required: false,
       },
       coordinates: {
         type: [Number],
-        required: false,
+        default: undefined,
       },
       streetAddress: {
         type: String,
-        required: false,
       },
     },
     stripeCustomerId: {

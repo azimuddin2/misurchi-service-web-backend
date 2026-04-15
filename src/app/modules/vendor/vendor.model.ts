@@ -95,15 +95,13 @@ const vendorSchema = new Schema<TVendor>(
         type: String,
         enum: ['Point'],
         default: 'Point',
-        required: false,
       },
       coordinates: {
         type: [Number],
-        required: false,
+        default: undefined,
       },
       streetAddress: {
         type: String,
-        required: false,
       },
     },
     isDeleted: {

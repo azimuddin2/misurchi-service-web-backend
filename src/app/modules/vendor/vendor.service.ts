@@ -63,12 +63,7 @@ const updateVendorProfileIntoDB = async (
           1000 + Math.random() * 9000,
         )}`,
       });
-
-      // 🧹 Delete old profile image if exists
-      if (existingVendor.image) {
-        await deleteFromS3(existingVendor.image);
-      }
-
+      if (existingVendor.image) await deleteFromS3(existingVendor.image);
       payload.image = uploadedProfileUrl as string;
     }
 
@@ -80,22 +75,28 @@ const updateVendorProfileIntoDB = async (
           1000 + Math.random() * 9000,
         )}`,
       });
-
-      // 🧹 Delete old cover image if exists
-      if (existingVendor.coverImage) {
+      if (existingVendor.coverImage)
         await deleteFromS3(existingVendor.coverImage);
-      }
-
       payload.coverImage = uploadedCoverUrl as string;
+    }
+
+    // ✅ Location dot notation এ convert
+    const { location, ...restPayload } = payload as any;
+
+    const updateData: Record<string, any> = { ...restPayload };
+
+    if (location?.coordinates?.length === 2) {
+      updateData['location.type'] = 'Point';
+      updateData['location.coordinates'] = location.coordinates;
+      updateData['location.streetAddress'] = location.streetAddress || '';
     }
 
     // 📝 Step 4: Update linked User
     const updatedUser = await User.findByIdAndUpdate(
       existingVendor.userId,
-      { $set: { ...payload } },
+      { $set: updateData },
       { new: true, runValidators: true, session },
     );
-
     if (!updatedUser) {
       throw new AppError(400, 'Failed to update Vendor');
     }
@@ -103,7 +104,7 @@ const updateVendorProfileIntoDB = async (
     // 📝 Step 5: Update Vendor
     const updatedVendor = await Vendor.findOneAndUpdate(
       { email },
-      { $set: payload },
+      { $set: updateData },
       { new: true, runValidators: true, session },
     );
     if (!updatedVendor) {
@@ -114,7 +115,7 @@ const updateVendorProfileIntoDB = async (
     await session.commitTransaction();
     session.endSession();
 
-    return updatedUser;
+    return updatedVendor;
   } catch (error: any) {
     await session.abortTransaction();
     session.endSession();

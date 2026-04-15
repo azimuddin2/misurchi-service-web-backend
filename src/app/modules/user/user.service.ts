@@ -292,9 +292,9 @@ const updateUserProfileIntoDB = async (
   profileFile?: Express.Multer.File,
   coverFile?: Express.Multer.File,
 ) => {
-  // 🔍 Step 1: Check if user exists & get email
+  // 🔍 Step 1: Check if user exists
   const existingUser = await User.findOne({ email }).select(
-    'userId image coverImage',
+    '_id image coverImage',
   );
   if (!existingUser) {
     throw new AppError(404, 'User not found');
@@ -313,7 +313,6 @@ const updateUserProfileIntoDB = async (
         )}`,
       });
 
-      // 🧹 Delete old profile image if exists
       if (existingUser.image) {
         await deleteFromS3(existingUser.image);
       }
@@ -330,7 +329,6 @@ const updateUserProfileIntoDB = async (
         )}`,
       });
 
-      // 🧹 Delete old cover image if exists
       if (existingUser.coverImage) {
         await deleteFromS3(existingUser.coverImage);
       }
@@ -338,10 +336,21 @@ const updateUserProfileIntoDB = async (
       payload.coverImage = uploadedCoverUrl as string;
     }
 
-    // 📝 Step 4: Update linked User
+    // ✅ 🔥 Location handling (same as vendor)
+    const { location, ...restPayload } = payload as any;
+
+    const updateData: Record<string, any> = { ...restPayload };
+
+    if (location?.coordinates?.length === 2) {
+      updateData['location.type'] = 'Point';
+      updateData['location.coordinates'] = location.coordinates;
+      updateData['location.streetAddress'] = location.streetAddress || '';
+    }
+
+    // 📝 Step 4: Update User
     const updatedUser = await User.findByIdAndUpdate(
       existingUser._id,
-      { $set: { ...payload } },
+      { $set: updateData },
       { new: true, runValidators: true, session },
     );
 

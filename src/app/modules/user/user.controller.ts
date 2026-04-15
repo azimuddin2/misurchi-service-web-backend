@@ -52,6 +52,8 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
 
+  console.log(req.body);
+
   // Access files from multer
   const profileFile = (
     req.files as { [fieldname: string]: Express.Multer.File[] }
@@ -104,8 +106,6 @@ const updateNotificationSettings = catchAsync(
   async (req: Request, res: Response) => {
     const { email } = req.user;
     const { notifications } = req.body;
-
-    console.log('Received notification setting:', notifications);
 
     const result = await UserServices.updateNotificationSettingsIntoDB(
       email,

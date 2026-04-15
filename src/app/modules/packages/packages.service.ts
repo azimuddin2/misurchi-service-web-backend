@@ -72,6 +72,7 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
 };
 
 const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
+  console.log(query);
   const {
     minPrice,
     maxPrice,
