@@ -1,9 +1,12 @@
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { TeamServices } from './team.service';
+import { TeamMemberServices } from './teamMember.service';
 
 const createTeamMember = catchAsync(async (req, res) => {
-  const result = await TeamServices.createTeamMemberIntoDB(req.body, req.file);
+  const result = await TeamMemberServices.createTeamMemberIntoDB(
+    req.body,
+    req.file,
+  );
 
   sendResponse(res, {
     statusCode: 201,
@@ -14,7 +17,7 @@ const createTeamMember = catchAsync(async (req, res) => {
 });
 
 const getAllTeamMember = catchAsync(async (req, res) => {
-  const result = await TeamServices.getAllTeamMemberFromDB(req.query);
+  const result = await TeamMemberServices.getAllTeamMemberFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -27,7 +30,7 @@ const getAllTeamMember = catchAsync(async (req, res) => {
 
 const getTeamMemberById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await TeamServices.getTeamMemberByIdFromDB(id);
+  const result = await TeamMemberServices.getTeamMemberByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: 200,
@@ -39,7 +42,7 @@ const getTeamMemberById = catchAsync(async (req, res) => {
 
 const updateTeamMember = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await TeamServices.updateTeamMemberIntoDB(
+  const result = await TeamMemberServices.updateTeamMemberIntoDB(
     id,
     req.body,
     req.file,
@@ -55,7 +58,7 @@ const updateTeamMember = catchAsync(async (req, res) => {
 
 const deleteTeamMember = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await TeamServices.deleteTeamMemberFromDB(id);
+  const result = await TeamMemberServices.deleteTeamMemberFromDB(id);
 
   sendResponse(res, {
     statusCode: 200,
@@ -65,7 +68,7 @@ const deleteTeamMember = catchAsync(async (req, res) => {
   });
 });
 
-export const TeamControllers = {
+export const TeamMemberControllers = {
   createTeamMember,
   getAllTeamMember,
   getTeamMemberById,

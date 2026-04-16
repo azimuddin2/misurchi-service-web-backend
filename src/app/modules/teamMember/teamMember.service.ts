@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
-import { teamMemberSearchableFields } from './team.constant';
-import { TTeam } from './team.interface';
-import { Team } from './team.model';
+import { teamMemberSearchableFields } from './teamMember.constant';
+import { TTeamMember } from './teamMember.interface';
+import { TeamMember } from './teamMember.model';
 
-const createTeamMemberIntoDB = async (payload: TTeam, file: any) => {
+const createTeamMemberIntoDB = async (payload: TTeamMember, file: any) => {
   // 📸 Handle single image upload to S3
   if (file) {
     const uploadedUrl = await uploadToS3({
@@ -18,7 +18,7 @@ const createTeamMemberIntoDB = async (payload: TTeam, file: any) => {
   }
 
   // 🧑‍💼 Create the team member
-  const result = await Team.create(payload);
+  const result = await TeamMember.create(payload);
   if (!result) {
     throw new AppError(400, 'Failed to create team member');
   }
@@ -33,7 +33,9 @@ const getAllTeamMemberFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted teams
-  let teamQuery = Team.find({ vendor, isDeleted: false }).populate('vendor');
+  let teamQuery = TeamMember.find({ vendor, isDeleted: false }).populate(
+    'vendor',
+  );
 
   const queryBuilder = new QueryBuilder(teamQuery, filters)
     .search(teamMemberSearchableFields)
@@ -49,7 +51,7 @@ const getAllTeamMemberFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getTeamMemberByIdFromDB = async (id: string) => {
-  const result = await Team.findById(id).populate('vendor');
+  const result = await TeamMember.findById(id).populate('vendor');
 
   if (!result) {
     throw new AppError(404, 'This team member not found');
@@ -60,11 +62,11 @@ const getTeamMemberByIdFromDB = async (id: string) => {
 
 const updateTeamMemberIntoDB = async (
   id: string,
-  payload: Partial<TTeam>,
+  payload: Partial<TTeamMember>,
   file?: Express.Multer.File,
 ) => {
   // 🔍 Step 1: Check if the team member exists
-  const existingTeamMember = await Team.findById(id);
+  const existingTeamMember = await TeamMember.findById(id);
   if (!existingTeamMember) {
     throw new AppError(404, 'Team member not found');
   }
@@ -87,7 +89,7 @@ const updateTeamMemberIntoDB = async (
     }
 
     // 🔄 Step 5: Update the team member in the database
-    const updatedTeamMember = await Team.findByIdAndUpdate(id, payload, {
+    const updatedTeamMember = await TeamMember.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
     });
@@ -104,13 +106,13 @@ const updateTeamMemberIntoDB = async (
 };
 
 const deleteTeamMemberFromDB = async (id: string) => {
-  const isTeamMemberExists = await Team.findById(id);
+  const isTeamMemberExists = await TeamMember.findById(id);
 
   if (!isTeamMemberExists) {
     throw new AppError(404, 'Team member not found');
   }
 
-  const result = await Team.findByIdAndUpdate(
+  const result = await TeamMember.findByIdAndUpdate(
     id,
     { isDeleted: true },
     { new: true },
@@ -122,7 +124,7 @@ const deleteTeamMemberFromDB = async (id: string) => {
   return result;
 };
 
-export const TeamServices = {
+export const TeamMemberServices = {
   createTeamMemberIntoDB,
   getAllTeamMemberFromDB,
   getTeamMemberByIdFromDB,

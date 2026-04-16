@@ -4,7 +4,6 @@ import { AuthRoutes } from '../modules/auth/auth.route';
 import { OtpRoutes } from '../modules/otp/otp.route';
 import { ProductRoutes } from '../modules/product/product.route';
 import { PackagesRoutes } from '../modules/packages/packages.route';
-import { TeamRoutes } from '../modules/team/team.route';
 import { VendorRoutes } from '../modules/vendor/vendor.route';
 import { TaskRoutes } from '../modules/task/task.route';
 import { ReviewRoutes } from '../modules/review/review.route';
@@ -29,6 +28,7 @@ import { ImageUploadRoutes } from '../modules/imageUpload/imageUpload.route';
 import { StripeRoute } from '../modules/stripe/stripe.route';
 import { CancellationPolicyRoutes } from '../modules/cancellationPolicy/cancellationPolicy.route';
 import { ReturnPolicyRoutes } from '../modules/returnPolicy/returnPolicy.route';
+import { TeamMemberRoutes } from '../modules/teamMember/teamMember.route';
 
 const router = Router();
 
@@ -71,7 +71,7 @@ const moduleRoutes = [
   },
   {
     path: '/team-members',
-    route: TeamRoutes,
+    route: TeamMemberRoutes,
   },
   {
     path: '/tasks',
