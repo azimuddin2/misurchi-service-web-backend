@@ -72,7 +72,6 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
 };
 
 const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
-  console.log(query);
   const {
     minPrice,
     maxPrice,
@@ -91,213 +90,152 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
   const isSet = (val: unknown) =>
     val !== undefined && String(val).trim() !== '';
 
-  // ── Pagination ──
   const pageNum = Math.max(Number(page), 1);
   const limitNum = Math.max(Number(limit), 1);
   const skip = (pageNum - 1) * limitNum;
 
-  // ── Sort ──
   const sortField =
     sortBy === 'rating' ? 'avgRating' : String(sortBy || 'createdAt');
   const sortDir = sortOrder === 'asc' ? 1 : -1;
 
-  // ─────────────────────────────────────────────
-  // Step 1: Base $match
-  // ─────────────────────────────────────────────
+  // ✅ BASE MATCH (FIXED REGEX)
   const baseMatch: Record<string, any> = { isDeleted: false };
 
-  // ✅ type filter (service এ 'type' field)
   if (isSet(type)) {
-    const types = String(type)
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (types.length > 0) {
-      baseMatch.type = {
-        $in: types.map((t) => new RegExp(`^${t}$`, 'i')),
-      };
-    }
+    baseMatch.type = {
+      $in: String(type)
+        .split(',')
+        .map((t) => t.trim()),
+    };
   }
 
-  // ✅ recommended filter → DB field: "recommendedType" (array)
   if (isSet(recommended)) {
-    const recs = String(recommended)
-      .split(',')
-      .map((r) => r.trim())
-      .filter(Boolean);
-    if (recs.length > 0) {
-      baseMatch.recommendedType = {
-        $in: recs.map((r) => new RegExp(`^${r}$`, 'i')),
-      };
-    }
+    baseMatch.recommendedType = {
+      $in: String(recommended)
+        .split(',')
+        .map((r) => r.trim()),
+    };
   }
 
-  // ✅ Special Offer → savedServices[0].discount must exist
   if (isOnSale === 'true' || isOnSale === true) {
-    baseMatch['savedServices'] = {
+    baseMatch.savedServices = {
       $elemMatch: {
-        discount: {
-          $exists: true,
-          $nin: [null, '', 'none', '0'],
-          $ne: 'none',
-        },
+        discount: { $exists: true, $nin: [null, '', 'none', '0'] },
       },
     };
   }
 
-  // searchTerm filter
   if (isSet(searchTerm)) {
-    const regex = new RegExp(String(searchTerm), 'i');
     baseMatch.$or = packageSearchableFields.map((field) => ({
-      [field]: { $regex: regex },
+      [field]: { $regex: String(searchTerm), $options: 'i' },
     }));
   }
 
-  // ─────────────────────────────────────────────
-  // Step 2: Computed fields (only when needed)
-  // ─────────────────────────────────────────────
+  // ✅ COMPUTED ONLY IF NEEDED
   const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
-  const needsComputed = hasPriceFilter || hasDiscountFilter;
 
-  // ✅ savedServices[0] থেকে price/discount নেওয়া
-  const firstServiceField = (field: string) => ({
-    $getField: {
-      field,
-      input: { $arrayElemAt: ['$savedServices', 0] },
-    },
-  });
+  const computedStages: PipelineStage[] = [];
 
-  const addComputedFields: PipelineStage = {
-    $addFields: {
-      _calcPrice: {
-        $toDouble: firstServiceField('price'),
+  if (hasPriceFilter || hasDiscountFilter) {
+    computedStages.push({
+      $addFields: {
+        _firstService: { $arrayElemAt: ['$savedServices', 0] },
       },
-      _calcDiscount: {
-        $cond: {
-          if: {
-            $in: [firstServiceField('discount'), ['none', '', null]],
-          },
-          then: 0,
-          else: {
-            $toInt: {
-              $replaceAll: {
-                input: firstServiceField('discount'),
-                find: '%',
-                replacement: '',
+    });
+
+    computedStages.push({
+      $addFields: {
+        _price: { $toDouble: '$_firstService.price' },
+        _discount: {
+          $cond: {
+            if: {
+              $in: ['$_firstService.discount', ['none', '', null]],
+            },
+            then: 0,
+            else: {
+              $toInt: {
+                $replaceAll: {
+                  input: '$_firstService.discount',
+                  find: '%',
+                  replacement: '',
+                },
               },
             },
           },
         },
       },
-    },
-  };
+    });
 
-  // ─────────────────────────────────────────────
-  // Step 3: Second $match (on computed fields)
-  // ─────────────────────────────────────────────
-  const computedMatch: Record<string, any> = {};
+    const match: Record<string, any> = {};
 
-  if (hasPriceFilter) {
-    computedMatch._calcPrice = {};
-    if (isSet(minPrice)) computedMatch._calcPrice.$gte = Number(minPrice);
-    if (isSet(maxPrice)) computedMatch._calcPrice.$lte = Number(maxPrice);
+    if (hasPriceFilter) {
+      match._price = {};
+      if (isSet(minPrice)) match._price.$gte = Number(minPrice);
+      if (isSet(maxPrice)) match._price.$lte = Number(maxPrice);
+    }
+
+    if (hasDiscountFilter) {
+      match._discount = {};
+      if (isSet(minDiscount)) match._discount.$gte = Number(minDiscount);
+      if (isSet(maxDiscount)) match._discount.$lte = Number(maxDiscount);
+    }
+
+    computedStages.push({ $match: match });
   }
 
-  if (hasDiscountFilter) {
-    computedMatch._calcDiscount = {};
-    if (isSet(minDiscount))
-      computedMatch._calcDiscount.$gte = Number(minDiscount);
-    if (isSet(maxDiscount))
-      computedMatch._calcDiscount.$lte = Number(maxDiscount);
-  }
-
-  // ─────────────────────────────────────────────
-  // Sensitive fields strip
-  // ─────────────────────────────────────────────
-  const SENSITIVE_FIELDS = [
-    'password',
-    'confirmPassword',
-    'needsPasswordChange',
-  ];
-
-  const stripSensitiveFields = (inputVar: string) => ({
-    $arrayToObject: {
-      $filter: {
-        input: { $objectToArray: inputVar },
-        as: 'field',
-        cond: {
-          $not: { $in: ['$$field.k', SENSITIVE_FIELDS] },
-        },
-      },
-    },
-  });
-
-  // ─────────────────────────────────────────────
-  // Build Pipeline
-  // ─────────────────────────────────────────────
+  // ✅ FINAL PIPELINE
   const pipeline: PipelineStage[] = [
     { $match: baseMatch },
 
-    ...(needsComputed ? [addComputedFields] : []),
-    ...(needsComputed && Object.keys(computedMatch).length > 0
-      ? [{ $match: computedMatch } as PipelineStage]
-      : []),
+    ...computedStages,
 
-    // Join vendor
+    // 🔥 PROJECT (BIGGEST FIX)
+    {
+      $project: {
+        name: 1,
+        type: 1,
+        recommendedType: 1,
+        savedServices: 1,
+        images: 1,
+        status: 1,
+        reviews: 1,
+        avgRating: 1,
+        isDeleted: 1,
+        vendor: 1,
+        createdAt: 1,
+      },
+    },
+
+    // 🔥 OPTIMIZED VENDOR LOOKUP
     {
       $lookup: {
         from: 'vendors',
-        localField: 'vendor',
-        foreignField: '_id',
+        let: { vendorId: '$vendor' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$_id', '$$vendorId'] } } },
+          {
+            $project: {
+              businessName: 1,
+              image: 1,
+              country: 1,
+              state: 1,
+            },
+          },
+        ],
         as: 'vendor',
       },
     },
     {
       $addFields: {
-        vendor: {
-          $arrayElemAt: [
-            {
-              $map: {
-                input: '$vendor',
-                as: 'v',
-                in: stripSensitiveFields('$$v'),
-              },
-            },
-            0,
-          ],
-        },
+        vendor: { $arrayElemAt: ['$vendor', 0] },
+        _price: '$$REMOVE',
+        _discount: '$$REMOVE',
+        _firstService: '$$REMOVE',
       },
     },
 
-    // Join user
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user',
-      },
-    },
-    {
-      $addFields: {
-        user: {
-          $arrayElemAt: [
-            {
-              $map: {
-                input: '$user',
-                as: 'u',
-                in: stripSensitiveFields('$$u'),
-              },
-            },
-            0,
-          ],
-        },
-        _calcPrice: '$$REMOVE',
-        _calcDiscount: '$$REMOVE',
-      },
-    },
-
+    // ❌ REMOVE USER LOOKUP (not needed)
     { $sort: { [sortField]: sortDir } },
 
     {
@@ -312,14 +250,13 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
 
   const result = facetResult?.data || [];
   const total = facetResult?.totalCount?.[0]?.total || 0;
-  const totalPage = Math.ceil(total / limitNum);
 
   return {
     meta: {
       page: pageNum,
       limit: limitNum,
       total,
-      totalPage,
+      totalPage: Math.ceil(total / limitNum),
       totalDoc: total,
     },
     result,

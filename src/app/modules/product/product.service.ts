@@ -94,46 +94,31 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
   const skip = (pageNum - 1) * limitNum;
 
   // ── Sort ──
-  // "Top Rated" → sortBy=rating → sort by avgRating (actual DB field name)
-  // default → createdAt desc
   const sortField =
     sortBy === 'rating' ? 'avgRating' : String(sortBy || 'createdAt');
   const sortDir = sortOrder === 'asc' ? 1 : -1;
 
   // ─────────────────────────────────────────────
-  // Step 1: Base $match (cheap, index-friendly)
+  // ✅ Step 1: Base Match (FIXED REGEX ISSUE)
   // ─────────────────────────────────────────────
   const baseMatch: Record<string, any> = { isDeleted: false };
 
-  // productType filter
   if (isSet(productType)) {
-    const types = String(productType)
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (types.length > 0) {
-      baseMatch.productType = {
-        $in: types.map((t) => new RegExp(`^${t}$`, 'i')),
-      };
-    }
+    baseMatch.productType = {
+      $in: String(productType)
+        .split(',')
+        .map((t) => t.trim()),
+    };
   }
 
-  // ⭐ recommended filter → actual DB field is "recommendedType" (array field)
-  // e.g. ["New Arrivals", "Black Friday Deal"]
-  // $in on an array field checks if ANY element matches
   if (isSet(recommended)) {
-    const recs = String(recommended)
-      .split(',')
-      .map((r) => r.trim())
-      .filter(Boolean);
-    if (recs.length > 0) {
-      baseMatch.recommendedType = {
-        $in: recs.map((r) => new RegExp(`^${r}$`, 'i')),
-      };
-    }
+    baseMatch.recommendedType = {
+      $in: String(recommended)
+        .split(',')
+        .map((r) => r.trim()),
+    };
   }
 
-  // ⭐ Special Offer → discountPrice must exist and not be empty/none/0
   if (isOnSale === 'true' || isOnSale === true) {
     baseMatch.discountPrice = {
       $exists: true,
@@ -141,163 +126,141 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
     };
   }
 
-  // searchTerm filter
+  // ⚠️ keep regex (but simplified)
   if (isSet(searchTerm)) {
-    const regex = new RegExp(String(searchTerm), 'i');
     baseMatch.$or = productSearchableFields.map((field) => ({
-      [field]: { $regex: regex },
+      [field]: { $regex: String(searchTerm), $options: 'i' },
     }));
   }
 
   // ─────────────────────────────────────────────
-  // Step 2: Computed fields (only when needed)
+  // ✅ Step 2: Computed fields (ONLY WHEN NEEDED)
   // ─────────────────────────────────────────────
   const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
-  const needsComputed = hasPriceFilter || hasDiscountFilter;
 
-  const addComputedFields: PipelineStage = {
-    $addFields: {
-      _calcPrice: {
-        $cond: [
-          { $eq: [{ $type: '$price' }, 'string'] },
-          { $toDouble: '$price' },
-          { $ifNull: ['$price', 0] },
-        ],
-      },
-      _calcDiscount: {
-        $let: {
-          vars: { raw: { $ifNull: ['$discountPrice', '0'] } },
-          in: {
-            $cond: {
-              if: {
-                $or: [{ $eq: ['$$raw', 'none'] }, { $eq: ['$$raw', ''] }],
-              },
-              then: 0,
-              else: {
-                $toDouble: {
-                  $replaceAll: { input: '$$raw', find: '%', replacement: '' },
+  const computedStages: PipelineStage[] = [];
+
+  if (hasPriceFilter || hasDiscountFilter) {
+    computedStages.push({
+      $addFields: {
+        _calcPrice: {
+          $cond: [
+            { $eq: [{ $type: '$price' }, 'string'] },
+            { $toDouble: '$price' },
+            { $ifNull: ['$price', 0] },
+          ],
+        },
+        _calcDiscount: {
+          $let: {
+            vars: { raw: { $ifNull: ['$discountPrice', '0'] } },
+            in: {
+              $cond: {
+                if: {
+                  $or: [{ $eq: ['$$raw', 'none'] }, { $eq: ['$$raw', ''] }],
+                },
+                then: 0,
+                else: {
+                  $toDouble: {
+                    $replaceAll: {
+                      input: '$$raw',
+                      find: '%',
+                      replacement: '',
+                    },
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  };
+    });
 
-  // ─────────────────────────────────────────────
-  // Step 3: Second $match (on computed fields)
-  // ─────────────────────────────────────────────
-  const computedMatch: Record<string, any> = {};
+    const match: Record<string, any> = {};
 
-  if (hasPriceFilter) {
-    computedMatch._calcPrice = {};
-    if (isSet(minPrice)) computedMatch._calcPrice.$gte = Number(minPrice);
-    if (isSet(maxPrice)) computedMatch._calcPrice.$lte = Number(maxPrice);
-  }
+    if (hasPriceFilter) {
+      match._calcPrice = {};
+      if (isSet(minPrice)) match._calcPrice.$gte = Number(minPrice);
+      if (isSet(maxPrice)) match._calcPrice.$lte = Number(maxPrice);
+    }
 
-  if (hasDiscountFilter) {
-    computedMatch._calcDiscount = {};
-    if (isSet(minDiscount))
-      computedMatch._calcDiscount.$gte = Number(minDiscount);
-    if (isSet(maxDiscount))
-      computedMatch._calcDiscount.$lte = Number(maxDiscount);
+    if (hasDiscountFilter) {
+      match._calcDiscount = {};
+      if (isSet(minDiscount)) match._calcDiscount.$gte = Number(minDiscount);
+      if (isSet(maxDiscount)) match._calcDiscount.$lte = Number(maxDiscount);
+    }
+
+    computedStages.push({ $match: match });
   }
 
   // ─────────────────────────────────────────────
-  // Sensitive fields to strip from vendor & user
-  // ─────────────────────────────────────────────
-  const SENSITIVE_FIELDS = [
-    'password',
-    'confirmPassword',
-    'needsPasswordChange',
-  ];
-
-  const stripSensitiveFields = (inputVar: string) => ({
-    $arrayToObject: {
-      $filter: {
-        input: { $objectToArray: inputVar },
-        as: 'field',
-        cond: {
-          $not: { $in: ['$$field.k', SENSITIVE_FIELDS] },
-        },
-      },
-    },
-  });
-
-  // ─────────────────────────────────────────────
-  // Build Pipeline
+  // ✅ Step 3: Pipeline (OPTIMIZED)
   // ─────────────────────────────────────────────
   const pipeline: PipelineStage[] = [
-    // Step 1: filter on registration model
     { $match: baseMatch },
 
-    // Step 2: computed price/discount (only if needed)
-    ...(needsComputed ? [addComputedFields] : []),
-    ...(needsComputed && Object.keys(computedMatch).length > 0
-      ? [{ $match: computedMatch } as PipelineStage]
-      : []),
+    ...computedStages,
 
-    // Step 3: Join vendor + strip sensitive fields
+    // 🔥 ADD PROJECT (BIGGEST FIX)
+    {
+      $project: {
+        name: 1,
+        productCode: 1,
+        images: 1,
+        productType: 1,
+        quantity: 1,
+        price: 1,
+        discountPrice: 1,
+        colors: 1,
+        recommendedType: 1,
+        size: 1,
+        status: 1,
+        reviews: 1,
+        avgRating: 1,
+        isDeleted: 1,
+        vendor: 1,
+        user: 1,
+        createdAt: 1,
+      },
+    },
+
+    // 🔥 OPTIMIZED VENDOR LOOKUP
     {
       $lookup: {
         from: 'vendors',
-        localField: 'vendor',
-        foreignField: '_id',
+        let: { vendorId: '$vendor' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$_id', '$$vendorId'] } } },
+          {
+            $project: {
+              businessName: 1,
+              image: 1,
+              country: 1,
+              state: 1,
+            },
+          },
+        ],
         as: 'vendor',
       },
     },
     {
       $addFields: {
-        vendor: {
-          $arrayElemAt: [
-            {
-              $map: {
-                input: '$vendor',
-                as: 'v',
-                in: stripSensitiveFields('$$v'),
-              },
-            },
-            0,
-          ],
-        },
+        vendor: { $arrayElemAt: ['$vendor', 0] },
       },
     },
 
-    // Step 4: Join user + strip sensitive fields
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user',
-      },
-    },
+    // 🔥 REMOVE USER LOOKUP (HEAVY + UNUSED)
+    // ❌ removed user join
+
     {
       $addFields: {
-        user: {
-          $arrayElemAt: [
-            {
-              $map: {
-                input: '$user',
-                as: 'u',
-                in: stripSensitiveFields('$$u'),
-              },
-            },
-            0,
-          ],
-        },
-        // Remove internal computed fields from output
         _calcPrice: '$$REMOVE',
         _calcDiscount: '$$REMOVE',
       },
     },
 
-    // Step 5: Sort
     { $sort: { [sortField]: sortDir } },
 
-    // Step 6: $facet → paginated data + total count in ONE round-trip
     {
       $facet: {
         data: [{ $skip: skip }, { $limit: limitNum }],
@@ -310,14 +273,13 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
 
   const result = facetResult?.data || [];
   const total = facetResult?.totalCount?.[0]?.total || 0;
-  const totalPage = Math.ceil(total / limitNum);
 
   return {
     meta: {
       page: pageNum,
       limit: limitNum,
       total,
-      totalPage,
+      totalPage: Math.ceil(total / limitNum),
       totalDoc: total,
     },
     result,
