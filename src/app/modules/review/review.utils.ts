@@ -39,3 +39,20 @@ export const getAverageServiceRating = async (
 
   return result.length ? result[0] : { averageRating: 0, totalReviews: 0 };
 };
+
+export const getAverageVendorRating = async (
+  vendorId: string,
+): Promise<IReturn> => {
+  const result = await Review.aggregate([
+    { $match: { vendor: new Types.ObjectId(vendorId) } },
+    {
+      $group: {
+        _id: '$vendor',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return result.length ? result[0] : { averageRating: 0, totalReviews: 0 };
+};

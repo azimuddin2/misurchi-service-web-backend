@@ -28,6 +28,9 @@ export type TVendor = {
     streetAddress?: string;
   };
 
+  reviewCount: number;
+  avgRating: number;
+
   isDeleted: boolean;
   createdAt?: string;
   updatedAt?: string;

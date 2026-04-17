@@ -14,12 +14,21 @@ import { Order } from '../order/order.model';
 import { calcChangePercent } from './vendor.utils';
 
 const getAllVendorsFromDB = async (query: Record<string, unknown>) => {
-  const vendorQuery = new QueryBuilder(Vendor.find(), query)
+  const { topRated, ...restQuery } = query;
+
+  const vendorQuery = new QueryBuilder(Vendor.find(), restQuery)
     .search(vendorSearchableFields)
     .filter()
     .sort()
     .paginate()
     .fields();
+
+  if (topRated === 'true') {
+    vendorQuery.modelQuery = vendorQuery.modelQuery
+      .where('avgRating')
+      .gte(4)
+      .sort({ avgRating: -1 });
+  }
 
   const meta = await vendorQuery.countTotal();
   const result = await vendorQuery.modelQuery;

@@ -271,9 +271,10 @@ const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted packages service
-  let packagesQuery = Packages.find({ vendor: vendorId, isDeleted: false })
-    .populate('vendor')
-    .populate('user');
+  let packagesQuery = Packages.find({
+    vendor: vendorId,
+    isDeleted: false,
+  }).select('name images serviceType status savedServices createdAt');
 
   const queryBuilder = new QueryBuilder(packagesQuery, filters)
     .search(packageSearchableFields)

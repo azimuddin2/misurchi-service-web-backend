@@ -294,9 +294,10 @@ const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted products
-  let productQuery = Product.find({ vendor: vendorId, isDeleted: false })
-    .populate('vendor')
-    .populate('user');
+  let productQuery = Product.find({
+    vendor: vendorId,
+    isDeleted: false,
+  }).select('name images productType price status createdAt');
 
   const queryBuilder = new QueryBuilder(productQuery, filters)
     .search(productSearchableFields)

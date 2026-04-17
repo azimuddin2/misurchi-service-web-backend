@@ -104,6 +104,14 @@ const vendorSchema = new Schema<TVendor>(
         type: String,
       },
     },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    avgRating: {
+      type: Number,
+      default: 0,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

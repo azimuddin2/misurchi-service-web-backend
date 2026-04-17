@@ -7,6 +7,10 @@ export const vendorSearchableFields = [
   'firstName',
   'firstName',
   'country',
+  'zipCode',
+  'state',
+  'street',
+  'phone',
 ];
 
 export const Subscribed: TSubscribed[] = ['advance', 'basic'];

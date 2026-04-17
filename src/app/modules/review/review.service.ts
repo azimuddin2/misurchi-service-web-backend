@@ -6,9 +6,11 @@ import { Review } from './review.model';
 import {
   getAverageProductRating,
   getAverageServiceRating,
+  getAverageVendorRating,
 } from './review.utils';
 import AppError from '../../errors/AppError';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { Vendor } from '../vendor/vendor.model';
 
 const createReviewIntoDB = async (payload: TReview) => {
   const session: ClientSession = await startSession();
@@ -51,6 +53,27 @@ const createReviewIntoDB = async (payload: TReview) => {
       },
       { session },
     );
+
+    // ✅ Vendor rating update
+    if (result[0].vendor) {
+      const vendorId = result[0].vendor.toString();
+      const vendorAvgData = await getAverageVendorRating(vendorId);
+
+      const newVendorAvgRating =
+        (Number(vendorAvgData.averageRating) *
+          Number(vendorAvgData.totalReviews) +
+          Number(payload.rating)) /
+        (vendorAvgData.totalReviews + 1);
+
+      await Vendor.findByIdAndUpdate(
+        vendorId,
+        {
+          avgRating: parseFloat(newVendorAvgRating.toFixed(2)),
+          reviewCount: vendorAvgData.totalReviews + 1,
+        },
+        { session },
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();
