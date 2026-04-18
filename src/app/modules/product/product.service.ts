@@ -297,7 +297,14 @@ const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
   let productQuery = Product.find({
     vendor: vendorId,
     isDeleted: false,
-  }).select('name images productType price status createdAt');
+  })
+    .select(
+      'name images productType recommendedType price discountPrice status createdAt',
+    )
+    .populate({
+      path: 'vendor',
+      select: 'businessName image country state',
+    });
 
   const queryBuilder = new QueryBuilder(productQuery, filters)
     .search(productSearchableFields)

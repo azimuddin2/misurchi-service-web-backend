@@ -274,7 +274,14 @@ const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
   let packagesQuery = Packages.find({
     vendor: vendorId,
     isDeleted: false,
-  }).select('name images serviceType status savedServices createdAt');
+  })
+    .select(
+      'name images serviceType recommendedType status savedServices createdAt',
+    )
+    .populate({
+      path: 'vendor',
+      select: 'businessName image country state',
+    });
 
   const queryBuilder = new QueryBuilder(packagesQuery, filters)
     .search(packageSearchableFields)
