@@ -31,6 +31,8 @@ export type TVendor = {
   reviewCount: number;
   avgRating: number;
 
+  teamMembers?: Types.ObjectId[];
+
   isDeleted: boolean;
   createdAt?: string;
   updatedAt?: string;

@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
-import { TTeamMember } from './teamMember.interface';
-import { TeamMemberRole } from './teamMember.constant';
+import { TPermission, TTeamMember } from './teamMember.interface';
+import { TeamMemberPermission, TeamMemberRole } from './teamMember.constant';
 
 const teamMemberSchema = new Schema<TTeamMember>(
   {
@@ -15,11 +15,22 @@ const teamMemberSchema = new Schema<TTeamMember>(
       ref: 'User',
     },
 
-    name: {
+    firstName: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, 'First Name is required'],
       trim: true,
+      minlength: [3, 'The length of first name can be minimum 3 characters'],
+      maxlength: [20, 'The length of first name can be maximum 20 characters'],
     },
+
+    lastName: {
+      type: String,
+      required: [true, 'Last Name is required'],
+      trim: true,
+      minlength: [3, 'The length of last name can be minimum 3 characters'],
+      maxlength: [20, 'The length of last name can be maximum 20 characters'],
+    },
+
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -51,12 +62,15 @@ const teamMemberSchema = new Schema<TTeamMember>(
       type: String,
       required: true,
     },
-
-    customPermissions: {
-      type: [String],
-      default: undefined,
-    },
-
+    // ✅ core change: typed permissions replace customPermissions
+    // permissions: {
+    //   type: [String],
+    //   enum: {
+    //     values: TeamMemberPermission,  // ✅ constant থেকে array
+    //     message: '{VALUE} is not a valid permission',
+    //   },
+    //   default: [],
+    // },
     timeZone: {
       type: String,
       required: [true, 'Time zone is required'],
@@ -81,5 +95,13 @@ const teamMemberSchema = new Schema<TTeamMember>(
     timestamps: true,
   },
 );
+
+// ✅ role assign automatically permissions set
+// teamMemberSchema.pre('save', function (next) {
+//   if (this.isModified('role')) {
+//     this.permissions = TeamMemberPermission[this.role] as TPermission[];
+//   }
+//   next();
+// });
 
 export const TeamMember = model<TTeamMember>('TeamMember', teamMemberSchema);

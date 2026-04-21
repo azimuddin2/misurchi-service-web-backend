@@ -112,6 +112,11 @@ const vendorSchema = new Schema<TVendor>(
       type: Number,
       default: 0,
     },
+    teamMembers: {
+      type: [Schema.Types.ObjectId],
+      ref: 'TeamMember',
+      default: [],
+    },
     isDeleted: {
       type: Boolean,
       default: false,

@@ -156,7 +156,11 @@ const userSchema = new Schema<TUser, UserModel>(
       type: Boolean,
       default: false,
     },
-
+    vendorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Vendor',
+      default: null,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

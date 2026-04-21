@@ -135,40 +135,48 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
   }
 
   const otp = generateOtp();
-  const expiresAt = moment().add(3, 'minutes').toDate();
+  const expiresAt = moment().add(5, 'minutes').toDate();
 
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
 
-    const userData = {
-      ...payload,
-      role: 'vendor',
-      isVerified: false,
-      verification: {
-        otp,
-        expiresAt,
-        status: false,
-      },
-    };
-
-    const createdUser = await User.create([userData], { session });
+    const createdUser = await User.create(
+      [
+        {
+          ...payload,
+          role: 'vendor',
+          isVerified: false,
+          verification: { otp, expiresAt, status: false },
+        },
+      ],
+      { session },
+    );
     if (!createdUser.length) {
       throw new AppError(400, 'Failed to create user');
     }
 
-    const vendorData = {
-      ...payload,
-      userId: createdUser?.map((user) => user._id),
-    };
-
-    const createdVendor = await Vendor.create([vendorData], { session });
+    const createdVendor = await Vendor.create(
+      [
+        {
+          ...payload,
+          userId: createdUser[0]._id, // ✅ map() → [0]._id
+        },
+      ],
+      { session },
+    );
     if (!createdVendor.length) {
       throw new AppError(400, 'Failed to create vendor');
     }
 
-    // ✅ Generate JWT Token
+    // ✅ User document vendorId set
+    await User.findByIdAndUpdate(
+      createdUser[0]._id,
+      { vendorId: createdVendor[0]._id },
+      { session },
+    );
+
     const jwtPayload: TJwtPayload = {
       userId: createdUser[0]._id,
       name: createdUser[0].fullName,
@@ -183,7 +191,6 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
       '5m',
     );
 
-    // ✅ Send OTP Email
     await sendEmail(
       payload.email,
       'Your OTP Code',
@@ -244,11 +251,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
     await session.commitTransaction();
     session.endSession();
 
-    // ✅ Return both vendor and token if needed
-    return {
-      // vendor: createdVendor[0],
-      accessToken,
-    };
+    return { accessToken };
   } catch (error: any) {
     await session.abortTransaction();
     session.endSession();

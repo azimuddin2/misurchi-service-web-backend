@@ -28,7 +28,7 @@ import { ImageUploadRoutes } from '../modules/imageUpload/imageUpload.route';
 import { StripeRoute } from '../modules/stripe/stripe.route';
 import { CancellationPolicyRoutes } from '../modules/cancellationPolicy/cancellationPolicy.route';
 import { ReturnPolicyRoutes } from '../modules/returnPolicy/returnPolicy.route';
-// import { TeamMemberRoutes } from '../modules/teamMember/teamMember.route';
+import { TeamMemberRoutes } from '../modules/teamMember/teamMember.route';
 
 const router = Router();
 
@@ -69,10 +69,10 @@ const moduleRoutes = [
     path: '/services',
     route: PackagesRoutes,
   },
-  // {
-  //   path: '/team-members',
-  //   route: TeamMemberRoutes,
-  // },
+  {
+    path: '/team-members',
+    route: TeamMemberRoutes,
+  },
   {
     path: '/tasks',
     route: TaskRoutes,

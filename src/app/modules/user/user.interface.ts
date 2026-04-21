@@ -1,7 +1,7 @@
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
 
-export type TRole = 'user' | 'vendor' | 'admin';
+export type TRole = 'user' | 'vendor' | 'admin' | 'team_member';
 
 export type TStatus = 'ongoing' | 'confirmed' | 'blocked';
 
@@ -47,6 +47,8 @@ export type TUser = {
   // 🔹 Stripe (Vendor / Connect)
   stripeAccountId?: string;
   stripeOnboardingComplete?: boolean;
+
+  vendorId?: Types.ObjectId;
 
   isDeleted: boolean;
 };
