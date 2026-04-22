@@ -14,6 +14,8 @@ import bcrypt from 'bcrypt';
 import { generateOtp } from '../../utils/generateOtp';
 import moment from 'moment';
 import { sendEmail } from '../../utils/sendEmail';
+import { Vendor } from '../vendor/vendor.model';
+import { TeamMember } from '../teamMember/teamMember.model';
 
 const loginUser = async (payload: TLoginUser) => {
   const user = await User.findOne({ email: payload.email });
@@ -30,7 +32,6 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(403, 'This user is blocked!');
   }
 
-  // checking if the password is correct
   const isPasswordMatched = await User.isPasswordMatched(
     payload?.password,
     user?.password,
@@ -39,13 +40,36 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(403, 'Password do not matched!');
   }
 
-  // create token and sent to the client
+  // ✅ vendorId + permissions বের করো
+  let permissions: string[] = [];
+  let vendorId: string | undefined = undefined;
+
+  // Vendor login করলে
+  if (user.role === 'vendor') {
+    const vendor = await Vendor.findOne({ userId: user._id }).select('_id');
+    vendorId = vendor?._id.toString();
+  }
+
+  // Team member login করলে
+  if (user.role === 'team_member') {
+    const teamMember = await TeamMember.findOne({
+      user: user._id,
+      isActive: true,
+      isDeleted: false,
+    }).select('permissions vendor');
+
+    vendorId = teamMember?.vendor.toString();
+    permissions = teamMember?.permissions ?? [];
+  }
+
   const jwtPayload: TJwtPayload = {
     userId: user._id.toString(),
     name: user?.fullName,
     email: user?.email,
     role: user?.role,
     image: user?.image,
+    vendorId, // ✅ নতুন
+    permissions, // ✅ নতুন
   };
 
   const accessToken = createToken(

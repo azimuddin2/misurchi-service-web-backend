@@ -1,6 +1,10 @@
 import { model, Schema } from 'mongoose';
-import { TPermission, TTeamMember } from './teamMember.interface';
-import { TeamMemberPermission, TeamMemberRole } from './teamMember.constant';
+import { TTeamMember } from './teamMember.interface';
+import {
+  AllPermissions,
+  TeamMemberPermission,
+  TeamMemberRole,
+} from './teamMember.constant';
 
 const teamMemberSchema = new Schema<TTeamMember>(
   {
@@ -38,6 +42,7 @@ const teamMemberSchema = new Schema<TTeamMember>(
       lowercase: true,
       unique: true,
     },
+
     phone: {
       type: String,
       required: [true, 'Phone is required'],
@@ -62,15 +67,16 @@ const teamMemberSchema = new Schema<TTeamMember>(
       type: String,
       required: true,
     },
-    // ✅ core change: typed permissions replace customPermissions
-    // permissions: {
-    //   type: [String],
-    //   enum: {
-    //     values: TeamMemberPermission,  // ✅ constant থেকে array
-    //     message: '{VALUE} is not a valid permission',
-    //   },
-    //   default: [],
-    // },
+
+    permissions: {
+      type: [String],
+      enum: {
+        values: AllPermissions, // ✅ flat array — Record না
+        message: '{VALUE} is not a valid permission',
+      },
+      default: [],
+    },
+
     timeZone: {
       type: String,
       required: [true, 'Time zone is required'],
@@ -96,12 +102,13 @@ const teamMemberSchema = new Schema<TTeamMember>(
   },
 );
 
-// ✅ role assign automatically permissions set
-// teamMemberSchema.pre('save', function (next) {
-//   if (this.isModified('role')) {
-//     this.permissions = TeamMemberPermission[this.role] as TPermission[];
-//   }
-//   next();
-// });
+// ✅ pre-save hook uncomment করে fix করা হয়েছে
+// Create হলে role দেখে permissions auto set হবে
+teamMemberSchema.pre('save', function (next) {
+  if (this.isNew) {
+    this.permissions = TeamMemberPermission[this.role];
+  }
+  next();
+});
 
 export const TeamMember = model<TTeamMember>('TeamMember', teamMemberSchema);

@@ -24,7 +24,7 @@ export type TTeamMember = {
   image: string;
   role: TTeamMemberRole;
   speciality: string;
-  // permissions?: TPermission[];
+  permissions?: TPermission[];
   timeZone: string;
   workHours: string;
   isActive: boolean;

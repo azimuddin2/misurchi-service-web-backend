@@ -8,20 +8,279 @@ import { TeamMember } from './teamMember.model';
 import { User } from '../user/user.model';
 import { sendEmail } from '../../utils/sendEmail';
 import QueryBuilder from '../../builder/QueryBuilder';
-import { teamMemberSearchableFields } from './teamMember.constant';
+import {
+  TeamMemberPermission,
+  teamMemberSearchableFields,
+} from './teamMember.constant';
+import {
+  buildEmailWithoutPassword,
+  buildEmailWithPassword,
+} from './teamMember.utils';
+
+// const createTeamMemberIntoDB = async (
+//   vendorUserId: string,
+//   payload: TTeamMember,
+//   file: any,
+// ) => {
+//   // Find the vendor by the logged-in user's ID (from JWT)
+//   const vendor = await Vendor.findOne({ userId: vendorUserId });
+//   if (!vendor) {
+//     throw new AppError(404, 'Vendor not found');
+//   }
+
+//   // 📸 Handle single image upload to S3
+//   if (file) {
+//     const uploadedUrl = await uploadToS3({
+//       file,
+//       fileName: `images/team/${Math.floor(100000 + Math.random() * 900000)}`,
+//     });
+//     payload.image = uploadedUrl as string;
+//   }
+
+//   // Generate a strong temporary password for new users
+//   const tempPassword = generateStrongPassword();
+
+//   const session = await mongoose.startSession();
+
+//   try {
+//     session.startTransaction();
+
+//     // Check if a user with this email already exists in the system
+//     const existingUser = await User.findOne({ email: payload.email });
+
+//     if (existingUser) {
+//       // Case 2: normal user → reject (they have their own account)
+//       if (existingUser.role === 'user') {
+//         throw new AppError(
+//           409,
+//           `${payload.email} is already a registered user.`,
+//         );
+//       }
+
+//       // Case 3a: vendor → reject
+//       if (existingUser.role === 'vendor') {
+//         throw new AppError(
+//           409,
+//           `${payload.email} is already a registered vendor.`,
+//         );
+//       }
+
+//       // Case 3b: admin → reject
+//       if (existingUser.role === 'admin') {
+//         throw new AppError(409, `${payload.email} is already an admin.`);
+//       }
+
+//       // Case 4: already a team member of THIS vendor → reject
+//       if (existingUser.role === 'team_member') {
+//         const alreadyTeamMember = await TeamMember.findOne({
+//           user: existingUser._id,
+//           vendor: vendor._id,
+//         });
+//         if (alreadyTeamMember) {
+//           throw new AppError(
+//             409,
+//             `${payload.email} is already your team member.`,
+//           );
+//         }
+//       }
+//     }
+
+//     let userId: any;
+//     let shouldSendPassword = false;
+
+//     if (!existingUser) {
+//       // Case 1: No user found → create a brand new user with team_member role
+//       const createdUser = await User.create(
+//         [
+//           {
+//             firstName: payload.firstName,
+//             lastName: payload.lastName,
+//             email: payload.email,
+//             phone: payload.phone ?? '',
+//             password: tempPassword,
+//             confirmPassword: tempPassword,
+//             role: 'team_member',
+//             needsPasswordChange: true, // Force password change on first login
+//             isVerified: true, // Skip OTP — vendor already verified them
+//             vendorId: vendor._id, // Link to this vendor
+//           },
+//         ],
+//         { session },
+//       );
+//       if (!createdUser.length) {
+//         throw new AppError(400, 'Failed to create user');
+//       }
+
+//       userId = createdUser[0]._id;
+//       shouldSendPassword = true; // Send temporary password via email
+//     } else {
+//       // Case 5: team_member of ANOTHER vendor → update vendorId only
+//       await User.findByIdAndUpdate(
+//         existingUser._id,
+//         {
+//           vendorId: vendor._id, // Switch to this vendor
+//           needsPasswordChange: false, // They already know their password
+//         },
+//         { session },
+//       );
+
+//       userId = existingUser._id;
+//       shouldSendPassword = false; // No need to send password
+//     }
+
+//     // Create the TeamMember document
+//     // Note: pre-save hook will auto-set permissions based on role
+//     const createdTeamMember = await TeamMember.create(
+//       [
+//         {
+//           vendor: vendor._id,
+//           user: userId,
+//           firstName: payload.firstName,
+//           lastName: payload.lastName,
+//           email: payload.email,
+//           phone: payload.phone,
+//           image: payload.image,
+//           role: payload.role,
+//           speciality: payload.speciality,
+//           timeZone: payload.timeZone,
+//           workHours: payload.workHours,
+//         },
+//       ],
+//       { session },
+//     );
+//     if (!createdTeamMember.length) {
+//       throw new AppError(400, 'Failed to create team member');
+//     }
+
+//     // Add the new team member reference to the vendor's teamMembers array
+//     await Vendor.findByIdAndUpdate(
+//       vendor._id,
+//       { $push: { teamMembers: createdTeamMember[0]._id } },
+//       { session },
+//     );
+
+//     if (shouldSendPassword) {
+//       // Case 1 — New user: send email with temporary credentials
+//       await sendEmail(
+//         payload.email,
+//         'You have been added as a team member',
+//         `
+//         <!DOCTYPE html>
+//         <html lang="en">
+//         <head><meta charset="UTF-8"/><title>Team Member Invitation</title></head>
+//         <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
+//           <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
+//             <tr><td align="center">
+//               <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;padding:40px;border-radius:8px;">
+//                 <tr>
+//                   <td align="center" style="padding-bottom:20px;">
+//                     <h2 style="color:#007BFF;margin:0;">You're added as a Team Member</h2>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="font-size:16px;color:#333;text-align:center;padding-bottom:20px;">
+//                     <p>You have been added as <strong>${payload.role}</strong> by <strong>${vendor.businessName}</strong>.</p>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td align="center" style="padding:20px 0;">
+//                     <div style="background:#f8f8f8;padding:20px;border-radius:6px;text-align:left;">
+//                       <p style="margin:0 0 8px;"><strong>Email:</strong> ${payload.email}</p>
+//                       <p style="margin:0 0 8px;"><strong>Temporary Password:</strong>
+//                         <span style="font-size:18px;font-weight:bold;color:#007BFF;letter-spacing:2px;">
+//                           ${tempPassword}
+//                         </span>
+//                       </p>
+//                     </div>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="font-size:14px;color:#666;text-align:center;">
+//                     <p>Please change your password after first login.</p>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="padding-top:30px;text-align:center;">
+//                     <p style="font-size:12px;color:#ccc;margin:0;">&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+//                   </td>
+//                 </tr>
+//               </table>
+//             </td></tr>
+//           </table>
+//         </body>
+//         </html>
+//         `,
+//       );
+//     } else {
+//       // Case 5 — Existing team_member: notify without credentials
+//       await sendEmail(
+//         payload.email,
+//         'You have been added as a team member',
+//         `
+//         <!DOCTYPE html>
+//         <html lang="en">
+//         <head><meta charset="UTF-8"/><title>Team Member Invitation</title></head>
+//         <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
+//           <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
+//             <tr><td align="center">
+//               <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;padding:40px;border-radius:8px;">
+//                 <tr>
+//                   <td align="center" style="padding-bottom:20px;">
+//                     <h2 style="color:#007BFF;margin:0;">You're added as a Team Member</h2>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="font-size:16px;color:#333;text-align:center;padding-bottom:20px;">
+//                     <p>You have been added as <strong>${payload.role}</strong> by <strong>${vendor.businessName}</strong>.</p>
+//                     <p>Login with your existing credentials.</p>
+//                   </td>
+//                 </tr>
+//                 <tr>
+//                   <td style="padding-top:30px;text-align:center;">
+//                     <p style="font-size:12px;color:#ccc;margin:0;">&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
+//                   </td>
+//                 </tr>
+//               </table>
+//             </td></tr>
+//           </table>
+//         </body>
+//         </html>
+//         `,
+//       );
+//     }
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     return { teamMember: createdTeamMember[0] };
+//   } catch (error: any) {
+//     // Rollback all DB changes if anything fails
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw new AppError(500, error.message || 'Failed to create team member');
+//   }
+// };
+
+// ─────────────────────────────────────────
+// Email Builders
+// ─────────────────────────────────────────
+
+// ─────────────────────────────────────────
+// Create Team Member
+// ─────────────────────────────────────────
 
 const createTeamMemberIntoDB = async (
   vendorUserId: string,
   payload: TTeamMember,
   file: any,
 ) => {
-  // Find the vendor by the logged-in user's ID (from JWT)
+  // Vendor get
   const vendor = await Vendor.findOne({ userId: vendorUserId });
   if (!vendor) {
     throw new AppError(404, 'Vendor not found');
   }
 
-  // 📸 Handle single image upload to S3
+  // Image upload to S3
   if (file) {
     const uploadedUrl = await uploadToS3({
       file,
@@ -30,59 +289,41 @@ const createTeamMemberIntoDB = async (
     payload.image = uploadedUrl as string;
   }
 
-  // Generate a strong temporary password for new users
   const tempPassword = generateStrongPassword();
-
   const session = await mongoose.startSession();
 
   try {
     session.startTransaction();
 
-    // Check if a user with this email already exists in the system
     const existingUser = await User.findOne({ email: payload.email });
 
+    // ── user / vendor / admin Reject ──
     if (existingUser) {
-      // Case 2: normal user → reject (they have their own account)
       if (existingUser.role === 'user') {
         throw new AppError(
           409,
           `${payload.email} is already a registered user.`,
         );
       }
-
-      // Case 3a: vendor → reject
       if (existingUser.role === 'vendor') {
         throw new AppError(
           409,
           `${payload.email} is already a registered vendor.`,
         );
       }
-
-      // Case 3b: admin → reject
       if (existingUser.role === 'admin') {
         throw new AppError(409, `${payload.email} is already an admin.`);
-      }
-
-      // Case 4: already a team member of THIS vendor → reject
-      if (existingUser.role === 'team_member') {
-        const alreadyTeamMember = await TeamMember.findOne({
-          user: existingUser._id,
-          vendor: vendor._id,
-        });
-        if (alreadyTeamMember) {
-          throw new AppError(
-            409,
-            `${payload.email} is already your team member.`,
-          );
-        }
       }
     }
 
     let userId: any;
     let shouldSendPassword = false;
+    let teamMemberDocId: any;
 
+    // ─────────────────────────────────────────
+    // Case 1: সম্পূর্ণ নতুন user
+    // ─────────────────────────────────────────
     if (!existingUser) {
-      // Case 1: No user found → create a brand new user with team_member role
       const createdUser = await User.create(
         [
           {
@@ -93,9 +334,9 @@ const createTeamMemberIntoDB = async (
             password: tempPassword,
             confirmPassword: tempPassword,
             role: 'team_member',
-            needsPasswordChange: true, // Force password change on first login
-            isVerified: true, // Skip OTP — vendor already verified them
-            vendorId: vendor._id, // Link to this vendor
+            needsPasswordChange: true,
+            isVerified: true,
+            vendorId: vendor._id,
           },
         ],
         { session },
@@ -105,149 +346,143 @@ const createTeamMemberIntoDB = async (
       }
 
       userId = createdUser[0]._id;
-      shouldSendPassword = true; // Send temporary password via email
+      shouldSendPassword = true;
+
+      // New TeamMember doc
+      // pre-save hook চলবে → permissions auto set
+      const createdTeamMember = await TeamMember.create(
+        [
+          {
+            vendor: vendor._id,
+            user: userId,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            email: payload.email,
+            phone: payload.phone,
+            image: payload.image,
+            role: payload.role,
+            speciality: payload.speciality,
+            timeZone: payload.timeZone,
+            workHours: payload.workHours,
+            // ✅ permissions দিতে হবে না — pre-save hook দেবে
+          },
+        ],
+        { session },
+      );
+      if (!createdTeamMember.length) {
+        throw new AppError(400, 'Failed to create team member');
+      }
+
+      teamMemberDocId = createdTeamMember[0]._id;
+
+      // ─────────────────────────────────────────
+      // Case 2: Existing team_member
+      // ─────────────────────────────────────────
     } else {
-      // Case 5: team_member of ANOTHER vendor → update vendorId only
+      userId = existingUser._id;
+
+      // এই user এর TeamMember doc খোঁজো
+      const existingTeamMember = await TeamMember.findOne({
+        user: existingUser._id,
+      });
+
+      // Same vendor এ already আছে → Reject
+      if (
+        existingTeamMember &&
+        existingTeamMember.vendor.toString() === vendor._id.toString()
+      ) {
+        throw new AppError(
+          409,
+          `${payload.email} is already your team member.`,
+        );
+      }
+
+      if (existingTeamMember) {
+        // ✅ পুরনো vendor এর teamMembers[] থেকে remove করো
+        await Vendor.findByIdAndUpdate(
+          existingTeamMember.vendor,
+          { $pull: { teamMembers: existingTeamMember._id } },
+          { session },
+        );
+
+        // ✅ Same doc update — নতুন বানাবো না
+        // findByIdAndUpdate এ pre-save hook চলে না
+        // তাই permissions manually set করতে হবে
+        await TeamMember.findByIdAndUpdate(
+          existingTeamMember._id,
+          {
+            vendor: vendor._id,
+            role: payload.role,
+            permissions: TeamMemberPermission[payload.role], // ✅ manual set
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            phone: payload.phone,
+            image: payload.image,
+            speciality: payload.speciality,
+            timeZone: payload.timeZone,
+            workHours: payload.workHours,
+            isActive: true,
+          },
+          { session },
+        );
+
+        teamMemberDocId = existingTeamMember._id;
+      } else {
+        // User আছে কিন্তু TeamMember doc নেই (edge case)
+        // pre-save hook চলবে → permissions auto set হবে
+        const createdTeamMember = await TeamMember.create(
+          [
+            {
+              vendor: vendor._id,
+              user: userId,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              email: payload.email,
+              phone: payload.phone,
+              image: payload.image,
+              role: payload.role,
+              speciality: payload.speciality,
+              timeZone: payload.timeZone,
+              workHours: payload.workHours,
+            },
+          ],
+          { session },
+        );
+
+        teamMemberDocId = createdTeamMember[0]._id;
+      }
+
+      // User এর vendorId update করো
       await User.findByIdAndUpdate(
         existingUser._id,
-        {
-          vendorId: vendor._id, // Switch to this vendor
-          needsPasswordChange: false, // They already know their password
-        },
+        { vendorId: vendor._id },
         { session },
       );
 
-      userId = existingUser._id;
-      shouldSendPassword = false; // No need to send password
+      shouldSendPassword = false;
     }
 
-    // Create the TeamMember document
-    // Note: pre-save hook will auto-set permissions based on role
-    const createdTeamMember = await TeamMember.create(
-      [
-        {
-          vendor: vendor._id,
-          user: userId,
-          firstName: payload.firstName,
-          lastName: payload.lastName,
-          email: payload.email,
-          phone: payload.phone,
-          image: payload.image,
-          role: payload.role,
-          speciality: payload.speciality,
-          timeZone: payload.timeZone,
-          workHours: payload.workHours,
-        },
-      ],
-      { session },
-    );
-    if (!createdTeamMember.length) {
-      throw new AppError(400, 'Failed to create team member');
-    }
-
-    // Add the new team member reference to the vendor's teamMembers array
+    // ✅ নতুন vendor এর teamMembers[] তে add করো
     await Vendor.findByIdAndUpdate(
       vendor._id,
-      { $push: { teamMembers: createdTeamMember[0]._id } },
+      { $push: { teamMembers: teamMemberDocId } },
       { session },
     );
 
-    if (shouldSendPassword) {
-      // Case 1 — New user: send email with temporary credentials
-      await sendEmail(
-        payload.email,
-        'You have been added as a team member',
-        `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head><meta charset="UTF-8"/><title>Team Member Invitation</title></head>
-        <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
-            <tr><td align="center">
-              <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;padding:40px;border-radius:8px;">
-                <tr>
-                  <td align="center" style="padding-bottom:20px;">
-                    <h2 style="color:#007BFF;margin:0;">You're added as a Team Member</h2>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size:16px;color:#333;text-align:center;padding-bottom:20px;">
-                    <p>You have been added as <strong>${payload.role}</strong> by <strong>${vendor.businessName}</strong>.</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding:20px 0;">
-                    <div style="background:#f8f8f8;padding:20px;border-radius:6px;text-align:left;">
-                      <p style="margin:0 0 8px;"><strong>Email:</strong> ${payload.email}</p>
-                      <p style="margin:0 0 8px;"><strong>Temporary Password:</strong>
-                        <span style="font-size:18px;font-weight:bold;color:#007BFF;letter-spacing:2px;">
-                          ${tempPassword}
-                        </span>
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size:14px;color:#666;text-align:center;">
-                    <p>Please change your password after first login.</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top:30px;text-align:center;">
-                    <p style="font-size:12px;color:#ccc;margin:0;">&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
-                  </td>
-                </tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-        `,
-      );
-    } else {
-      // Case 5 — Existing team_member: notify without credentials
-      await sendEmail(
-        payload.email,
-        'You have been added as a team member',
-        `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head><meta charset="UTF-8"/><title>Team Member Invitation</title></head>
-        <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
-            <tr><td align="center">
-              <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;padding:40px;border-radius:8px;">
-                <tr>
-                  <td align="center" style="padding-bottom:20px;">
-                    <h2 style="color:#007BFF;margin:0;">You're added as a Team Member</h2>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size:16px;color:#333;text-align:center;padding-bottom:20px;">
-                    <p>You have been added as <strong>${payload.role}</strong> by <strong>${vendor.businessName}</strong>.</p>
-                    <p>Login with your existing credentials.</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top:30px;text-align:center;">
-                    <p style="font-size:12px;color:#ccc;margin:0;">&copy; ${new Date().getFullYear()} Your Company. All rights reserved.</p>
-                  </td>
-                </tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-        `,
-      );
-    }
+    // ✅ Email send
+    await sendEmail(
+      payload.email,
+      'You have been added as a team member',
+      shouldSendPassword
+        ? buildEmailWithPassword(payload, vendor, tempPassword)
+        : buildEmailWithoutPassword(payload, vendor),
+    );
 
     await session.commitTransaction();
     session.endSession();
 
-    return { teamMember: createdTeamMember[0] };
+    return { teamMember: await TeamMember.findById(teamMemberDocId) };
   } catch (error: any) {
-    // Rollback all DB changes if anything fails
     await session.abortTransaction();
     session.endSession();
     throw new AppError(500, error.message || 'Failed to create team member');
@@ -262,9 +497,7 @@ const getAllTeamMemberFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted teams
-  let teamQuery = TeamMember.find({ vendor, isDeleted: false }).populate(
-    'vendor',
-  );
+  let teamQuery = TeamMember.find({ vendor, isDeleted: false });
 
   const queryBuilder = new QueryBuilder(teamQuery, filters)
     .search(teamMemberSearchableFields)
