@@ -12,8 +12,8 @@ export type TJwtPayload = {
   email: string;
   role: TRole;
   image?: string;
-  vendorId?: string; // ✅ নতুন
-  permissions?: string[]; // ✅ নতুন
+  vendorId?: string;
+  permissions?: string[];
   iat?: number;
   exp?: number;
 };

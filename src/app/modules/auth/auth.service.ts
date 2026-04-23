@@ -96,16 +96,15 @@ const refreshToken = async (token: string) => {
   }
 
   const decoded = verifyToken(token, config.jwt_refresh_secret as string);
+  const { email } = decoded;
 
-  const { email, iat } = decoded;
-
-  const user = await User.findOne({ email: email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw new AppError(404, 'This user is not found!');
   }
 
-  if (user?.isDeleted === true) {
+  if (user?.isDeleted) {
     throw new AppError(403, 'This user is deleted!');
   }
 
@@ -113,13 +112,35 @@ const refreshToken = async (token: string) => {
     throw new AppError(403, 'This user is blocked!');
   }
 
-  // create token and sent to the client
+  // ✅ vendorId + permissions resolve
+  let vendorId: string | undefined = undefined;
+  let permissions: string[] = [];
+
+  if (user.role === 'vendor') {
+    const vendor = await Vendor.findOne({ userId: user._id }).select('_id');
+    vendorId = vendor?._id?.toString();
+  }
+
+  if (user.role === 'team_member') {
+    const teamMember = await TeamMember.findOne({
+      user: user._id,
+      isActive: true,
+      isDeleted: false,
+    }).select('permissions vendor');
+
+    vendorId = teamMember?.vendor?.toString();
+    permissions = teamMember?.permissions ?? [];
+  }
+
+  // ✅ unified JWT payload (same as login)
   const jwtPayload: TJwtPayload = {
     userId: user._id.toString(),
-    name: user?.fullName,
-    email: user?.email,
-    role: user?.role,
-    image: user?.image,
+    name: user.fullName,
+    email: user.email,
+    role: user.role,
+    image: user.image,
+    vendorId,
+    permissions,
   };
 
   const accessToken = createToken(
