@@ -15,7 +15,7 @@ router.get('/:id', VendorControllers.getVendorUserById);
 
 router.get(
   '/profile/:email',
-  auth('vendor', 'admin', 'user'),
+  auth('vendor', 'admin', 'user', 'team_member'),
   VendorControllers.getVendorProfile,
 );
 
@@ -46,25 +46,25 @@ router.get(
 
 router.get(
   '/vendor-stats/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   VendorControllers.getVendorDashboardStats,
 );
 
 router.get(
   '/vendor-sales-overview/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   VendorControllers.getVendorSalesOverviewChart,
 );
 
 router.get(
   '/appointments-overview/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   VendorControllers.getAppointmentsOverviewRate,
 );
 
 router.get(
   '/vendor-data/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   VendorControllers.getVendorDashboardData,
 );
 

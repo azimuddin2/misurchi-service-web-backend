@@ -16,7 +16,11 @@ router.post(
   OrderControllers.createOrder,
 );
 
-router.get('/', auth('vendor'), OrderControllers.getAllOrderByUser);
+router.get(
+  '/',
+  auth('vendor', 'team_member'),
+  OrderControllers.getAllOrderByUser,
+);
 
 router.get('/user', auth('user'), OrderControllers.getOrdersByEmail);
 

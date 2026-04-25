@@ -5,7 +5,7 @@ import { PaymentController } from './payment.controller';
 
 const router = Router();
 
-router.get('/', auth('vendor'), PaymentController.getAllPayment);
+router.get('/', auth('vendor', 'team_member'), PaymentController.getAllPayment);
 
 router.post('/checkout', auth(USER_ROLE.user), PaymentController.createPayment);
 

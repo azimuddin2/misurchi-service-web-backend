@@ -4,6 +4,7 @@ export const USER_ROLE = {
   vendor: 'vendor',
   user: 'user',
   admin: 'admin',
+  team_member: 'team_member',
 } as const;
 
 export const UserRole: TRole[] = ['vendor', 'user', 'admin', 'team_member'];

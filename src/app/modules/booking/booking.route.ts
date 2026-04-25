@@ -19,7 +19,11 @@ router.get(
   BookingControllers.getBookingAppointments,
 );
 
-router.get('/', auth('vendor'), BookingControllers.getAllBookingByUser);
+router.get(
+  '/',
+  auth('vendor', 'team_member'),
+  BookingControllers.getAllBookingByVendor,
+);
 
 router.get('/user', auth('user'), BookingControllers.getBookingsByEmail);
 

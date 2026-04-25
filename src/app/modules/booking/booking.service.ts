@@ -114,7 +114,7 @@ const createBookingIntoDB = async (payload: TBooking) => {
   return booking;
 };
 
-const getAllBookingByUserFromDB = async (query: Record<string, unknown>) => {
+const getAllBookingByVendorFromDB = async (query: Record<string, unknown>) => {
   const { vendor, requestType, ...filters } = query;
 
   if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
@@ -354,7 +354,7 @@ export const BookingServices = {
   getBookingsByEmailFromDB,
   getBookingByIdFromDB,
   updateBookingRequestIntoDB,
-  getAllBookingByUserFromDB,
+  getAllBookingByVendorFromDB,
   getBookingAppointmentsFromDB,
   bookingApprovedRequestIntoDB,
   bookingAssignedToMemberIntoDB,

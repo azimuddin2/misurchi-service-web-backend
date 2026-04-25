@@ -13,7 +13,7 @@ router.post(
   TaskControllers.createTask,
 );
 
-router.get('/', auth('vendor'), TaskControllers.getAllTasks);
+router.get('/', auth('vendor', 'team_member'), TaskControllers.getAllTasks);
 
 router.get('/:id', auth('vendor', 'admin'), TaskControllers.getTaskById);
 

@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { TVendor } from '../vendor/vendor.interface';
 
 export type TTeamMemberRole = 'team_member' | 'manager' | 'supervisor';
 
@@ -15,7 +16,7 @@ export type TPermission =
 
 export type TTeamMember = {
   _id?: string;
-  vendor: Types.ObjectId;
+  vendor: Types.ObjectId | TVendor;
   user?: Types.ObjectId;
   firstName: string;
   lastName: string;

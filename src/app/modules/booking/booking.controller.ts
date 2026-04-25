@@ -13,8 +13,8 @@ const createBooking = catchAsync(async (req, res) => {
   });
 });
 
-const getAllBookingByUser = catchAsync(async (req, res) => {
-  const result = await BookingServices.getAllBookingByUserFromDB(req.query);
+const getAllBookingByVendor = catchAsync(async (req, res) => {
+  const result = await BookingServices.getAllBookingByVendorFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -120,7 +120,7 @@ const updateBookingStatus = catchAsync(async (req, res) => {
 
 export const BookingControllers = {
   createBooking,
-  getAllBookingByUser,
+  getAllBookingByVendor,
   getBookingAppointments,
   getBookingsByEmail,
   getBookingById,

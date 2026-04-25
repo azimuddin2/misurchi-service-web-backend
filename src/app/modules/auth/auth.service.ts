@@ -16,60 +16,64 @@ import moment from 'moment';
 import { sendEmail } from '../../utils/sendEmail';
 import { Vendor } from '../vendor/vendor.model';
 import { TeamMember } from '../teamMember/teamMember.model';
+import { TTeamMemberRole } from '../teamMember/teamMember.interface';
 
 const loginUser = async (payload: TLoginUser) => {
   const user = await User.findOne({ email: payload.email });
 
-  if (!user) {
-    throw new AppError(404, 'This user is not found!');
-  }
-
-  if (user?.isDeleted === true) {
-    throw new AppError(403, 'This user is deleted!');
-  }
-
-  if (user?.status === 'blocked') {
+  if (!user) throw new AppError(404, 'This user is not found!');
+  if (user.isDeleted) throw new AppError(403, 'This user is deleted!');
+  if (user.status === 'blocked')
     throw new AppError(403, 'This user is blocked!');
-  }
 
   const isPasswordMatched = await User.isPasswordMatched(
-    payload?.password,
-    user?.password,
+    payload.password,
+    user.password,
   );
-  if (!isPasswordMatched) {
-    throw new AppError(403, 'Password do not matched!');
-  }
+  if (!isPasswordMatched) throw new AppError(403, 'Password do not matched!');
 
-  // ✅ vendorId + permissions বের করো
-  let permissions: string[] = [];
   let vendorId: string | undefined = undefined;
+  let vendorEmail: string | undefined = undefined;
+  let permissions: string[] = [];
+  let teamRole: TTeamMemberRole | undefined = undefined;
 
-  // Vendor login করলে
+  // ✅ vendor এর জন্য vendorId
   if (user.role === 'vendor') {
-    const vendor = await Vendor.findOne({ userId: user._id }).select('_id');
+    const vendor = await Vendor.findOne({ userId: user._id }).select(
+      '_id email',
+    );
     vendorId = vendor?._id.toString();
+    vendorEmail = vendor?.email;
   }
 
-  // Team member login করলে
+  // ✅ team_member এর জন্য extra fields
   if (user.role === 'team_member') {
     const teamMember = await TeamMember.findOne({
       user: user._id,
       isActive: true,
       isDeleted: false,
-    }).select('permissions vendor');
+    })
+      .select('permissions vendor role')
+      .populate('vendor', 'email'); // ✅
 
-    vendorId = teamMember?.vendor.toString();
+    vendorId = (teamMember?.vendor as any)?._id.toString();
+    vendorEmail = (teamMember?.vendor as any)?.email;
     permissions = teamMember?.permissions ?? [];
+    teamRole = teamMember?.role;
   }
+
+  console.log(vendorEmail);
 
   const jwtPayload: TJwtPayload = {
     userId: user._id.toString(),
-    name: user?.fullName,
-    email: user?.email,
-    role: user?.role,
-    image: user?.image,
-    vendorId, // ✅ নতুন
-    permissions, // ✅ নতুন
+    name: user.fullName,
+    email: user.email,
+    role: user.role,
+    image: user.image,
+    vendorId,
+    vendorEmail,
+    permissions,
+    teamRole,
   };
 
   const accessToken = createToken(
@@ -84,10 +88,7 @@ const loginUser = async (payload: TLoginUser) => {
     config.jwt_refresh_expires_in as string,
   );
 
-  return {
-    accessToken,
-    refreshToken,
-  };
+  return { accessToken, refreshToken };
 };
 
 const refreshToken = async (token: string) => {
@@ -100,39 +101,39 @@ const refreshToken = async (token: string) => {
 
   const user = await User.findOne({ email });
 
-  if (!user) {
-    throw new AppError(404, 'This user is not found!');
-  }
-
-  if (user?.isDeleted) {
-    throw new AppError(403, 'This user is deleted!');
-  }
-
-  if (user?.status === 'blocked') {
+  if (!user) throw new AppError(404, 'This user is not found!');
+  if (user?.isDeleted) throw new AppError(403, 'This user is deleted!');
+  if (user?.status === 'blocked')
     throw new AppError(403, 'This user is blocked!');
-  }
 
-  // ✅ vendorId + permissions resolve
   let vendorId: string | undefined = undefined;
+  let vendorEmail: string | undefined = undefined;
   let permissions: string[] = [];
+  let teamRole: TTeamMemberRole | undefined = undefined;
 
+  // ✅ vendor এর জন্য vendorId
   if (user.role === 'vendor') {
     const vendor = await Vendor.findOne({ userId: user._id }).select('_id');
-    vendorId = vendor?._id?.toString();
+    vendorId = vendor?._id.toString();
+    vendorEmail = vendor?.email;
   }
 
+  // ✅ team_member এর জন্য extra fields
   if (user.role === 'team_member') {
     const teamMember = await TeamMember.findOne({
       user: user._id,
       isActive: true,
       isDeleted: false,
-    }).select('permissions vendor');
+    })
+      .select('permissions vendor role')
+      .populate('vendor', 'email'); // ✅
 
-    vendorId = teamMember?.vendor?.toString();
+    vendorId = (teamMember?.vendor as any)?._id.toString();
+    vendorEmail = (teamMember?.vendor as any)?.email;
     permissions = teamMember?.permissions ?? [];
+    teamRole = teamMember?.role;
   }
 
-  // ✅ unified JWT payload (same as login)
   const jwtPayload: TJwtPayload = {
     userId: user._id.toString(),
     name: user.fullName,
@@ -140,7 +141,9 @@ const refreshToken = async (token: string) => {
     role: user.role,
     image: user.image,
     vendorId,
+    vendorEmail,
     permissions,
+    teamRole,
   };
 
   const accessToken = createToken(
@@ -149,9 +152,7 @@ const refreshToken = async (token: string) => {
     config.jwt_access_expires_in as string,
   );
 
-  return {
-    accessToken,
-  };
+  return { accessToken };
 };
 
 const changePassword = async (

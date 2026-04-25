@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongoose';
 import { TRole } from '../user/user.interface';
+import { TTeamMemberRole } from '../teamMember/teamMember.interface';
 
 export type TLoginUser = {
   email: string;
@@ -13,6 +14,8 @@ export type TJwtPayload = {
   role: TRole;
   image?: string;
   vendorId?: string;
+  vendorEmail?: string;
+  teamRole?: TTeamMemberRole;
   permissions?: string[];
   iat?: number;
   exp?: number;
