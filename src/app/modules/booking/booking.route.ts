@@ -15,7 +15,7 @@ router.post(
 
 router.get(
   '/appointments',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   BookingControllers.getBookingAppointments,
 );
 
@@ -38,20 +38,20 @@ router.patch(
 
 router.put(
   '/update-request/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   BookingControllers.bookingApprovedRequest,
 );
 
 router.patch(
   '/assign/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(BookingValidation.assignedMemberValidationSchema),
   BookingControllers.bookingAssignedToMember,
 );
 
 router.put(
   '/update-status/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(BookingValidation.updateBookingStatusValidationSchema),
   BookingControllers.updateBookingStatus,
 );

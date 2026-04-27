@@ -4,15 +4,17 @@ import { TVendor } from '../vendor/vendor.interface';
 export type TTeamMemberRole = 'team_member' | 'manager' | 'supervisor';
 
 export type TPermission =
-  | 'assign_tasks'
-  | 'initiate_refunds'
-  | 'approve_refunds'
+  | 'dashboard'
+  | 'profile'
+  | 'manage_offering'
+  | 'activity_center'
   | 'filter_transactions'
   | 'respond_to_messages'
-  | 'cancel_reschedule_appointments'
-  | 'add_edit_users'
-  | 'assign_discounts'
-  | 'create_edit_offerings';
+  | 'feedback_history'
+  | 'shared_calendar'
+  | 'assign_tasks'
+  | 'team_members'
+  | 'settings';
 
 export type TTeamMember = {
   _id?: string;

@@ -11,7 +11,7 @@ const upload = multer({ storage: memoryStorage() });
 
 router.post(
   '/',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   upload.fields([{ name: 'images', maxCount: 10 }]),
   parseData(),
   validateRequest(PackagesValidations.createPackagesValidationSchema),
@@ -26,25 +26,29 @@ router.get('/:id', PackagesControllers.getPackagesById);
 
 router.patch(
   '/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   upload.fields([{ name: 'images', maxCount: 10 }]),
   parseData(),
   validateRequest(PackagesValidations.updatePackagesValidationSchema),
   PackagesControllers.updatePackages,
 );
 
-router.delete('/:id', PackagesControllers.deletePackages);
+router.delete(
+  '/:id',
+  auth('vendor', 'admin', 'team_member'),
+  PackagesControllers.deletePackages,
+);
 
 router.put(
   '/update-status/:id',
-  auth('admin', 'vendor'),
+  auth('admin', 'vendor', 'team_member'),
   validateRequest(PackagesValidations.updatePackagesStatusValidationSchema),
   PackagesControllers.updatePackagesStatus,
 );
 
 router.put(
   '/highlight-status/:id',
-  auth('admin', 'vendor'),
+  auth('admin', 'vendor', 'team_member'),
   validateRequest(
     PackagesValidations.updatePackagesHighlightStatusValidationSchema,
   ),

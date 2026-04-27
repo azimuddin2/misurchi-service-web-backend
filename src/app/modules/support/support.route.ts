@@ -16,7 +16,7 @@ router.get('/', auth('admin'), SupportControllers.getAllSupport);
 
 router.get(
   '/:email',
-  auth('user', 'vendor'),
+  auth('user', 'vendor', 'team_member'),
   SupportControllers.getSupportByEmail,
 );
 
@@ -31,7 +31,7 @@ router.patch(
 
 router.patch(
   '/:id/helpful',
-  auth('user', 'vendor'),
+  auth('user', 'vendor', 'team_member'),
   validateRequest(SupportValidation.helpfulSupportValidationSchema),
   SupportControllers.supportMarkHelpful,
 );

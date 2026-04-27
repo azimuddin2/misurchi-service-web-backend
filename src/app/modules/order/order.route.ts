@@ -37,14 +37,14 @@ router.patch(
 
 router.put(
   '/update-status/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(OrderValidation.updateOrderStatusValidationSchema),
   OrderControllers.updateOrderStatus,
 );
 
 router.put(
   '/update-request/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   OrderControllers.orderApprovedRequest,
 );
 

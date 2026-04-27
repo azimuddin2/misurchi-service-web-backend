@@ -8,14 +8,14 @@ const router = express.Router();
 
 router.post(
   '/',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(ReturnPolicyValidation.createReturnPolicyValidationSchema),
   ReturnPolicyController.upsertReturnPolicy,
 );
 
 router.get(
   '/:vendorId',
-  auth('user', 'vendor', 'admin'),
+  auth('user', 'vendor', 'team_member', 'admin'),
   ReturnPolicyController.getReturnPolicy,
 );
 

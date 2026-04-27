@@ -11,7 +11,7 @@ const upload = multer({ storage: memoryStorage() });
 
 router.post(
   '/',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   upload.single('image'),
   parseData(),
   validateRequest(TeamMemberValidation.createTeamMemberValidationSchema),
@@ -26,13 +26,13 @@ router.get(
 
 router.get(
   '/:id',
-  auth('vendor', 'admin'),
+  auth('vendor', 'team_member', 'admin'),
   TeamMemberControllers.getTeamMemberById,
 );
 
 router.patch(
   '/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   upload.single('image'),
   parseData(),
   validateRequest(TeamMemberValidation.updateTeamMemberValidationSchema),
@@ -41,7 +41,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  auth('vendor', 'admin'),
+  auth('vendor', 'team_member', 'admin'),
   TeamMemberControllers.deleteTeamMember,
 );
 

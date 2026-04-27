@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.patch(
   '/',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(
     CancellationPolicyValidation.createCancellationPolicyValidationSchema,
   ),
@@ -17,7 +17,7 @@ router.patch(
 
 router.get(
   '/:vendorId',
-  auth('user', 'vendor', 'admin'),
+  auth('user', 'vendor', 'team_member', 'admin'),
   CancellationPolicyController.getCancellationPolicy,
 );
 

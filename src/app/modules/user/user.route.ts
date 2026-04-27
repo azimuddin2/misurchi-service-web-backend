@@ -26,7 +26,7 @@ router.get('/', auth('admin', 'user', 'vendor'), UserControllers.getAllUsers);
 
 router.get(
   '/profile/:email',
-  auth('user', 'vendor', 'admin'),
+  auth('user', 'vendor', 'team_member', 'admin'),
   UserControllers.getUserProfile,
 );
 
@@ -57,7 +57,7 @@ router.put(
 
 router.patch(
   '/update-notifications',
-  auth('admin', 'user', 'vendor'),
+  auth('admin', 'user', 'vendor', 'team_member'),
   validateRequest(UserValidations.notificationSettingsValidationSchema),
   UserControllers.updateNotificationSettings,
 );

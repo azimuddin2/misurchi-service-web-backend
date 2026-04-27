@@ -6,49 +6,53 @@ export const TeamMemberRole: TTeamMemberRole[] = [
   'team_member',
 ];
 
-// teamMember.constant.t
-
-// ✅ Schema enum এর জন্য flat array
 export const AllPermissions: TPermission[] = [
-  'assign_tasks',
-  'initiate_refunds',
-  'approve_refunds',
+  'dashboard',
+  'profile',
+  'manage_offering',
+  'activity_center',
   'filter_transactions',
   'respond_to_messages',
-  'cancel_reschedule_appointments',
-  'add_edit_users',
-  'assign_discounts',
-  'create_edit_offerings',
+  'feedback_history',
+  'shared_calendar',
+  'assign_tasks',
+  'team_members',
+  'settings',
 ];
 
-// ✅ Role → Permissions map
 export const TeamMemberPermission: Record<TTeamMemberRole, TPermission[]> = {
   team_member: [
-    'assign_tasks',
+    'dashboard',
+    'profile',
+    'activity_center',
     'filter_transactions',
     'respond_to_messages',
-    'cancel_reschedule_appointments',
+    'assign_tasks',
   ],
   supervisor: [
-    'assign_tasks',
-    'initiate_refunds',
+    'dashboard',
+    'profile',
+    'manage_offering',
+    'activity_center',
     'filter_transactions',
     'respond_to_messages',
-    'cancel_reschedule_appointments',
-    'add_edit_users',
-    'assign_discounts',
-    'create_edit_offerings',
+    'feedback_history',
+    'shared_calendar',
+    'assign_tasks',
+    'team_members',
   ],
   manager: [
-    'assign_tasks',
-    'initiate_refunds',
-    'approve_refunds',
+    'dashboard',
+    'profile',
+    'manage_offering',
+    'activity_center',
     'filter_transactions',
     'respond_to_messages',
-    'cancel_reschedule_appointments',
-    'add_edit_users',
-    'assign_discounts',
-    'create_edit_offerings',
+    'feedback_history',
+    'shared_calendar',
+    'assign_tasks',
+    'team_members',
+    'settings',
   ],
 };
 
