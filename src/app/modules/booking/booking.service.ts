@@ -123,8 +123,14 @@ const getAllBookingByVendorFromDB = async (query: Record<string, unknown>) => {
 
   // Base query -> always exclude deleted service
   let bookingQuery = Booking.find({ vendor, isDeleted: false })
-    .populate('vendor')
-    .populate('service');
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone',
+    })
+    .populate({
+      path: 'service',
+      select: 'name images price serviceId',
+    });
 
   // ✅ Custom filter for booking request type (cancel | reschedule)
   if (requestType && ['cancel', 'reschedule'].includes(requestType as string)) {
@@ -178,8 +184,14 @@ const getBookingsByEmailFromDB = async (email: string) => {
 
   // ✅ Fetch bookings directly by email
   const bookings = await Booking.find({ email, isDeleted: false })
-    .populate('service')
-    .populate('vendor')
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone',
+    })
+    .populate({
+      path: 'service',
+      select: 'name images price serviceId',
+    })
     .sort({ createdAt: -1 }) // latest first
     .select('-__v -isDeleted'); // exclude unwanted fields
 
@@ -217,7 +229,7 @@ const updateBookingRequestIntoDB = async (
 
   // 3️⃣ Update all provided fields
   for (const key in payload) {
-    if (key === 'request') continue; // handle request separately
+    if (key === 'request') continue;
     if (Object.prototype.hasOwnProperty.call(payload, key)) {
       (booking as any)[key] = (payload as any)[key];
     }
@@ -227,7 +239,6 @@ const updateBookingRequestIntoDB = async (
   if (payload.request) {
     booking.request = {
       ...payload.request,
-      vendorApproved: false, // always start as not approved
       updatedAt: new Date(),
     };
 
@@ -240,18 +251,22 @@ const updateBookingRequestIntoDB = async (
   // 5️⃣ Save updated booking
   await booking.save();
 
+  // 6️⃣ Notification — request type
+  const requestLabel =
+    payload.request?.type === 'cancel' ? 'Cancellation' : 'Reschedule';
+
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking?.user,
-    message: '❌ Booking Cancelled',
-    description: `Your booking for "${booking.serviceName}" has been successfully cancelled. If you didn't request this or need help, please reach out to our support team.`,
+    message: `📋 ${requestLabel} Request Submitted`,
+    description: `Your ${requestLabel.toLowerCase()} request for "${booking.serviceName}" has been submitted. Please wait for vendor approval.`,
     reference: booking?._id,
     model_type: ModeType.Booking,
   });
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking?.vendor,
-    message: '⚠️ A Booking Has Been Cancelled',
-    description: `The booking for "${booking.serviceName}" has been cancelled by the user. Please update your availability and check your dashboard for details.`,
+    message: `⚠️ New ${requestLabel} Request`,
+    description: `A buyer has requested a ${requestLabel.toLowerCase()} for "${booking.serviceName}". Please review from your dashboard.`,
     reference: booking?._id,
     model_type: ModeType.Booking,
   });
@@ -284,7 +299,7 @@ const bookingApprovedRequestIntoDB = async (
   if (vendorApproved) {
     await NotificationServices.insertNotificationIntoDB({
       receiver: booking.user,
-      message: '✅ Your Request Has Been Approved!',
+      message: '🎉 Your Request Has Been Approved!',
       description: `Your booking ${booking.serviceName} request (${booking.request.type}) has been approved by the vendor.`,
       reference: booking._id,
       model_type: ModeType.Booking,

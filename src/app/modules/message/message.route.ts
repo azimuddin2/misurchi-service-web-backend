@@ -11,7 +11,12 @@ const router = Router();
 
 router.post(
   '/send-messages',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
   parseData(),
   validateRequest(MessagesValidation.sendMessageValidation),
   MessagesController.createMessages,
@@ -19,14 +24,24 @@ router.post(
 
 router.patch(
   '/seen/:chatId',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
 
   MessagesController.seenMessage,
 );
 
 router.patch(
   '/update/:id',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
   parseData(),
   validateRequest(MessagesValidation.updateMessageValidation),
   MessagesController.updateMessages,
@@ -36,19 +51,34 @@ router.get('/my-messages/:chatId', MessagesController.getMessagesByChatId);
 
 router.delete(
   '/:id',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
   MessagesController.deleteMessages,
 );
 
 router.get(
   '/:id',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
   MessagesController.getMessagesById,
 );
 
 router.get(
   '/',
-  auth(USER_ROLE.admin, USER_ROLE.user, USER_ROLE.vendor),
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.vendor,
+    USER_ROLE.team_member,
+  ),
   MessagesController.getAllMessages,
 );
 

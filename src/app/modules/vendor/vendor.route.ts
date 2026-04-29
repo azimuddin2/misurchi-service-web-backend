@@ -21,7 +21,7 @@ router.get(
 
 router.patch(
   '/profile/:email',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   upload.fields([
     { name: 'profile', maxCount: 1 },
     { name: 'coverImage', maxCount: 1 },

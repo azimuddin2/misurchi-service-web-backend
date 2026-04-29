@@ -91,8 +91,14 @@ const getAllOrderByUserFromDB = async (query: Record<string, unknown>) => {
 
   // Base query -> always exclude deleted products
   let orderQuery = Order.find({ vendor, isDeleted: false })
-    .populate('buyer')
-    .populate('vendor');
+    .populate({
+      path: 'buyer',
+      select: 'fullName email phone image',
+    })
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone image',
+    });
 
   // ✅ Custom filter for order request type (cancelled | return)
   if (requestType && ['cancelled', 'return'].includes(requestType as string)) {
@@ -120,8 +126,10 @@ const getOrdersByEmailFromDB = async (email: string) => {
 
   // ✅ Fetch bookings directly by email
   const bookings = await Order.find({ customerEmail: email, isDeleted: false })
-    // .populate('products.product')
-    .populate('vendor')
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone',
+    })
     .sort({ createdAt: -1 }) // latest first
     .select('-__v -isDeleted'); // exclude unwanted fields
 
@@ -217,16 +225,25 @@ const requestOrderIntoDB = async (
     if (!updatedOrder) {
       throw new AppError(400, 'Order request update failed');
     }
-
-    //  🔔 Notify vendor
+    // 🔔 Notify vendor
     if (requestData.type === 'cancelled' || requestData.type === 'return') {
+      const requestLabel =
+        requestData.type === 'cancelled' ? 'Cancellation' : 'Return';
+
+      // Vendor notification
       await NotificationServices.insertNotificationIntoDB({
         receiver: updatedOrder.vendor,
-        message:
-          requestData.type === 'cancelled'
-            ? 'Order Cancellation Request'
-            : 'Order Return Request',
-        description: `Customer has requested to ${requestData.type} order (${updatedOrder.orderId}). Please review the request.`,
+        message: `⚠️ Order ${requestLabel} Request`,
+        description: `A customer has requested a ${requestLabel.toLowerCase()} for order #${updatedOrder.orderId}. Please review and respond from your dashboard.`,
+        reference: updatedOrder._id,
+        model_type: ModeType.Order,
+      });
+
+      // ✅ Customer notification
+      await NotificationServices.insertNotificationIntoDB({
+        receiver: updatedOrder.buyer,
+        message: `📋 ${requestLabel} Request Submitted`,
+        description: `Your ${requestLabel.toLowerCase()} request for order #${updatedOrder.orderId} has been submitted. Please wait for vendor approval.`,
         reference: updatedOrder._id,
         model_type: ModeType.Order,
       });
@@ -283,20 +300,23 @@ const orderApprovedRequestIntoDB = async (
   // 4️⃣ Save the updated order
   const updatedOrder = await order.save();
 
-  //  🔔 Notify buyer
+  // 🔔 Notify buyer
+  const requestLabel =
+    order.request.type === 'cancelled' ? 'Cancellation' : 'Return';
+
   if (vendorApproved) {
     await NotificationServices.insertNotificationIntoDB({
       receiver: order.buyer,
-      message: 'Order Request Approved',
-      description: `Your ${order.request.type} request for order (${order.orderId}) has been approved by the vendor.`,
+      message: `✅ ${requestLabel} Request Approved`,
+      description: `Your ${requestLabel.toLowerCase()} request for order #${order.orderId} has been approved by the vendor.`,
       reference: order._id,
       model_type: ModeType.Order,
     });
   } else {
     await NotificationServices.insertNotificationIntoDB({
       receiver: order.buyer,
-      message: 'Order Request Declined',
-      description: `Your ${order.request.type} request for order (${order.orderId}) has been declined by the vendor.`,
+      message: `❌ ${requestLabel} Request Rejected`,
+      description: `Your ${requestLabel.toLowerCase()} request for order #${order.orderId} has been declined by the vendor.`,
       reference: order._id,
       model_type: ModeType.Order,
     });

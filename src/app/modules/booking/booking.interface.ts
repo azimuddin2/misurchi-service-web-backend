@@ -21,7 +21,7 @@ export interface IBookingRequest {
   reason?: string;
   newDate?: string;
   newTime?: string;
-  vendorApproved?: boolean;
+  vendorApproved?: boolean | null;
   updatedAt?: Date;
 }
 

@@ -11,7 +11,7 @@ const BookingRequestSchema = new Schema<IBookingRequest>({
   reason: { type: String },
   newDate: { type: String },
   newTime: { type: String },
-  vendorApproved: { type: Boolean, default: false },
+  vendorApproved: { type: Boolean, default: null },
   updatedAt: { type: Date, default: Date.now },
 });
 

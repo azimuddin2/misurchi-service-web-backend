@@ -22,7 +22,11 @@ router.post(
   UserControllers.vendorRegisterUser,
 );
 
-router.get('/', auth('admin', 'user', 'vendor'), UserControllers.getAllUsers);
+router.get(
+  '/',
+  auth('admin', 'user', 'vendor', 'team_member'),
+  UserControllers.getAllUsers,
+);
 
 router.get(
   '/profile/:email',
@@ -44,7 +48,7 @@ router.patch(
 
 router.get(
   '/:id',
-  auth('user', 'vendor', 'admin'),
+  auth('user', 'vendor', 'admin', 'team_member'),
   UserControllers.getUserById,
 );
 

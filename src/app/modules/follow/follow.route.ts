@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post(
   '/:vendorId/follow',
-  auth('user', 'vendor'),
+  auth('user', 'vendor', 'team_member'),
   FollowControllers.followVendor,
 );
 
@@ -18,7 +18,7 @@ router.delete(
 
 router.get(
   '/:vendorId/followers',
-  auth('user', 'vendor'),
+  auth('user', 'vendor', 'team_member'),
   FollowControllers.getVendorFollowersCount,
 );
 

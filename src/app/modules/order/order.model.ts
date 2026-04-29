@@ -37,7 +37,7 @@ const OrderRequestSchema = new Schema(
     },
     images: { type: [ImageSchema], default: [] },
     reason: { type: String },
-    vendorApproved: { type: Boolean, default: false },
+    vendorApproved: { type: Boolean, default: null },
     updatedAt: { type: Date },
   },
   { _id: false },

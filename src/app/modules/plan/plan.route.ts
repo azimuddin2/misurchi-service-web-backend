@@ -17,7 +17,7 @@ router.get('/', PlanControllers.getAllPlans);
 
 router.get(
   '/:id',
-  auth('user', 'vendor', 'admin'),
+  auth('user', 'vendor', 'admin', 'team_member'),
   PlanControllers.getPlanById,
 );
 
