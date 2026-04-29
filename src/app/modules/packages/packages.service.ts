@@ -275,9 +275,7 @@ const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
     vendor: vendorId,
     isDeleted: false,
   })
-    .select(
-      'name images serviceType recommendedType status savedServices createdAt',
-    )
+    .select('name images type recommendedType status savedServices createdAt')
     .populate({
       path: 'vendor',
       select: 'businessName image country state',
@@ -302,7 +300,7 @@ const getPackagesByIdFromDB = async (id: string) => {
     .populate('user')
     .populate({
       path: 'reviews',
-      select: '_id rating review user', // include the fields you need
+      select: '_id rating review user',
     });
 
   if (!result) {

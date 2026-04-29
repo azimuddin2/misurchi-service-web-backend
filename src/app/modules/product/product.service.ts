@@ -299,7 +299,7 @@ const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
     isDeleted: false,
   })
     .select(
-      'name images productType recommendedType price discountPrice status createdAt',
+      'name images productType recommendedType quantity price discountPrice status createdAt',
     )
     .populate({
       path: 'vendor',
