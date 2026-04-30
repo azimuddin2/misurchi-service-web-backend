@@ -71,7 +71,7 @@ const teamMemberSchema = new Schema<TTeamMember>(
     permissions: {
       type: [String],
       enum: {
-        values: AllPermissions, // ✅ flat array — Record না
+        values: AllPermissions,
         message: '{VALUE} is not a valid permission',
       },
       default: [],
@@ -102,8 +102,8 @@ const teamMemberSchema = new Schema<TTeamMember>(
   },
 );
 
-// ✅ pre-save hook uncomment করে fix করা হয়েছে
-// Create হলে role দেখে permissions auto set হবে
+// ✅ Fixed by uncommenting the pre-save hook
+// Permissions will be auto set based on the role when created
 teamMemberSchema.pre('save', function (next) {
   if (this.isNew) {
     this.permissions = TeamMemberPermission[this.role];
