@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import config from '../../config';
 import httpStatus from 'http-status';
-import { startSession } from 'mongoose';
+import mongoose, { now, startSession } from 'mongoose';
 import { TSubPayment } from './sub-payment.interface';
 import generateRandomString from '../../utils/generateRandomString';
 import { User } from '../user/user.model';
@@ -24,58 +24,83 @@ const subPayCheckout = async (payload: TSubPayment) => {
 
   // 1️⃣ Validate User
   const user = await User.findById(payload.user);
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-  }
+  if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
 
   const vendor = await VendorServices.getVendorProfileFromDB(user?.email);
-  if (!vendor) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
-  }
+  if (!vendor) throw new AppError(httpStatus.NOT_FOUND, 'Vendor not found');
 
   // 2️⃣ Validate Plan
   const plan = await Plan.findById(payload.plan);
-  if (!plan) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Plan not found!');
-  }
+  if (!plan) throw new AppError(httpStatus.NOT_FOUND, 'Plan not found!');
 
   if (!plan.stripePriceId) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Stripe price not found for this plan.');
+  }
+
+  // 3️⃣ ✅ Active subscription check
+  const now = new Date();
+  const activeSubscription = await Subscription.findOne({
+    user: payload.user,
+    isPaid: true,
+    status: 'active',
+    expiredAt: { $gt: now },
+    isDeleted: false,
+  });
+
+  if (activeSubscription) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      'Stripe price not found for this plan.',
+      `You already have an active subscription. It expires on ${activeSubscription.expiredAt?.toDateString()}.`,
     );
   }
 
-  // 3️⃣ Create Payment Entry
+  // 4️⃣ ✅ Calculate expiry date
+  const expiredAt = new Date();
+  if (payload.durationType === 'yearly') {
+    expiredAt.setFullYear(expiredAt.getFullYear() + 1);
+  } else {
+    expiredAt.setMonth(expiredAt.getMonth() + 1);
+  }
+
+  // 5️⃣ ✅ Create Subscription record first
+  const subscription = await Subscription.create({
+    user: payload.user,
+    plan: payload.plan,
+    amount: plan.cost || 0,
+    durationType: payload.durationType,
+    isPaid: false,
+    status: 'pending',
+    expiredAt,
+  });
+
+  if (!subscription) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create subscription record.');
+  }
+
+  // 6️⃣ Create Payment Entry
   const modifyPayload: Partial<TSubPayment> = {
     ...payload,
-    vendor: vendor?._id as any,
+    vendor: vendor._id as any,
     tranId,
     amount: plan.cost || 0,
+    subscription: subscription._id as any,
   };
 
   const createdPayment = await SubPayment.create(modifyPayload);
   if (!createdPayment) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Failed to create payment record.',
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create payment record.');
   }
 
-  // 4️⃣ Create Checkout Session (pass both priceId + paymentId)
+  // 7️⃣ Create Checkout Session
   const checkoutSession = await createCheckoutSession({
     priceId: plan.stripePriceId,
     paymentId: createdPayment._id as any,
   });
 
   if (!checkoutSession?.url) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'Failed to create checkout session.',
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create checkout session.');
   }
 
-  // 5️⃣ Return payment URL
   return checkoutSession.url;
 };
 
@@ -227,11 +252,27 @@ const webhook = async (req: Request) => {
     console.error('Error handling Stripe webhook event', err);
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      `Internal error processing webhook event: ${
-        err instanceof Error ? err.message : 'Unknown error'
+      `Internal error processing webhook event: ${err instanceof Error ? err.message : 'Unknown error'
       }`,
     );
   }
+};
+
+const cancelSubPayment = async (paymentId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(paymentId))
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid paymentId');
+
+  const payment = await SubPayment.findById(paymentId);
+  if (!payment)
+    throw new AppError(httpStatus.NOT_FOUND, 'Payment record not found!');
+
+  if (payment.isPaid)
+    throw new AppError(httpStatus.BAD_REQUEST, 'Cannot cancel an already paid subscription');
+
+  payment.isDeleted = true;
+  await payment.save();
+
+  return payment;
 };
 
 const getAllSubPaymentFromDB = async (query: Record<string, unknown>) => {
@@ -259,5 +300,6 @@ export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
   webhook,
+  cancelSubPayment,
   getAllSubPaymentFromDB,
 };

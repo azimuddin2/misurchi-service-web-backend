@@ -15,6 +15,8 @@ export type TSubPayment = {
   isPaid: boolean;
   paidAt: Date;
   isDeleted: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type ISubscriptionsModel = Model<TSubPayment, Record<string, unknown>>;

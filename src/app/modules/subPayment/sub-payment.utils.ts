@@ -23,8 +23,12 @@ export const createCheckoutSession = async (payload: ICheckoutPayload) => {
     ],
     mode: 'subscription',
     payment_method_types: ['card'],
-    success_url: `${config.server_url}/sub-payments/confirm-sub-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payload.paymentId}`,
-    cancel_url: config.client_Url,
+
+    // ✅ confirm route — server side redirect
+    success_url: `${config.server_url}/api/v1/sub-payments/confirm-sub-payment?sessionId={CHECKOUT_SESSION_ID}&paymentId=${payload.paymentId}`,
+
+    // ✅ cancel route — server side redirect with paymentId
+    cancel_url: `${config.server_url}/api/v1/sub-payments/cancel?paymentId=${payload.paymentId}`,
   });
 
   console.log('✅ Stripe session created:', session.id);
