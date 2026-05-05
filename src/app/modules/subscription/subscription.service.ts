@@ -90,7 +90,10 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
 };
 
 const getAllSubscriptionFromDB = async (query: Record<string, unknown>) => {
-  const subscriptionsModel = new QueryBuilder(Subscription.find(), query)
+  const subscriptionsModel = new QueryBuilder(
+    Subscription.find({ isDeleted: false }),
+    query,
+  )
     .search([])
     .filter()
     .paginate()
@@ -115,7 +118,7 @@ const getSubscriptionByUserIdFromDB = async (id: string) => {
   const result = await Subscription.findOne({
     user: new Types.ObjectId(id),
   })
-    .populate('package')
+    .populate('plan')
     .populate('user', 'email');
 
   return result;

@@ -4,6 +4,7 @@ import { createServer, Server } from 'http';
 import config from './app/config';
 import initializeSocketIO from './socket';
 import chalk from 'chalk';
+import { startCronJobs } from './app/utils/cronJobs';
 
 let server: Server;
 export const io = initializeSocketIO(createServer(app));
@@ -14,6 +15,8 @@ async function main() {
     console.log(
       chalk.green('🟢 Connection to database is successfully established'),
     );
+
+    startCronJobs();
 
     server = app.listen(config.port, () => {
       console.log(chalk.blue(`🚀 Server is running on port: ${config.port}`));

@@ -79,6 +79,24 @@ const updatePlanIntoDB = async (id: string, payload: Partial<TPlan>) => {
     throw new AppError(400, 'This plan has been deleted');
   }
 
+  // ✅ cost বা name বদলালে Stripe update করো
+  if (payload.cost || payload.name || payload.description) {
+    // Stripe এ price update করতে হলে নতুন price create করতে হয়
+    // কারণ Stripe old price update allow করে না
+    const interval = isPlanExists.validity === '1year' ? 'year' : 'month';
+
+    const stripeData = await createStripeProduct(
+      payload.name || isPlanExists.name,
+      payload.description || isPlanExists.description,
+      payload.cost || isPlanExists.cost,
+      interval,
+    );
+
+    // ✅ নতুন Stripe IDs payload এ add করো
+    payload.stripeProductId = stripeData.productId;
+    payload.stripePriceId = stripeData.priceId;
+  }
+
   const updatedPlan = await Plan.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
