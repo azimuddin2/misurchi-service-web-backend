@@ -196,7 +196,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
       [
         {
           ...payload,
-          userId: createdUser[0]._id, // ✅ map() → [0]._id
+          userId: createdUser[0]._id,
         },
       ],
       { session },
@@ -218,6 +218,8 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
       email: createdUser[0].email,
       role: createdUser[0].role,
       image: createdUser[0].image,
+      vendorId: createdVendor[0]._id.toString(),
+      vendorEmail: createdVendor[0].email,
     };
 
     const accessToken = createToken(

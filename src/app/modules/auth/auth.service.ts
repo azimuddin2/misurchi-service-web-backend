@@ -37,7 +37,7 @@ const loginUser = async (payload: TLoginUser) => {
   let permissions: string[] = [];
   let teamRole: TTeamMemberRole | undefined = undefined;
 
-  // ✅ vendor এর জন্য vendorId
+  // ✅ vendor vendorId and vendorEmail
   if (user.role === 'vendor') {
     const vendor = await Vendor.findOne({ userId: user._id }).select(
       '_id email',
@@ -46,7 +46,7 @@ const loginUser = async (payload: TLoginUser) => {
     vendorEmail = vendor?.email;
   }
 
-  // ✅ team_member এর জন্য extra fields
+  // ✅ team_member extra fields
   if (user.role === 'team_member') {
     const teamMember = await TeamMember.findOne({
       user: user._id,
@@ -54,15 +54,13 @@ const loginUser = async (payload: TLoginUser) => {
       isDeleted: false,
     })
       .select('permissions vendor role')
-      .populate('vendor', 'email'); // ✅
+      .populate('vendor', 'email');
 
     vendorId = (teamMember?.vendor as any)?._id.toString();
     vendorEmail = (teamMember?.vendor as any)?.email;
     permissions = teamMember?.permissions ?? [];
     teamRole = teamMember?.role;
   }
-
-  console.log(vendorEmail);
 
   const jwtPayload: TJwtPayload = {
     userId: user._id.toString(),
@@ -111,14 +109,14 @@ const refreshToken = async (token: string) => {
   let permissions: string[] = [];
   let teamRole: TTeamMemberRole | undefined = undefined;
 
-  // ✅ vendor এর জন্য vendorId
+  // ✅ vendor vendorId and vendorEmail
   if (user.role === 'vendor') {
-    const vendor = await Vendor.findOne({ userId: user._id }).select('_id');
+    const vendor = await Vendor.findOne({ userId: user._id }).select('_id email');
     vendorId = vendor?._id.toString();
     vendorEmail = vendor?.email;
   }
 
-  // ✅ team_member এর জন্য extra fields
+  // ✅ team_member extra fields
   if (user.role === 'team_member') {
     const teamMember = await TeamMember.findOne({
       user: user._id,
@@ -126,7 +124,7 @@ const refreshToken = async (token: string) => {
       isDeleted: false,
     })
       .select('permissions vendor role')
-      .populate('vendor', 'email'); // ✅
+      .populate('vendor', 'email');
 
     vendorId = (teamMember?.vendor as any)?._id.toString();
     vendorEmail = (teamMember?.vendor as any)?.email;

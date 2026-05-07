@@ -129,7 +129,7 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
       <p><span>Status</span><span class="badge">Active</span></p>
       <p><span>Date</span><strong>${date}</strong></p>
     </div>
-    <a class="btn" href="${config.client_Url}/vendor/profile">Back to Home Page</a>
+    <a class="btn" href="${config.client_Url}/vendor/profile">Back to Dashboard</a>
   </div>
 </body>
 </html>
