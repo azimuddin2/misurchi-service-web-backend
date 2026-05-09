@@ -1,7 +1,6 @@
 import { model, Schema } from 'mongoose';
 import { TSubPayment } from './sub-payment.interface';
 
-// Define the Mongoose schema
 const SubPaymentSchema = new Schema<TSubPayment>(
   {
     user: {
@@ -18,7 +17,7 @@ const SubPaymentSchema = new Schema<TSubPayment>(
     },
     subscription: {
       type: Schema.Types.ObjectId,
-      ref: 'Subscriptions',
+      ref: 'Subscription',
     },
     durationType: {
       type: String,

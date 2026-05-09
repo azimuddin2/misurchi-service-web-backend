@@ -9,8 +9,23 @@ import { Subscription } from './subscription.model';
 import httpStatus from 'http-status';
 import { addMonths } from './subscription.utils';
 
-export const createSubscriptionIntoDB = async (payload: TSubscription) => {
-  // 1️⃣ Check for existing unpaid subscription for this plan
+const createSubscriptionIntoDB = async (payload: TSubscription) => {
+  // 1️⃣ Active subscription check
+  const activeSubscription = await Subscription.findOne({
+    user: payload.user,
+    status: 'active',
+    isExpired: false,
+    isDeleted: false,
+  });
+
+  if (activeSubscription) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `You already have an active subscription. It expires on ${activeSubscription.expiredAt?.toDateString()}.`,
+    );
+  }
+
+  // 2️⃣ Check for existing unpaid subscription for this plan
   const existing = await Subscription.findOne({
     user: payload.user,
     plan: payload.plan,
@@ -20,7 +35,7 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
 
   if (existing) return existing;
 
-  // 2️⃣ Validate Plan
+  // 3️⃣ Validate Plan
   const plan = await Plan.findById(payload.plan);
   if (!plan) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Plan not found.');
@@ -30,13 +45,13 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'This plan is not active.');
   }
 
-  // 3️⃣ Validate User
+  // 4️⃣ Validate User
   const user = await User.findById(payload.user);
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found.');
   }
 
-  // 4️⃣ Only vendors can subscribe
+  // 5️⃣ Only vendors can subscribe
   if (user.role !== USER_ROLE.vendor) {
     throw new AppError(
       httpStatus.FORBIDDEN,
@@ -44,7 +59,7 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
     );
   }
 
-  // 5️⃣ Calculate subscription expiry
+  // 6️⃣ Calculate subscription expiry
   const now = new Date();
   let expiredAt: Date;
 
@@ -65,7 +80,7 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
       );
   }
 
-  // 6️⃣ Prepare subscription payload
+  // 7️⃣ Prepare subscription payload
   const subscriptionPayload: TSubscription = {
     ...payload,
     amount: plan.cost,
@@ -77,7 +92,7 @@ export const createSubscriptionIntoDB = async (payload: TSubscription) => {
     durationType: plan.validity === '1year' ? 'yearly' : 'monthly',
   };
 
-  // 7️⃣ Save subscription
+  // 8️⃣ Save subscription
   const subscription = await Subscription.create(subscriptionPayload);
   if (!subscription) {
     throw new AppError(

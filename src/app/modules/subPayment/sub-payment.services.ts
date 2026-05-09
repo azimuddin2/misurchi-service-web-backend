@@ -41,7 +41,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
     );
   }
 
-  // 3️⃣ ✅ Active subscription check
+  // 3️⃣ Active subscription check
   const now = new Date();
   const activeSubscription = await Subscription.findOne({
     user: payload.user,
@@ -58,7 +58,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
     );
   }
 
-  // 4️⃣ ✅ Calculate expiry date
+  // 4️⃣ Calculate expiry date
   const expiredAt = new Date();
   if (payload.durationType === 'yearly') {
     expiredAt.setFullYear(expiredAt.getFullYear() + 1);
@@ -66,16 +66,32 @@ const subPayCheckout = async (payload: TSubPayment) => {
     expiredAt.setMonth(expiredAt.getMonth() + 1);
   }
 
-  // 5️⃣ ✅ Create Subscription record first
-  const subscription = await Subscription.create({
-    user: payload.user,
-    plan: payload.plan,
-    amount: plan.cost || 0,
-    durationType: payload.durationType,
-    isPaid: false,
-    status: 'pending',
-    expiredAt,
-  });
+  // 5️⃣ Create Subscription record (atomic - duplicate prevent)
+  const subscription = await Subscription.findOneAndUpdate(
+    {
+      user: payload.user,
+      plan: payload.plan,
+      isPaid: false,
+      status: 'pending',
+      isDeleted: false,
+    },
+    {
+      $setOnInsert: {
+        user: payload.user,
+        plan: payload.plan,
+        amount: plan.cost || 0,
+        durationType: payload.durationType,
+        isPaid: false,
+        status: 'pending',
+        expiredAt,
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true,
+    },
+  );
 
   if (!subscription) {
     throw new AppError(
@@ -93,7 +109,24 @@ const subPayCheckout = async (payload: TSubPayment) => {
     subscription: subscription._id as any,
   };
 
-  const createdPayment = await SubPayment.create(modifyPayload);
+  const createdPayment = await SubPayment.findOneAndUpdate(
+    {
+      user: payload.user,
+      subscription: subscription._id,
+      isPaid: false,
+    },
+    {
+      $setOnInsert: {
+        ...modifyPayload,
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true,
+    },
+  );
+
   if (!createdPayment) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -177,7 +210,7 @@ const confirmPayment = async (query: Record<string, any>) => {
       {
         $set: {
           isSubscribed: true,
-          subscribed: subscribedValue, // ✅ dynamic value
+          subscribed: subscribedValue,
         },
       },
       { new: true, session },
@@ -264,8 +297,7 @@ const webhook = async (req: Request) => {
     console.error('Error handling Stripe webhook event', err);
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      `Internal error processing webhook event: ${
-        err instanceof Error ? err.message : 'Unknown error'
+      `Internal error processing webhook event: ${err instanceof Error ? err.message : 'Unknown error'
       }`,
     );
   }
@@ -312,10 +344,45 @@ const getAllSubPaymentFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
+  const { vendorId, ...filters } = query;
+
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId as string)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  let subPaymentQuery = SubPayment.find({
+    vendor: vendorId,
+    isPaid: true,
+    isDeleted: false,
+  })
+    .populate({
+      path: 'plan',
+      select: 'name',
+    })
+    .populate({
+      path: 'subscription',
+      select: 'startedAt expiredAt',
+    });
+
+  const queryBuilder = new QueryBuilder(subPaymentQuery, filters)
+    .search([''])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery;
+
+  return { meta, result };
+};
+
 export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
   webhook,
   cancelSubPayment,
   getAllSubPaymentFromDB,
+  getSubPaymentByVendorFromDB,
 };

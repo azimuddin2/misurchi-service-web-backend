@@ -264,10 +264,23 @@ const getAllSubPayment = catchAsync(async (req, res) => {
   });
 });
 
+const getSubPaymentByVendor = catchAsync(async (req, res) => {
+  const result = await SubPaymentsService.getSubPaymentByVendorFromDB(req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Subscription Payments retrieved successfully',
+    meta: result.meta,
+    data: result.result,
+  });
+});
+
 export const SubPaymentsController = {
   subPayCheckout,
   confirmPayment,
   webhook,
   cancelPayment,
   getAllSubPayment,
+  getSubPaymentByVendor,
 };

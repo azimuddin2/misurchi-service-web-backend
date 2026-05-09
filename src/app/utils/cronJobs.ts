@@ -29,6 +29,7 @@ export const startCronJobs = () => {
       await User.findByIdAndUpdate(subscription.user, {
         $set: {
           isSubscribed: false,
+          subscribed: 'basic',
         },
       });
     }
