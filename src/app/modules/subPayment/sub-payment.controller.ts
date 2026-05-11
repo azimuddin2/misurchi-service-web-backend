@@ -265,7 +265,9 @@ const getAllSubPayment = catchAsync(async (req, res) => {
 });
 
 const getSubPaymentByVendor = catchAsync(async (req, res) => {
-  const result = await SubPaymentsService.getSubPaymentByVendorFromDB(req.query);
+  const result = await SubPaymentsService.getSubPaymentByVendorFromDB(
+    req.query,
+  );
 
   sendResponse(res, {
     statusCode: 200,
@@ -276,6 +278,19 @@ const getSubPaymentByVendor = catchAsync(async (req, res) => {
   });
 });
 
+const getActiveSubPaymentByVendor = catchAsync(async (req, res) => {
+  const { vendorId } = req.params;
+  const result =
+    await SubPaymentsService.getActiveSubPaymentByVendorFromDB(vendorId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Active Subscription retrieved successfully',
+    data: result,
+  });
+});
+
 export const SubPaymentsController = {
   subPayCheckout,
   confirmPayment,
@@ -283,4 +298,5 @@ export const SubPaymentsController = {
   cancelPayment,
   getAllSubPayment,
   getSubPaymentByVendor,
+  getActiveSubPaymentByVendor,
 };

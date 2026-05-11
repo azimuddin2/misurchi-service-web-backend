@@ -297,7 +297,8 @@ const webhook = async (req: Request) => {
     console.error('Error handling Stripe webhook event', err);
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      `Internal error processing webhook event: ${err instanceof Error ? err.message : 'Unknown error'
+      `Internal error processing webhook event: ${
+        err instanceof Error ? err.message : 'Unknown error'
       }`,
     );
   }
@@ -378,6 +379,28 @@ const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+const getActiveSubPaymentByVendorFromDB = async (vendorId: string) => {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId as string)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const activeSubscription = await Subscription.findOne({
+    vendor: vendorId,
+    isDeleted: false,
+  }).sort({ createdAt: -1 });
+
+  const result = await SubPayment.findOne({
+    vendor: vendorId,
+    isPaid: true,
+    isDeleted: false,
+    subscription: activeSubscription?._id,
+  })
+    .populate('subscription')
+    .populate('plan');
+
+  return result;
+};
+
 export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
@@ -385,4 +408,5 @@ export const SubPaymentsService = {
   cancelSubPayment,
   getAllSubPaymentFromDB,
   getSubPaymentByVendorFromDB,
+  getActiveSubPaymentByVendorFromDB,
 };

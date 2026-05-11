@@ -18,6 +18,17 @@ router.post('/webhook', SubPaymentsController.webhook);
 router.get('/cancel', SubPaymentsController.cancelPayment);
 
 router.get('/', auth('admin'), SubPaymentsController.getAllSubPayment);
-router.get('/vendor', auth('vendor'), SubPaymentsController.getSubPaymentByVendor);
+
+router.get(
+  '/vendor',
+  auth('vendor'),
+  SubPaymentsController.getSubPaymentByVendor,
+);
+
+router.get(
+  '/vendor/active/:vendorId',
+  auth('vendor', 'team_member'),
+  SubPaymentsController.getActiveSubPaymentByVendor,
+);
 
 export const SubPaymentsRoutes = router;

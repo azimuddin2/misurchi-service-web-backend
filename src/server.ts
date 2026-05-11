@@ -11,7 +11,9 @@ export const io = initializeSocketIO(createServer(app));
 
 async function main() {
   try {
-    await mongoose.connect('mongodb://mohammadazimuddin:Yn13pU4ul04s9ke6@ac-evxy9ch-shard-00-00.nbb0ei9.mongodb.net:27017,ac-evxy9ch-shard-00-01.nbb0ei9.mongodb.net:27017,ac-evxy9ch-shard-00-02.nbb0ei9.mongodb.net:27017/misurchiServiceWeb?ssl=true&replicaSet=atlas-11j7uv-shard-0&authSource=admin&appName=Cluster0' as string);
+    await mongoose.connect(
+      'mongodb://mohammadazimuddin:Yn13pU4ul04s9ke6@ac-evxy9ch-shard-00-00.nbb0ei9.mongodb.net:27017,ac-evxy9ch-shard-00-01.nbb0ei9.mongodb.net:27017,ac-evxy9ch-shard-00-02.nbb0ei9.mongodb.net:27017/misurchiServiceWeb?ssl=true&replicaSet=atlas-11j7uv-shard-0&authSource=admin&appName=Cluster0' as string,
+    );
     // await mongoose.connect(config.database_url as string);
     console.log(
       chalk.green('🟢 Connection to database is successfully established'),

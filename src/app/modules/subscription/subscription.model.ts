@@ -9,6 +9,10 @@ const subscriptionSchema = new Schema<TSubscription, TSubscriptionModel>(
       ref: 'User',
       required: true,
     },
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'Vendor',
+    },
     plan: {
       type: Schema.Types.ObjectId,
       ref: 'Plan',

@@ -111,7 +111,9 @@ const refreshToken = async (token: string) => {
 
   // ✅ vendor vendorId and vendorEmail
   if (user.role === 'vendor') {
-    const vendor = await Vendor.findOne({ userId: user._id }).select('_id email');
+    const vendor = await Vendor.findOne({ userId: user._id }).select(
+      '_id email',
+    );
     vendorId = vendor?._id.toString();
     vendorEmail = vendor?.email;
   }
