@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { TTeamMember } from '../teamMember/teamMember.interface';
 
 export type TStatus =
   | 'To-Do'
@@ -15,7 +16,7 @@ export type TTask = {
   description: string;
   date: string;
   time: string;
-  assignTeamMember: string;
+  assignTeamMember: Types.ObjectId | TTeamMember;
   status: TStatus;
   isDeleted: boolean;
 };

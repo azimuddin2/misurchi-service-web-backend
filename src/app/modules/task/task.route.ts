@@ -16,6 +16,12 @@ router.post(
 router.get('/', auth('vendor', 'team_member'), TaskControllers.getAllTasks);
 
 router.get(
+  '/member/:memberId',
+  auth('vendor', 'team_member'),
+  TaskControllers.getTasksByTeamMemberId,
+);
+
+router.get(
   '/:id',
   auth('vendor', 'admin', 'team_member'),
   TaskControllers.getTaskById,

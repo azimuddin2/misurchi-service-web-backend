@@ -9,4 +9,4 @@ export const TaskStatus: TStatus[] = [
   'Obsolete',
 ];
 
-export const taskSearchableFields = ['title'];
+export const taskSearchableFields = ['title', 'description'];

@@ -25,6 +25,20 @@ const getAllTasks = catchAsync(async (req, res) => {
   });
 });
 
+const getTasksByTeamMemberId = catchAsync(async (req, res) => {
+  const { memberId } = req.params;
+  const result = await TaskServices.getTasksByTeamMemberIdFromDB(
+    memberId,
+    req.query,
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Tasks fetched successfully',
+    data: result,
+  });
+});
+
 const getTaskById = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await TaskServices.getTaskByIdFromDB(id);
@@ -76,6 +90,7 @@ const deleteTask = catchAsync(async (req, res) => {
 export const TaskControllers = {
   createTask,
   getAllTasks,
+  getTasksByTeamMemberId,
   getTaskById,
   updateTask,
   updateTaskStatus,

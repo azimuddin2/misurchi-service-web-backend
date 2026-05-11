@@ -26,8 +26,9 @@ const taskSchema = new Schema<TTask>(
       required: true,
     },
     assignTeamMember: {
-      type: String,
-      required: true,
+      type: Schema.Types.ObjectId,
+      required: [true, 'Team member is required'],
+      ref: 'TeamMember',
     },
     status: {
       type: String,
@@ -47,5 +48,4 @@ const taskSchema = new Schema<TTask>(
   },
 );
 
-// Create model
 export const Task = model<TTask>('Task', taskSchema);

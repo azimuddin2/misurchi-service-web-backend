@@ -21,7 +21,12 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
   }
 
   // Base query -> always exclude deleted tasks
-  let taskQuery = Task.find({ vendor, isDeleted: false }).populate('vendor');
+  let taskQuery = Task.find({ vendor, isDeleted: false })
+    .populate('vendor')
+    .populate({
+      path: 'assignTeamMember',
+      select: 'firstName lastName email role',
+    });
 
   const queryBuilder = new QueryBuilder(taskQuery, filters)
     .search(taskSearchableFields)
@@ -36,8 +41,39 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+const getTasksByTeamMemberIdFromDB = async (
+  memberId: string,
+  query: Record<string, unknown>,
+) => {
+  if (!mongoose.Types.ObjectId.isValid(memberId)) {
+    throw new AppError(400, 'Invalid member ID');
+  }
+
+  const taskQuery = Task.find({
+    assignTeamMember: memberId,
+    isDeleted: false,
+  });
+
+  const queryBuilder = new QueryBuilder(taskQuery, query)
+    .search(taskSearchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const meta = await queryBuilder.countTotal();
+  const result = await queryBuilder.modelQuery
+    .populate('vendor')
+    .populate('assignTeamMember');
+
+  return { meta, result };
+};
+
 const getTaskByIdFromDB = async (id: string) => {
-  const result = await Task.findById(id).populate('vendor');
+  const result = await Task.findById(id).populate('vendor').populate({
+    path: 'assignTeamMember',
+    select: 'firstName lastName email role',
+  });
 
   if (!result) {
     throw new AppError(404, 'This Task not found');
@@ -110,6 +146,7 @@ export const TaskServices = {
   createTaskIntoDB,
   getAllTasksFromDB,
   getTaskByIdFromDB,
+  getTasksByTeamMemberIdFromDB,
   updateTaskIntoDB,
   updateTaskStatusIntoDB,
   deleteTaskFromDB,
