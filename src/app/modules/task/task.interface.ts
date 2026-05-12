@@ -9,6 +9,12 @@ export type TStatus =
   | 'Done'
   | 'Obsolete';
 
+export type TNote = {
+  text: string;
+  status: TStatus;
+  createdAt: Date;
+};
+
 export type TTask = {
   vendor: Types.ObjectId;
   _id?: string;
@@ -18,5 +24,6 @@ export type TTask = {
   time: string;
   assignTeamMember: Types.ObjectId | TTeamMember;
   status: TStatus;
+  notes?: TNote[];
   isDeleted: boolean;
 };

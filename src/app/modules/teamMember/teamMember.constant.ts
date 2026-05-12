@@ -28,6 +28,7 @@ export const TeamMemberPermission: Record<TTeamMemberRole, TPermission[]> = {
     'filter_transactions',
     'respond_to_messages',
     'assign_tasks',
+    'settings',
   ],
   supervisor: [
     'dashboard',
@@ -40,6 +41,7 @@ export const TeamMemberPermission: Record<TTeamMemberRole, TPermission[]> = {
     'shared_calendar',
     'assign_tasks',
     'team_members',
+    'settings',
   ],
   manager: [
     'dashboard',

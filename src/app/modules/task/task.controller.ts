@@ -26,16 +26,17 @@ const getAllTasks = catchAsync(async (req, res) => {
 });
 
 const getTasksByTeamMemberId = catchAsync(async (req, res) => {
-  const { memberId } = req.params;
+  const { userId } = req.params;
   const result = await TaskServices.getTasksByTeamMemberIdFromDB(
-    memberId,
+    userId,
     req.query,
   );
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Tasks fetched successfully',
-    data: result,
+    meta: result.meta,
+    data: result.result,
   });
 });
 
@@ -65,7 +66,13 @@ const updateTask = catchAsync(async (req, res) => {
 
 const updateTaskStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await TaskServices.updateTaskStatusIntoDB(id, req.body);
+
+  const payload = {
+    status: req.body.status,
+    note: req.body.note,
+  };
+
+  const result = await TaskServices.updateTaskStatusIntoDB(id, payload);
 
   sendResponse(res, {
     statusCode: 200,

@@ -4,6 +4,7 @@ import AppError from '../../errors/AppError';
 import { taskSearchableFields } from './task.constant';
 import { TTask } from './task.interface';
 import { Task } from './task.model';
+import { TeamMember } from '../teamMember/teamMember.model';
 
 const createTaskIntoDB = async (payload: TTask) => {
   const result = await Task.create(payload);
@@ -25,7 +26,7 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
     .populate('vendor')
     .populate({
       path: 'assignTeamMember',
-      select: 'firstName lastName email role',
+      select: 'firstName lastName email role image',
     });
 
   const queryBuilder = new QueryBuilder(taskQuery, filters)
@@ -42,15 +43,24 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getTasksByTeamMemberIdFromDB = async (
-  memberId: string,
+  userId: string,
   query: Record<string, unknown>,
 ) => {
-  if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new AppError(400, 'Invalid member ID');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new AppError(400, 'Invalid user ID');
+  }
+
+  const teamMember = await TeamMember.findOne({
+    user: userId,
+    isDeleted: false,
+  });
+
+  if (!teamMember) {
+    throw new AppError(404, 'Team member not found for this user');
   }
 
   const taskQuery = Task.find({
-    assignTeamMember: memberId,
+    assignTeamMember: teamMember._id,
     isDeleted: false,
   });
 
@@ -62,9 +72,11 @@ const getTasksByTeamMemberIdFromDB = async (
     .fields();
 
   const meta = await queryBuilder.countTotal();
-  const result = await queryBuilder.modelQuery
-    .populate('vendor')
-    .populate('assignTeamMember');
+  const result = await queryBuilder.modelQuery;
+  // .populate('vendor')
+  // .populate('assignTeamMember');
+
+  console.log(result);
 
   return { meta, result };
 };
@@ -72,7 +84,7 @@ const getTasksByTeamMemberIdFromDB = async (
 const getTaskByIdFromDB = async (id: string) => {
   const result = await Task.findById(id).populate('vendor').populate({
     path: 'assignTeamMember',
-    select: 'firstName lastName email role',
+    select: 'firstName lastName email role image',
   });
 
   if (!result) {
@@ -111,7 +123,7 @@ const updateTaskIntoDB = async (id: string, payload: Partial<TTask>) => {
 
 const updateTaskStatusIntoDB = async (
   id: string,
-  payload: { status: string },
+  payload: { status: string; note?: string },
 ) => {
   const isTaskExists = await Task.findById(id);
 
@@ -119,7 +131,21 @@ const updateTaskStatusIntoDB = async (
     throw new AppError(404, 'This task is not found');
   }
 
-  const result = await Task.findByIdAndUpdate(id, payload, { new: true });
+  const updateData: any = {
+    status: payload.status,
+  };
+
+  if (payload.note?.trim()) {
+    updateData.$push = {
+      notes: {
+        text: payload.note.trim(),
+        status: payload.status,
+        createdAt: new Date(),
+      },
+    };
+  }
+
+  const result = await Task.findByIdAndUpdate(id, updateData, { new: true });
   return result;
 };
 

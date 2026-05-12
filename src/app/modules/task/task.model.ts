@@ -38,6 +38,22 @@ const taskSchema = new Schema<TTask>(
       },
       default: 'To-Do',
     },
+    notes: [
+      {
+        text: {
+          type: String,
+          required: true,
+        },
+        status: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     isDeleted: {
       type: Boolean,
       default: false,
