@@ -320,7 +320,11 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
   const paymentQuery = Payment.find({ vendor, isDeleted: false })
     .populate('vendor', 'businessName email')
     .populate('user', 'fullName email phone image role')
-    .populate({ path: 'reference', select: 'orderId bookingId' });
+    .populate({
+      path: 'reference',
+      select:
+        'orderId bookingId products serviceName date time duration price status',
+    });
 
   const queryBuilder = new QueryBuilder(paymentQuery, filters)
     .search(paymentSearchableFields)

@@ -21,7 +21,7 @@ router.get('/', auth('admin'), SubPaymentsController.getAllSubPayment);
 
 router.get(
   '/vendor',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   SubPaymentsController.getSubPaymentByVendor,
 );
 
