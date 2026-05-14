@@ -119,19 +119,21 @@ const getAllOrderByUserFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getOrdersByEmailFromDB = async (email: string) => {
-  // ✅ Validate email
   if (!email) {
     throw new AppError(400, 'Email is required');
   }
 
-  // ✅ Fetch bookings directly by email
   const bookings = await Order.find({ customerEmail: email, isDeleted: false })
     .populate({
       path: 'vendor',
-      select: 'businessName email phone',
+      select: 'businessName email phone userId',
+      populate: {
+        path: 'userId',
+        select: '_id fullName email image',
+      },
     })
-    .sort({ createdAt: -1 }) // latest first
-    .select('-__v -isDeleted'); // exclude unwanted fields
+    .sort({ createdAt: -1 })
+    .select('-__v -isDeleted');
 
   return bookings;
 };

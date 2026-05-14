@@ -186,7 +186,11 @@ const getBookingsByEmailFromDB = async (email: string) => {
   const bookings = await Booking.find({ email, isDeleted: false })
     .populate({
       path: 'vendor',
-      select: 'businessName email phone',
+      select: 'businessName email phone userId',
+      populate: {
+        path: 'userId',
+        select: '_id fullName email image',
+      },
     })
     .populate({
       path: 'service',

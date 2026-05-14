@@ -39,12 +39,6 @@ const getCancellationPolicyFromDB = async (vendorId: string) => {
     vendor: vendorExists._id,
     isDeleted: false,
   });
-  if (!result) {
-    throw new AppError(
-      404,
-      'No cancellation policy information is currently available.',
-    );
-  }
   return result;
 };
 
