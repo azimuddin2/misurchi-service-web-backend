@@ -101,6 +101,10 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
   // ✅ BASE MATCH (FIXED REGEX)
   const baseMatch: Record<string, any> = { isDeleted: false };
 
+  if (sortBy === 'rating') {
+    baseMatch.avgRating = { $gt: 0 };
+  }
+
   if (isSet(type)) {
     baseMatch.type = {
       $in: String(type)
@@ -136,7 +140,6 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
 
   const computedStages: PipelineStage[] = [];
-
   if (hasPriceFilter || hasDiscountFilter) {
     computedStages.push({
       $addFields: {
@@ -146,7 +149,8 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
 
     computedStages.push({
       $addFields: {
-        _price: { $toDouble: '$_firstService.price' },
+        // ✅ finalPrice use করো, actual price already calculated
+        _price: { $toDouble: '$_firstService.finalPrice' },
         _discount: {
           $cond: {
             if: {

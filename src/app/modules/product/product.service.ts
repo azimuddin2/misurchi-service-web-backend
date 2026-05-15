@@ -103,6 +103,10 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
   // ─────────────────────────────────────────────
   const baseMatch: Record<string, any> = { isDeleted: false };
 
+  if (sortBy === 'rating') {
+    baseMatch.avgRating = { $gt: 0 };
+  }
+
   if (isSet(productType)) {
     baseMatch.productType = {
       $in: String(productType)
@@ -145,11 +149,51 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
     computedStages.push({
       $addFields: {
         _calcPrice: {
-          $cond: [
-            { $eq: [{ $type: '$price' }, 'string'] },
-            { $toDouble: '$price' },
-            { $ifNull: ['$price', 0] },
-          ],
+          $let: {
+            vars: {
+              basePrice: {
+                $cond: [
+                  { $eq: [{ $type: '$price' }, 'string'] },
+                  { $toDouble: '$price' },
+                  { $ifNull: ['$price', 0] },
+                ],
+              },
+              discount: {
+                $let: {
+                  vars: { raw: { $ifNull: ['$discountPrice', '0'] } },
+                  in: {
+                    $cond: {
+                      if: {
+                        $or: [
+                          { $eq: ['$$raw', 'none'] },
+                          { $eq: ['$$raw', ''] },
+                          { $eq: ['$$raw', null] },
+                        ],
+                      },
+                      then: 0,
+                      else: {
+                        $toDouble: {
+                          $replaceAll: {
+                            input: '$$raw',
+                            find: '%',
+                            replacement: '',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            in: {
+              $subtract: [
+                '$$basePrice',
+                {
+                  $multiply: ['$$basePrice', { $divide: ['$$discount', 100] }],
+                },
+              ],
+            },
+          },
         },
         _calcDiscount: {
           $let: {
