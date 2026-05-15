@@ -116,6 +116,10 @@ const bookingSchema = new Schema<TBooking>(
     assignedTo: {
       type: String,
     },
+    isReviewed: {
+      type: Boolean,
+      default: false,
+    },
     request: { type: BookingRequestSchema, default: {} },
   },
   { timestamps: true },

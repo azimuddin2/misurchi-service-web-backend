@@ -100,6 +100,11 @@ const orderSchema = new Schema<TOrder>(
       address: { type: String, required: true },
     },
 
+    isReviewed: {
+      type: Boolean,
+      default: false,
+    },
+
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },

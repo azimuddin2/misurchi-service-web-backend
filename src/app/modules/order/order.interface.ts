@@ -54,6 +54,7 @@ export type TOrder = {
     address: string;
   };
   isDeleted: boolean;
+  isReviewed: boolean;
   createdAt?: string;
   updatedAt?: string;
 };

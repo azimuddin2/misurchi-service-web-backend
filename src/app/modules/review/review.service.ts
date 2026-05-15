@@ -11,6 +11,8 @@ import {
 import AppError from '../../errors/AppError';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { Vendor } from '../vendor/vendor.model';
+import { Order } from '../order/order.model';
+import { Booking } from '../booking/booking.model';
 
 const createReviewIntoDB = async (payload: TReview) => {
   const session: ClientSession = await startSession();
@@ -53,6 +55,23 @@ const createReviewIntoDB = async (payload: TReview) => {
       },
       { session },
     );
+
+    // ✅ Order/Booking isReviewed: true update
+    if (payload.orderId) {
+      await Order.findByIdAndUpdate(
+        payload.orderId,
+        { isReviewed: true },
+        { session },
+      );
+    }
+
+    if (payload.bookingId) {
+      await Booking.findByIdAndUpdate(
+        payload.bookingId,
+        { isReviewed: true },
+        { session },
+      );
+    }
 
     // ✅ Vendor rating update
     if (result[0].vendor) {

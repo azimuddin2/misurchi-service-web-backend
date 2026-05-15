@@ -8,4 +8,6 @@ export type TReview = {
   service?: Types.ObjectId;
   review: string;
   rating: number;
+  orderId?: string;
+  bookingId?: string;
 };
