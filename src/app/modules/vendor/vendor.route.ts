@@ -68,4 +68,6 @@ router.get(
   VendorControllers.getVendorDashboardData,
 );
 
+router.get('/profile-stats/:id', VendorControllers.getVendorProfileStats);
+
 export const VendorRoutes = router;

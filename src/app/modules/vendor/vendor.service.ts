@@ -569,6 +569,26 @@ const getVendorDashboardDataFromDB = async (vendorId: string) => {
   };
 };
 
+const getVendorProfileStatsFromDB = async (vendorId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid vendor ID');
+  }
+
+  const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
+
+  const [totalProducts, totalServices, totalSales] = await Promise.all([
+    Product.countDocuments({ vendor: vendorObjectId, isDeleted: false }),
+    Packages.countDocuments({ vendor: vendorObjectId, isDeleted: false }),
+    Payment.countDocuments({
+      vendor: vendorObjectId,
+      status: 'paid',
+      isDeleted: false,
+    }),
+  ]);
+
+  return { totalProducts, totalServices, totalSales };
+};
+
 export const VendorServices = {
   getAllVendorsFromDB,
   getVendorProfileFromDB,
@@ -580,4 +600,5 @@ export const VendorServices = {
   getVendorSalesOverviewChart,
   getAppointmentsOverviewRate,
   getVendorDashboardDataFromDB,
+  getVendorProfileStatsFromDB,
 };

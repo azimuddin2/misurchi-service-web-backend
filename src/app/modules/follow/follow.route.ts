@@ -16,10 +16,6 @@ router.delete(
   FollowControllers.unfollowVendor,
 );
 
-router.get(
-  '/:vendorId/followers',
-  auth('user', 'vendor', 'team_member'),
-  FollowControllers.getVendorFollowersCount,
-);
+router.get('/:vendorId/followers', FollowControllers.getVendorFollowersCount);
 
 export const FollowRoutes = router;

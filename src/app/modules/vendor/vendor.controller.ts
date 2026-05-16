@@ -153,6 +153,20 @@ const getVendorDashboardData = catchAsync(
   },
 );
 
+const getVendorProfileStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await VendorServices.getVendorProfileStatsFromDB(id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Vendor profile stats fetched successfully',
+      data: result,
+    });
+  },
+);
+
 export const VendorControllers = {
   getAllVendors,
   getVendorProfile,
@@ -164,4 +178,5 @@ export const VendorControllers = {
   getVendorSalesOverviewChart,
   getAppointmentsOverviewRate,
   getVendorDashboardData,
+  getVendorProfileStats,
 };

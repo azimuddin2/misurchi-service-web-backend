@@ -70,6 +70,7 @@ const createProductIntoDB = async (payload: TProduct, files: any) => {
 };
 
 const getAllProductFromDB = async (query: Record<string, unknown>) => {
+  console.log('Received query:', query);
   const {
     minPrice,
     maxPrice,
@@ -128,13 +129,6 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
       $exists: true,
       $nin: [null, '', 'none', '0', 0],
     };
-  }
-
-  // ⚠️ keep regex (but simplified)
-  if (isSet(searchTerm)) {
-    baseMatch.$or = productSearchableFields.map((field) => ({
-      [field]: { $regex: String(searchTerm), $options: 'i' },
-    }));
   }
 
   // ─────────────────────────────────────────────
@@ -281,6 +275,7 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
               image: 1,
               country: 1,
               state: 1,
+              zipCode: 1,
             },
           },
         ],
@@ -292,6 +287,31 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
         vendor: { $arrayElemAt: ['$vendor', 0] },
       },
     },
+
+    // ✅ search match
+    ...(isSet(searchTerm)
+      ? [
+          {
+            $match: {
+              $or: [
+                { name: { $regex: String(searchTerm), $options: 'i' } },
+                {
+                  'vendor.businessName': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
+                {
+                  'vendor.zipCode': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
 
     // 🔥 REMOVE USER LOOKUP (HEAVY + UNUSED)
     // ❌ removed user join

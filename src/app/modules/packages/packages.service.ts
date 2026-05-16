@@ -129,12 +129,6 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
     };
   }
 
-  if (isSet(searchTerm)) {
-    baseMatch.$or = packageSearchableFields.map((field) => ({
-      [field]: { $regex: String(searchTerm), $options: 'i' },
-    }));
-  }
-
   // ✅ COMPUTED ONLY IF NEEDED
   const hasPriceFilter = isSet(minPrice) || isSet(maxPrice);
   const hasDiscountFilter = isSet(minDiscount) || isSet(maxDiscount);
@@ -224,12 +218,39 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
               image: 1,
               country: 1,
               state: 1,
+              zipCode: 1,
             },
           },
         ],
         as: 'vendor',
       },
     },
+
+    // ✅ search match
+    ...(isSet(searchTerm)
+      ? [
+          {
+            $match: {
+              $or: [
+                { name: { $regex: String(searchTerm), $options: 'i' } },
+                {
+                  'vendor.businessName': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
+                {
+                  'vendor.zipCode': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
+
     {
       $addFields: {
         vendor: { $arrayElemAt: ['$vendor', 0] },
