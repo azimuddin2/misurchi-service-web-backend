@@ -21,8 +21,8 @@ const planSchema = new Schema<TPlan>(
     },
 
     limits: {
-      serviceMax: { type: Number, default: 0 },
-      productMax: { type: Number, default: 0 },
+      serviceMax: { type: String, default: 0 },
+      productMax: { type: String, default: 0 },
       highlightOfferMax: { type: Number, default: 0 },
       transactionFee: { type: Number, default: 0 },
     },

@@ -101,6 +101,12 @@ const subPayCheckout = async (payload: TSubPayment) => {
   }
 
   // 6️⃣ Create Payment Entry
+  await SubPayment.deleteOne({
+    user: payload.user,
+    subscription: subscription._id,
+    isPaid: false,
+  });
+
   const modifyPayload: Partial<TSubPayment> = {
     ...payload,
     vendor: vendor._id as any,
@@ -109,23 +115,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
     subscription: subscription._id as any,
   };
 
-  const createdPayment = await SubPayment.findOneAndUpdate(
-    {
-      user: payload.user,
-      subscription: subscription._id,
-      isPaid: false,
-    },
-    {
-      $setOnInsert: {
-        ...modifyPayload,
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-      runValidators: true,
-    },
-  );
+  const createdPayment = await SubPayment.create(modifyPayload);
 
   if (!createdPayment) {
     throw new AppError(

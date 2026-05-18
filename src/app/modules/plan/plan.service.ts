@@ -3,7 +3,7 @@ import { TPlan } from './plan.interface';
 import { User } from '../user/user.model';
 import { Plan } from './plan.model';
 import QueryBuilder from '../../builder/QueryBuilder';
-import { createStripeProduct } from './plan.utils';
+import { createStripeProduct, stripe } from './plan.utils';
 
 const createPlanIntoDB = async (payload: TPlan) => {
   // Find the admin to notify
@@ -79,22 +79,30 @@ const updatePlanIntoDB = async (id: string, payload: Partial<TPlan>) => {
     throw new AppError(400, 'This plan has been deleted');
   }
 
-  // ✅ cost বা name বদলালে Stripe update করো
-  if (payload.cost || payload.name || payload.description) {
-    // Stripe এ price update করতে হলে নতুন price create করতে হয়
-    // কারণ Stripe old price update allow করে না
+  // ✅ cost বদলালে — same product, নতুন price
+  if (payload.cost !== undefined) {
     const interval = isPlanExists.validity === '1year' ? 'year' : 'month';
 
-    const stripeData = await createStripeProduct(
-      payload.name || isPlanExists.name,
-      payload.description || isPlanExists.description,
-      payload.cost || isPlanExists.cost,
-      interval,
-    );
+    const newPrice = await stripe.prices.create({
+      unit_amount: payload.cost * 100,
+      currency: 'usd',
+      recurring: { interval },
+      product: isPlanExists.stripeProductId, // ✅ same productId
+    });
 
-    // ✅ নতুন Stripe IDs payload এ add করো
-    payload.stripeProductId = stripeData.productId;
-    payload.stripePriceId = stripeData.priceId;
+    // পুরনো price archive
+    await stripe.prices.update(isPlanExists.stripePriceId, { active: false });
+
+    payload.stripePriceId = newPrice.id; // ✅ শুধু priceId update
+    // stripeProductId same থাকবে — touch করবো না
+  }
+
+  // ✅ name বা description বদলালে — Stripe product update
+  if (payload.name || payload.description) {
+    await stripe.products.update(isPlanExists.stripeProductId, {
+      name: payload.name || isPlanExists.name,
+      description: payload.description || isPlanExists.description,
+    });
   }
 
   const updatedPlan = await Plan.findByIdAndUpdate(id, payload, {

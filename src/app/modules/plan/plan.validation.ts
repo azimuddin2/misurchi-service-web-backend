@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const serviceProductMaxSchema = z.union([
+  z.number().min(0),
+  z.literal('unlimited'),
+]);
+
 const createPlanValidationSchema = z.object({
   body: z.object({
     name: z
@@ -20,8 +25,8 @@ const createPlanValidationSchema = z.object({
     }),
 
     limits: z.object({
-      serviceMax: z.number().min(0).default(0),
-      productMax: z.number().min(0).default(0),
+      serviceMax: serviceProductMaxSchema.default(0),
+      productMax: serviceProductMaxSchema.default(0),
       highlightOfferMax: z.number().min(0).default(0),
       transactionFee: z.number().min(0).max(100).default(0),
     }),
@@ -53,8 +58,8 @@ const updatePlanValidationSchema = z.object({
     }),
 
     limits: z.object({
-      serviceMax: z.number().min(0).default(0).optional(),
-      productMax: z.number().min(0).default(0).optional(),
+      serviceMax: serviceProductMaxSchema.optional(),
+      productMax: serviceProductMaxSchema.optional(),
       highlightOfferMax: z.number().min(0).default(0).optional(),
       transactionFee: z.number().min(0).max(100).default(0).optional(),
     }),

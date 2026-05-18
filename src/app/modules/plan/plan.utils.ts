@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import config from '../../config';
 
-const stripe: Stripe = new Stripe(config.stripe_api_secret as string, {
+export const stripe: Stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
   typescript: true,
 });
