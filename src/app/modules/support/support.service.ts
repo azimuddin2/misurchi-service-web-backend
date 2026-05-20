@@ -143,7 +143,7 @@ const updateSupportIntoDB = async (id: string, payload: Partial<TSupport>) => {
               <p style="margin-top:30px;font-size:13px;color:#999;">
                 Best Regards,<br/>
                 <strong>Support Team</strong><br/>
-                Crystal Cleaners
+                Scott Clements
               </p>
             </td>
           </tr>

@@ -57,7 +57,7 @@ const registerUserIntoDB = async (payload: TUser) => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    '5m',
+    '30m',
   );
 
   // 7. Send OTP email
@@ -138,7 +138,7 @@ const registerUserIntoDB = async (payload: TUser) => {
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Crystal Cleaners</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -225,7 +225,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
     const accessToken = createToken(
       jwtPayload,
       config.jwt_access_secret as string,
-      '5m',
+      '30m',
     );
 
     await sendEmail(
@@ -305,7 +305,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Crystal Cleaners</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>

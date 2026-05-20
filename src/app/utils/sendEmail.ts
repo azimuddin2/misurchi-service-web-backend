@@ -1,22 +1,13 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import config from '../config';
 
-export const sendEmail = async (to: string, subject: string, html: string) => {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: config.NODE_ENV === 'production',
-    auth: {
-      user: config.nodemailer_host_email,
-      pass: config.nodemailer_host_pass,
-    },
-  });
+const resend = new Resend(config.resend_api_key);
 
-  await transporter.sendMail({
-    from: 'mohammadazimuddin274@gmail.com', // sender address
-    to, // list of receivers
+export const sendEmail = async (to: string, subject: string, html: string) => {
+  await resend.emails.send({
+    from: 'Scott Clements <noreply@smevine.com>',
+    to,
     subject,
-    text: '', // plain text body
-    html, // html body
+    html,
   });
 };
