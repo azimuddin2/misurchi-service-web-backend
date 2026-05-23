@@ -8,21 +8,42 @@ import { TSubscription } from './subscription.interface';
 import { Subscription } from './subscription.model';
 import httpStatus from 'http-status';
 import { addMonths } from './subscription.utils';
+import { TPlan } from '../plan/plan.interface';
 
 const createSubscriptionIntoDB = async (payload: TSubscription) => {
-  // 1️⃣ Active subscription check
   const activeSubscription = await Subscription.findOne({
     user: payload.user,
     status: 'active',
     isExpired: false,
     isDeleted: false,
-  });
+  }).populate('plan');
 
   if (activeSubscription) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      `You already have an active subscription. It expires on ${activeSubscription.expiredAt?.toDateString()}.`,
-    );
+    const currentPlan = activeSubscription.plan as TPlan;
+    const newPlan = await Plan.findById(payload.plan);
+
+    // ❌ Free → Free block
+    if (currentPlan.validity === 'free' && newPlan?.validity === 'free') {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'You are already on a free plan.',
+      );
+    }
+
+    // ❌ Paid → Paid block
+    if (currentPlan.validity !== 'free' && newPlan?.validity !== 'free') {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `You already have an active subscription. It expires on ${activeSubscription.expiredAt?.toDateString()}.`,
+      );
+    }
+
+    // ✅ Free → Paid upgrade allow
+    if (currentPlan.validity === 'free' && newPlan?.validity !== 'free') {
+      await Subscription.findByIdAndUpdate(activeSubscription._id, {
+        status: 'canceled',
+      });
+    }
   }
 
   // 2️⃣ Check for existing unpaid subscription for this plan

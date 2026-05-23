@@ -30,7 +30,8 @@ const registerUserValidationSchema = z.object({
         .string({
           required_error: 'Phone number is required',
         })
-        .regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'),
+        .transform((v) => v.replace(/\s+/g, ''))
+        .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number')),
 
       password: z
         .string({
@@ -108,7 +109,8 @@ const updateUserValidationSchema = z.object({
       .string({
         required_error: 'Phone number is required',
       })
-      .regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number')
+      .transform((v) => v.replace(/\s+/g, ''))
+      .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'))
       .optional(),
 
     role: z

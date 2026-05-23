@@ -42,11 +42,14 @@ const userSchema = new Schema<TUser, UserModel>(
       type: String,
       required: [true, 'Phone Number is required'],
       trim: true,
+      set: (v: string) => v.replace(/\s+/g, ''),
       validate: {
-        validator: function (v) {
-          return /^\+?[0-9]{10,15}$/.test(v);
+        validator: function (v: string) {
+          const cleaned = v.replace(/\s+/g, '');
+          return /^\+?[0-9]{10,15}$/.test(cleaned);
         },
-        message: (props) => `${props.value} is not a valid contact number!`,
+        message: (props: any) =>
+          `${props.value} is not a valid contact number!`,
       },
     },
     password: {
@@ -54,14 +57,12 @@ const userSchema = new Schema<TUser, UserModel>(
       required: [true, 'Password is required'],
       trim: true,
       minlength: [8, 'Password can be minimum 8 characters'],
-      // maxlength: [20, 'Password can not be more than 20 characters'],
     },
     confirmPassword: {
       type: String,
       required: [true, 'Password is required'],
       trim: true,
       minlength: [8, 'Password can be minimum 8 characters'],
-      // maxlength: [20, 'Password can not be more than 20 characters'],
     },
     needsPasswordChange: {
       type: Boolean,

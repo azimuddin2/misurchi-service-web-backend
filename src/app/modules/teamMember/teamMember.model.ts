@@ -45,8 +45,17 @@ const teamMemberSchema = new Schema<TTeamMember>(
 
     phone: {
       type: String,
-      required: [true, 'Phone is required'],
-      unique: true,
+      required: [true, 'Phone Number is required'],
+      trim: true,
+      set: (v: string) => v.replace(/\s+/g, ''),
+      validate: {
+        validator: function (v: string) {
+          const cleaned = v.replace(/\s+/g, '');
+          return /^\+?[0-9]{10,15}$/.test(cleaned);
+        },
+        message: (props: any) =>
+          `${props.value} is not a valid contact number!`,
+      },
     },
 
     image: {

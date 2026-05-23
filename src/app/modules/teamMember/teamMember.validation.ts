@@ -26,8 +26,11 @@ const createTeamMemberValidationSchema = z.object({
       .email('Invalid email address')
       .toLowerCase(),
     phone: z
-      .string({ required_error: 'Phone number is required' })
-      .regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'),
+      .string({
+        required_error: 'Phone number is required',
+      })
+      .transform((v) => v.replace(/\s+/g, ''))
+      .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number')),
     role: z
       .enum(TeamMemberRole as [string, ...string[]])
       .default('team_member'),
@@ -61,8 +64,11 @@ const updateTeamMemberValidationSchema = z.object({
 
       email: z.string().email('Invalid email address').toLowerCase().optional(),
       phone: z
-        .string()
-        .regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number')
+        .string({
+          required_error: 'Phone number is required',
+        })
+        .transform((v) => v.replace(/\s+/g, ''))
+        .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'))
         .optional(),
 
       role: z.enum(TeamMemberRole as [string, ...string[]]).optional(),

@@ -20,7 +20,17 @@ const vendorSchema = new Schema<TVendor>(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      required: [true, 'Phone Number is required'],
+      trim: true,
+      set: (v: string) => v.replace(/\s+/g, ''),
+      validate: {
+        validator: function (v: string) {
+          const cleaned = v.replace(/\s+/g, '');
+          return /^\+?[0-9]{10,15}$/.test(cleaned);
+        },
+        message: (props: any) =>
+          `${props.value} is not a valid contact number!`,
+      },
     },
     country: {
       type: String,
