@@ -19,7 +19,8 @@ const vendorRegisterUserValidationSchema = z.object({
         .string({
           required_error: 'Phone number is required',
         })
-        .min(7, 'Phone number seems too short'),
+        .transform((v) => v.replace(/\s+/g, ''))
+        .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number')),
 
       country: z.string({
         required_error: 'Country is required',
@@ -104,7 +105,8 @@ const updateVendorUserValidationSchema = z.object({
       .string({
         required_error: 'Phone number is required',
       })
-      .min(7, 'Phone number seems too short')
+      .transform((v) => v.replace(/\s+/g, ''))
+      .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'))
       .optional(),
 
     country: z

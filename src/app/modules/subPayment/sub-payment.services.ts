@@ -78,6 +78,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
     {
       $setOnInsert: {
         user: payload.user,
+        vendor: vendor._id,
         plan: payload.plan,
         amount: plan.cost || 0,
         durationType: payload.durationType,
@@ -124,7 +125,35 @@ const subPayCheckout = async (payload: TSubPayment) => {
     );
   }
 
-  // 7️⃣ Create Checkout Session
+  // 7️⃣ If you have the Basic Plan, activate directly — no Stripe checkout required
+  if (plan.cost === 0) {
+    await Subscription.findByIdAndUpdate(subscription._id, {
+      $set: {
+        isPaid: true,
+        status: 'active',
+        startedAt: new Date(),
+        isExpired: false,
+      },
+    });
+
+    await User.findByIdAndUpdate(payload.user, {
+      $set: {
+        isSubscribed: true,
+        subscribed: 'basic',
+      },
+    });
+
+    await SubPayment.findByIdAndUpdate(createdPayment._id, {
+      $set: {
+        isPaid: true,
+        paidAt: new Date(),
+      },
+    });
+
+    return { message: 'Basic plan activated successfully' };
+  }
+
+  // 8️⃣ Paid Plan — Stripe Checkout Session
   const checkoutSession = await createCheckoutSession({
     priceId: plan.stripePriceId,
     paymentId: createdPayment._id as any,
@@ -353,7 +382,7 @@ const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
     })
     .populate({
       path: 'subscription',
-      select: 'startedAt expiredAt',
+      select: 'startedAt expiredAt status',
     });
 
   const queryBuilder = new QueryBuilder(subPaymentQuery, filters)
@@ -377,18 +406,44 @@ const getActiveSubPaymentByVendorFromDB = async (vendorId: string) => {
   const activeSubscription = await Subscription.findOne({
     vendor: vendorId,
     isDeleted: false,
-  }).sort({ createdAt: -1 });
+    status: 'active',
+    isExpired: false,
+  })
+    .populate('plan')
+    .sort({ createdAt: -1 });
 
-  const result = await SubPayment.findOne({
+  return activeSubscription;
+};
+
+const cancelActiveSubscription = async (vendorId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const now = new Date();
+
+  const activeSubscription = await Subscription.findOne({
     vendor: vendorId,
     isPaid: true,
+    status: 'active',
+    expiredAt: { $gt: now },
     isDeleted: false,
-    subscription: activeSubscription?._id,
-  })
-    .populate('subscription')
-    .populate('plan');
+  });
 
-  return result;
+  console.log('activeSubscription', activeSubscription); // 👈 এটা add করুন
+
+  if (!activeSubscription) {
+    throw new AppError(404, 'No active subscription found');
+  }
+
+  await Subscription.findByIdAndUpdate(activeSubscription._id, {
+    $set: { status: 'canceled' },
+  });
+
+  return {
+    message: `Your subscription will remain active until ${activeSubscription.expiredAt?.toDateString()}. It will not auto-renew after that.`,
+    expiredAt: activeSubscription.expiredAt,
+  };
 };
 
 export const SubPaymentsService = {
@@ -399,4 +454,5 @@ export const SubPaymentsService = {
   getAllSubPaymentFromDB,
   getSubPaymentByVendorFromDB,
   getActiveSubPaymentByVendorFromDB,
+  cancelActiveSubscription,
 };
