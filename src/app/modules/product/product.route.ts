@@ -7,7 +7,13 @@ import validateRequest from '../../middlewares/validateRequest';
 import { ProductValidations } from './product.validation';
 
 const router = express.Router();
-const upload = multer({ storage: memoryStorage() });
+const upload = multer({
+  storage: memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    fieldSize: 25 * 1024 * 1024,
+  },
+});
 
 router.post(
   '/',
