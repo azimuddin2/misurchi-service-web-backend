@@ -29,6 +29,7 @@ import { StripeRoute } from '../modules/stripe/stripe.route';
 import { CancellationPolicyRoutes } from '../modules/cancellationPolicy/cancellationPolicy.route';
 import { ReturnPolicyRoutes } from '../modules/returnPolicy/returnPolicy.route';
 import { TeamMemberRoutes } from '../modules/teamMember/teamMember.route';
+import { ReferralRoutes } from '../modules/referral/referral.routes';
 
 const router = Router();
 
@@ -152,6 +153,10 @@ const moduleRoutes = [
   {
     path: '/stripe',
     route: StripeRoute,
+  },
+  {
+    path: '/referral',
+    route: ReferralRoutes,
   },
 ];
 

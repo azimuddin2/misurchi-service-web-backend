@@ -3,6 +3,7 @@ import { TVendor } from './vendor.interface';
 import config from '../../config';
 import bcrypt from 'bcrypt';
 import { ChooseOffer } from './vendor.constant';
+import crypto from 'crypto';
 
 const vendorSchema = new Schema<TVendor>(
   {
@@ -126,6 +127,19 @@ const vendorSchema = new Schema<TVendor>(
       type: [Schema.Types.ObjectId],
       ref: 'TeamMember',
       default: [],
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      default: () => crypto.randomBytes(6).toString('hex').toUpperCase(),
+    },
+    referralLink: {
+      type: String,
+      default: '',
+    },
+    totalReferralPoints: {
+      type: Number,
+      default: 0,
     },
     isDeleted: {
       type: Boolean,

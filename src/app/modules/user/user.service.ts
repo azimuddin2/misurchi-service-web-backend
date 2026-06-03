@@ -14,6 +14,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { userSearchableFields } from './user.constant';
 import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
 import { Subscription } from '../subscription/subscription.model';
+import { Referral } from '../referral/referral.model';
 
 const registerUserIntoDB = async (payload: TUser) => {
   // 1. Check if user already exists
@@ -159,7 +160,7 @@ const registerUserIntoDB = async (payload: TUser) => {
   return { accessToken };
 };
 
-const vendorRegisterUserIntoDB = async (payload: TVendor) => {
+const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
   if (payload.password !== payload.confirmPassword) {
     throw new AppError(400, 'Passwords do not match!');
   }
@@ -211,6 +212,24 @@ const vendorRegisterUserIntoDB = async (payload: TVendor) => {
       { vendorId: createdVendor[0]._id },
       { session },
     );
+
+    // ✅ Referral logic
+    if (refCode) {
+      const referrer = await Vendor.findOne({ referralCode: refCode });
+      if (referrer) {
+        await Referral.create(
+          [
+            {
+              referrerId: referrer._id,
+              referredUserId: createdVendor[0]._id,
+              businessName: payload.businessName,
+              status: 'pending',
+            },
+          ],
+          { session },
+        );
+      }
+    }
 
     const jwtPayload: TJwtPayload = {
       userId: createdUser[0]._id,

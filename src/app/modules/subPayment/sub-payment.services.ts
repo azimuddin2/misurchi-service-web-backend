@@ -14,6 +14,7 @@ import { Subscription } from '../subscription/subscription.model';
 import { VendorServices } from '../vendor/vendor.service';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { TSubscribed } from '../user/user.interface';
+import { ReferralService } from '../referral/referral.service';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -248,6 +249,11 @@ const confirmPayment = async (query: Record<string, any>) => {
       },
       { new: true, session },
     );
+
+    const payingUser = await User.findById(userId).select('vendorId');
+    if (payingUser?.vendorId) {
+      await ReferralService.awardReferralPoint(payingUser.vendorId);
+    }
 
     await session.commitTransaction();
     return payment;

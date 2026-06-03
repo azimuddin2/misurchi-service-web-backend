@@ -33,6 +33,11 @@ export type TVendor = {
 
   teamMembers?: Types.ObjectId[];
 
+  // 🔹 Referral
+  referralCode: string;
+  referralLink: string;
+  totalReferralPoints: number;
+
   isDeleted: boolean;
   createdAt?: string;
   updatedAt?: string;
