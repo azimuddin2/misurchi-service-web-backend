@@ -15,7 +15,9 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const vendorRegisterUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.vendorRegisterUserIntoDB(req.body);
+  const refCode = req.query.ref as string | undefined;
+
+  const result = await UserServices.vendorRegisterUserIntoDB(req.body, refCode);
 
   sendResponse(res, {
     statusCode: 201,
@@ -51,8 +53,6 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 
 const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
-
-  console.log(req.body);
 
   // Access files from multer
   const profileFile = (

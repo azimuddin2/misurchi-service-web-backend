@@ -4,7 +4,7 @@ import { Referral } from './referral.model';
 import { sendEmail } from '../../utils/sendEmail';
 import config from '../../config';
 
-// ✅ 1. Referral link
+// Referral link আনো
 const getReferralLink = async (vendorId: Types.ObjectId) => {
   const vendor = await Vendor.findById(vendorId).select(
     'referralCode referralLink businessName',
@@ -12,10 +12,19 @@ const getReferralLink = async (vendorId: Types.ObjectId) => {
 
   if (!vendor) throw new Error('Vendor not found');
 
-  // যদি link না থাকে তাহলে তৈরি করো
   if (!vendor.referralLink) {
-    vendor.referralLink = `${config.client_Url}/signup/vendor?ref=${vendor.referralCode}`;
-    await vendor.save();
+    const link = `${config.client_Url}/signup/vendor?ref=${vendor.referralCode}`;
+
+    await Vendor.findByIdAndUpdate(
+      vendorId,
+      { referralLink: link },
+      { new: true },
+    );
+
+    return {
+      referralCode: vendor.referralCode,
+      referralLink: link,
+    };
   }
 
   return {
@@ -24,7 +33,7 @@ const getReferralLink = async (vendorId: Types.ObjectId) => {
   };
 };
 
-// ✅ 2. Email referral link
+// Email পাঠাও
 const emailReferralLink = async (
   vendorId: Types.ObjectId,
   recipientEmail: string,
@@ -63,7 +72,7 @@ const emailReferralLink = async (
   );
 };
 
-// ✅ 3. Dashboard stats
+// Vendor Dashboard stats
 const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
   let dateFilter: Record<string, unknown> = {};
   if (month) {
@@ -116,7 +125,7 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
   };
 };
 
-// ✅ 4. Transaction complete হলে point দাও
+// রেফারেল পয়েন্ট অ্যাওয়ার্ড করো
 const awardReferralPoint = async (vendorId: Types.ObjectId) => {
   const referral = await Referral.findOne({
     referredUserId: vendorId,

@@ -4,7 +4,6 @@ import httpStatus from 'http-status';
 import { Types } from 'mongoose';
 import { ReferralService } from './referral.service';
 
-// ✅ 1. Referral link আনো
 const getReferralLink = catchAsync(async (req, res) => {
   const vendorId = req.user.vendorId as unknown as Types.ObjectId;
 
@@ -18,7 +17,6 @@ const getReferralLink = catchAsync(async (req, res) => {
   });
 });
 
-// ✅ 2. Email পাঠাও
 const emailReferralLink = catchAsync(async (req, res) => {
   const vendorId = req.user.vendorId as unknown as Types.ObjectId;
   const { recipientEmail } = req.body;
@@ -33,11 +31,9 @@ const emailReferralLink = catchAsync(async (req, res) => {
   });
 });
 
-// ✅ 3. Dashboard stats
 const getReferralStats = catchAsync(async (req, res) => {
   const vendorId = req.user.vendorId as unknown as Types.ObjectId;
   const month = req.query.month as string | undefined;
-  // optional: ?month=2025-05
 
   const result = await ReferralService.getReferralStats(vendorId, month);
 

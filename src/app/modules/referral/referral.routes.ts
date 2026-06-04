@@ -5,7 +5,11 @@ import { ReferralController } from './referral.controller';
 
 const router = express.Router();
 
-router.get('/link', auth(USER_ROLE.vendor), ReferralController.getReferralLink);
+router.get(
+  '/referral-link',
+  auth(USER_ROLE.vendor),
+  ReferralController.getReferralLink,
+);
 
 router.post(
   '/email',
