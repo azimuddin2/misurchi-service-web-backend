@@ -22,13 +22,11 @@ const createTeamMemberIntoDB = async (
   payload: TTeamMember,
   file: any,
 ) => {
-  // Vendor get
   const vendor = await Vendor.findOne({ userId: vendorUserId });
   if (!vendor) {
     throw new AppError(404, 'Vendor not found');
   }
 
-  // Image upload to S3
   if (file) {
     const uploadedUrl = await uploadToS3({
       file,

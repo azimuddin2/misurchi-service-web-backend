@@ -113,8 +113,10 @@ const bookingSchema = new Schema<TBooking>(
     remainingAmount: { type: Number, default: 0 },
     trnId: { type: String },
     trnIds: [{ type: String }],
-    assignedTo: {
-      type: String,
+    assignedToMember: {
+      type: Schema.Types.ObjectId,
+      required: [false, 'Team Member Id is required'],
+      ref: 'TeamMember',
     },
     isReviewed: {
       type: Boolean,

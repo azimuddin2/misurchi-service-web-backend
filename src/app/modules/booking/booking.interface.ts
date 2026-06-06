@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { TTeamMember } from '../teamMember/teamMember.interface';
 
 export type TBookingStatus =
   | 'pending'
@@ -51,7 +52,7 @@ export type TBooking = {
   trnId?: string;
   trnIds?: string[];
 
-  assignedTo: string;
+  assignedToMember: Types.ObjectId | TTeamMember | null;
 
   // Request field for cancel/reschedule
   request?: IBookingRequest;

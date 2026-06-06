@@ -9,6 +9,8 @@ import { bookingSearchableFields } from './booking.constant';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
 import { generateBookingId } from './booking.utils';
+import { TeamMember } from '../teamMember/teamMember.model';
+import { sendEmail } from '../../utils/sendEmail';
 
 const createBookingIntoDB = async (payload: TBooking) => {
   const { service, serviceItemId, date, time } = payload;
@@ -170,8 +172,18 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
 
   // Fetch bookings
   const bookings = await Booking.find(bookingQuery)
-    .populate('vendor')
-    .populate('service');
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone',
+    })
+    .populate({
+      path: 'service',
+      select: 'name images price serviceId',
+    })
+    .populate({
+      path: 'assignedToMember',
+      select: 'firstName lastName email phone role',
+    });
 
   return bookings;
 };
@@ -323,7 +335,7 @@ const bookingApprovedRequestIntoDB = async (
 
 const bookingAssignedToMemberIntoDB = async (
   id: string,
-  payload: { assignedTo: string },
+  payload: { assignedToMember: string },
 ) => {
   const isBookingExists = await Booking.findById(id);
 
@@ -331,16 +343,263 @@ const bookingAssignedToMemberIntoDB = async (
     throw new AppError(404, 'This booking is not found');
   }
 
-  // Update assignedTo field (works for add or edit)
-  const result = await Booking.findByIdAndUpdate(id, payload, { new: true });
+  const assignedMemberId = payload.assignedToMember;
 
-  // await NotificationServices.insertNotificationIntoDB({
-  //   receiver: payload.assignedTo,
-  //   message: 'New Booking Assigned',
-  //   description: `You’ve been assigned to a booking for ${isBookingExists.serviceName}. Please review the details.`,
-  //   reference: result?._id,
-  //   model_type: ModeType.Booking,
-  // });
+  if (!Types.ObjectId.isValid(assignedMemberId)) {
+    throw new AppError(400, 'Invalid Team Member ID');
+  }
+
+  const teamMemberExists = await TeamMember.findById(assignedMemberId);
+
+  if (!teamMemberExists) {
+    throw new AppError(404, 'Team Member not found');
+  }
+
+  // Update booking
+  const result = await Booking.findByIdAndUpdate(
+    id,
+    { assignedToMember: assignedMemberId },
+    { new: true, runValidators: true },
+  );
+
+  // ── Email ──────────────────────────────────────────────────────────────────
+  const memberName = `${teamMemberExists.firstName} ${teamMemberExists.lastName}`;
+  const bookingDate = new Date(isBookingExists.date).toLocaleDateString(
+    'en-US',
+    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+  );
+  const year = new Date().getFullYear();
+
+  await sendEmail(
+    teamMemberExists.email,
+    `📋 New Booking Assigned — ${isBookingExists.serviceName}`,
+    `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Booking Assigned</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0AA84C 0%,#087a38 100%);padding:36px 40px;text-align:center;">
+              <p style="margin:0 0 8px;color:rgba(255,255,255,0.85);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">
+                Scott Clements
+              </p>
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;line-height:1.3;">
+                New Booking Assigned
+              </h1>
+              <p style="margin:10px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">
+                You have a new appointment to manage
+              </p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:36px 40px 0;">
+              <p style="margin:0;font-size:16px;color:#1a1a1a;line-height:1.6;">
+                Hi <strong>${memberName}</strong>,
+              </p>
+              <p style="margin:12px 0 0;font-size:15px;color:#555555;line-height:1.7;">
+                A new booking has been assigned to you. Please review the details
+                below and make sure everything is prepared before the appointment.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Booking Details Card -->
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#f8fdf9;border:1px solid #d4edda;border-radius:12px;overflow:hidden;">
+
+                <tr>
+                  <td colspan="2"
+                    style="background:#e8f7ee;padding:14px 20px;border-bottom:1px solid #d4edda;">
+                    <p style="margin:0;font-size:13px;font-weight:700;color:#0AA84C;
+                       letter-spacing:1px;text-transform:uppercase;">
+                      📅 Booking Details
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Service -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;width:40%;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Service
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">
+                      ${isBookingExists.serviceName}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Date -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Date
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">
+                      ${bookingDate}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Time -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Time
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">
+                      ${isBookingExists.time}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Status -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Status
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <span style="display:inline-block;padding:3px 12px;background:#fff3cd;
+                      color:#856404;border-radius:20px;font-size:12px;font-weight:600;
+                      text-transform:capitalize;border:1px solid #ffc107;">
+                      ${isBookingExists.status}
+                    </span>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td colspan="2"
+                    style="background:#e8f7ee;padding:14px 20px;border-top:1px solid #d4edda;border-bottom:1px solid #d4edda;">
+                    <p style="margin:0;font-size:13px;font-weight:700;color:#0AA84C;
+                       letter-spacing:1px;text-transform:uppercase;">
+                      👤 Customer Information
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Customer Name -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Name
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">
+                      ${isBookingExists.name}
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Customer Email -->
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Email
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <a href="mailto:${isBookingExists.email}"
+                      style="font-size:14px;color:#0AA84C;text-decoration:none;font-weight:500;">
+                      ${isBookingExists.email}
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Customer Phone -->
+                <tr>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                      Phone
+                    </p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <a href="tel:${isBookingExists.phone}"
+                      style="font-size:14px;color:#0AA84C;text-decoration:none;font-weight:500;">
+                      ${isBookingExists.phone}
+                    </a>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Note -->
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:0;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+                      ⚠️ <strong>Action Required:</strong> Please log in to your dashboard
+                      to confirm your availability and review the full booking details
+                      before the appointment date.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Closing -->
+          <tr>
+            <td style="padding:28px 40px 36px;">
+              <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">
+                If you have any questions or concerns about this booking, please
+                contact your manager or reply to this email.
+              </p>
+              <p style="margin:20px 0 0;font-size:15px;color:#1a1a1a;">
+                Best regards,<br/>
+                <strong style="color:#0AA84C;">Scott Clements Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f8f8;padding:20px 40px;text-align:center;
+              border-top:1px solid #eeeeee;">
+              <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.6;">
+                © ${year} Scott Clements. All rights reserved.<br/>
+                This email was sent because a booking was assigned to you.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`,
+  );
 
   return result;
 };
