@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { PackagesServices } from './packages.service';
 
-const createPackages = catchAsync(async (req, res) => {
+const createPackages = catchAsync(async (req: Request, res: Response) => {
   const result = await PackagesServices.createPackagesIntoDB(
     req.body,
     req.files,
@@ -16,7 +17,7 @@ const createPackages = catchAsync(async (req, res) => {
   });
 });
 
-const getAllPackages = catchAsync(async (req, res) => {
+const getAllPackages = catchAsync(async (req: Request, res: Response) => {
   const result = await PackagesServices.getAllPackagesFromDB(req.query);
 
   sendResponse(res, {
@@ -28,19 +29,23 @@ const getAllPackages = catchAsync(async (req, res) => {
   });
 });
 
-const getAllPackagesByVendor = catchAsync(async (req, res) => {
-  const result = await PackagesServices.getAllPackagesByVendorFromDB(req.query);
+const getAllPackagesByVendor = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await PackagesServices.getAllPackagesByVendorFromDB(
+      req.query,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Services retrieved successfully',
-    meta: result.meta,
-    data: result.result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Services retrieved successfully',
+      meta: result.meta,
+      data: result.result,
+    });
+  },
+);
 
-const getPackagesById = catchAsync(async (req, res) => {
+const getPackagesById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await PackagesServices.getPackagesByIdFromDB(id);
 
@@ -52,7 +57,7 @@ const getPackagesById = catchAsync(async (req, res) => {
   });
 });
 
-const updatePackages = catchAsync(async (req, res) => {
+const updatePackages = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await PackagesServices.updatePackagesIntoDB(
     id,
@@ -68,7 +73,7 @@ const updatePackages = catchAsync(async (req, res) => {
   });
 });
 
-const deletePackages = catchAsync(async (req, res) => {
+const deletePackages = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await PackagesServices.deletePackagesFromDB(id);
 
@@ -80,7 +85,7 @@ const deletePackages = catchAsync(async (req, res) => {
   });
 });
 
-const updatePackagesStatus = catchAsync(async (req, res) => {
+const updatePackagesStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await PackagesServices.updatePackagesStatusIntoDB(
     id,
@@ -95,22 +100,24 @@ const updatePackagesStatus = catchAsync(async (req, res) => {
   });
 });
 
-const updatePackagesHighlightStatus = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const result = await PackagesServices.updatePackagesHighlightStatusIntoDB(
-    id,
-    req.body,
-  );
+const updatePackagesHighlightStatus = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await PackagesServices.updatePackagesHighlightStatusIntoDB(
+      id,
+      req.body,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Highlight status updated successfully.',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Highlight status updated successfully.',
+      data: result,
+    });
+  },
+);
 
-const getAvailability = catchAsync(async (req, res) => {
+const getAvailability = catchAsync(async (req: Request, res: Response) => {
   const result = await PackagesServices.getAvailabilityFromDB(req.query);
 
   sendResponse(res, {

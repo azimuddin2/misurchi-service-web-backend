@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ProductServices } from './product.service';
 
-const createProduct = catchAsync(async (req, res) => {
+const createProduct = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductServices.createProductIntoDB(req.body, req.files);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createProduct = catchAsync(async (req, res) => {
   });
 });
 
-const getAllProduct = catchAsync(async (req, res) => {
+const getAllProduct = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductServices.getAllProductFromDB(req.query);
 
   sendResponse(res, {
@@ -25,19 +26,21 @@ const getAllProduct = catchAsync(async (req, res) => {
   });
 });
 
-const getAllProductByVendor = catchAsync(async (req, res) => {
-  const result = await ProductServices.getAllProductByVendorFromDB(req.query);
+const getAllProductByVendor = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await ProductServices.getAllProductByVendorFromDB(req.query);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Products retrieved successfully',
-    meta: result.meta,
-    data: result.result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Products retrieved successfully',
+      meta: result.meta,
+      data: result.result,
+    });
+  },
+);
 
-const getProductById = catchAsync(async (req, res) => {
+const getProductById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductServices.getProductByIdFromDB(id);
 
@@ -49,7 +52,7 @@ const getProductById = catchAsync(async (req, res) => {
   });
 });
 
-const updateProduct = catchAsync(async (req, res) => {
+const updateProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductServices.updateProductIntoDB(
     id,
@@ -65,7 +68,7 @@ const updateProduct = catchAsync(async (req, res) => {
   });
 });
 
-const updateProductStatus = catchAsync(async (req, res) => {
+const updateProductStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductServices.updateProductStatusIntoDB(id, req.body);
 
@@ -77,22 +80,24 @@ const updateProductStatus = catchAsync(async (req, res) => {
   });
 });
 
-const updateProductHighlightStatus = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const result = await ProductServices.updateProductHighlightStatusIntoDB(
-    id,
-    req.body,
-  );
+const updateProductHighlightStatus = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await ProductServices.updateProductHighlightStatusIntoDB(
+      id,
+      req.body,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Highlight status updated successfully.',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Highlight status updated successfully.',
+      data: result,
+    });
+  },
+);
 
-const deleteProduct = catchAsync(async (req, res) => {
+const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductServices.deleteProductFromDB(id);
 

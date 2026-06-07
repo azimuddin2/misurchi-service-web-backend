@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { OrderServices } from './order.service';
 
-const createOrder = catchAsync(async (req, res) => {
+const createOrder = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.createOrderIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createOrder = catchAsync(async (req, res) => {
   });
 });
 
-const getAllOrderByUser = catchAsync(async (req, res) => {
+const getAllOrderByUser = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.getAllOrderByUserFromDB(req.query);
 
   sendResponse(res, {
@@ -25,7 +26,7 @@ const getAllOrderByUser = catchAsync(async (req, res) => {
   });
 });
 
-const getOrdersByEmail = catchAsync(async (req, res) => {
+const getOrdersByEmail = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.query;
   const result = await OrderServices.getOrdersByEmailFromDB(email as string);
 
@@ -37,7 +38,7 @@ const getOrdersByEmail = catchAsync(async (req, res) => {
   });
 });
 
-const getOrderById = catchAsync(async (req, res) => {
+const getOrderById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await OrderServices.getOrderByIdFromDB(id);
 
@@ -49,7 +50,7 @@ const getOrderById = catchAsync(async (req, res) => {
   });
 });
 
-const requestOrder = catchAsync(async (req, res) => {
+const requestOrder = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await OrderServices.requestOrderIntoDB(
     id,
@@ -65,7 +66,7 @@ const requestOrder = catchAsync(async (req, res) => {
   });
 });
 
-const updateOrderStatus = catchAsync(async (req, res) => {
+const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await OrderServices.updateOrderStatusIntoDB(id, req.body);
 
@@ -77,7 +78,7 @@ const updateOrderStatus = catchAsync(async (req, res) => {
   });
 });
 
-const orderApprovedRequest = catchAsync(async (req, res) => {
+const orderApprovedRequest = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const vendorApproved = Boolean(req.body.vendorApproved);
 

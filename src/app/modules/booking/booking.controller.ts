@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { BookingServices } from './booking.service';
 
-const createBooking = catchAsync(async (req, res) => {
+const createBooking = catchAsync(async (req: Request, res: Response) => {
   const result = await BookingServices.createBookingIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,30 +14,36 @@ const createBooking = catchAsync(async (req, res) => {
   });
 });
 
-const getAllBookingByVendor = catchAsync(async (req, res) => {
-  const result = await BookingServices.getAllBookingByVendorFromDB(req.query);
+const getAllBookingByVendor = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await BookingServices.getAllBookingByVendorFromDB(req.query);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Bookings retrieved successfully',
-    meta: result.meta,
-    data: result.result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Bookings retrieved successfully',
+      meta: result.meta,
+      data: result.result,
+    });
+  },
+);
 
-const getBookingAppointments = catchAsync(async (req, res) => {
-  const result = await BookingServices.getBookingAppointmentsFromDB(req.query);
+const getBookingAppointments = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await BookingServices.getBookingAppointmentsFromDB(
+      req.query,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Bookings retrieved successfully',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Bookings retrieved successfully',
+      data: result,
+    });
+  },
+);
 
-const getBookingsByEmail = catchAsync(async (req, res) => {
+const getBookingsByEmail = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.query;
   const result = await BookingServices.getBookingsByEmailFromDB(
     email as string,
@@ -50,7 +57,7 @@ const getBookingsByEmail = catchAsync(async (req, res) => {
   });
 });
 
-const getBookingById = catchAsync(async (req, res) => {
+const getBookingById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await BookingServices.getBookingByIdFromDB(id);
 
@@ -62,7 +69,7 @@ const getBookingById = catchAsync(async (req, res) => {
   });
 });
 
-const updateBookingRequest = catchAsync(async (req, res) => {
+const updateBookingRequest = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await BookingServices.updateBookingRequestIntoDB(id, req.body);
 
@@ -74,39 +81,43 @@ const updateBookingRequest = catchAsync(async (req, res) => {
   });
 });
 
-const bookingApprovedRequest = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const vendorApproved = Boolean(req.body.vendorApproved);
+const bookingApprovedRequest = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const vendorApproved = Boolean(req.body.vendorApproved);
 
-  const updatedBooking = await BookingServices.bookingApprovedRequestIntoDB(
-    id,
-    vendorApproved,
-  );
+    const updatedBooking = await BookingServices.bookingApprovedRequestIntoDB(
+      id,
+      vendorApproved,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: `Request ${vendorApproved ? 'approved' : 'rejected'} successfully.`,
-    data: updatedBooking,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: `Request ${vendorApproved ? 'approved' : 'rejected'} successfully.`,
+      data: updatedBooking,
+    });
+  },
+);
 
-const bookingAssignedToMember = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const result = await BookingServices.bookingAssignedToMemberIntoDB(
-    id,
-    req.body,
-  );
+const bookingAssignedToMember = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await BookingServices.bookingAssignedToMemberIntoDB(
+      id,
+      req.body,
+    );
 
-  sendResponse(res, {
-    statusCode: 201,
-    success: true,
-    message: 'Member assigned successfully',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: 'Member assigned successfully',
+      data: result,
+    });
+  },
+);
 
-const updateBookingStatus = catchAsync(async (req, res) => {
+const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await BookingServices.updateBookingStatusIntoDB(id, req.body);
 
