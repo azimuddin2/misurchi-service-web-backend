@@ -113,7 +113,7 @@ const getSalesTaxSummaryFromDB = async (vendorId: string) => {
       planName,
       refundIssue: Math.round(item.refundIssue * 100) / 100,
       payoutDatesAndMethods:
-        '1st and 15th of each month via PayPal and Bank Transfer',
+        '1st and 15th of each month via Stripe and Bank Transfer',
     };
   });
 
@@ -172,13 +172,10 @@ const getSubscriptionTaxSummaryFromDB = async (vendorId: string) => {
         durationType: 1,
         tranId: 1,
         paidAt: 1,
-        startDate: '$subscriptionInfo.startDate',
-        expirationDate: '$subscriptionInfo.endDate',
+        startDate: '$subscriptionInfo.startedAt',
+        expirationDate: '$subscriptionInfo.expiredAt',
         planStatus: '$subscriptionInfo.status',
         refundIssue: { $literal: 0 },
-        payoutDatesAndMethods: {
-          $literal: '1st and 15th of each month via Bank Transfer',
-        },
       },
     },
   ]);

@@ -354,7 +354,7 @@ const getAllUsersFromDB = async (query: Record<string, unknown>) => {
   const baseQuery = {
     ...query,
     isDeleted: false,
-    role: { $nin: ['admin'] }, // ✅ exclude admins
+    role: { $nin: ['admin'] },
   };
 
   const queryBuilder = new QueryBuilder(User.find(), baseQuery)
@@ -513,6 +513,37 @@ const updateNotificationSettingsIntoDB = async (
   return updatedUser;
 };
 
+const deleteUserAccountFromDB = async (userId: string) => {
+  // 1️⃣ Check if user exists
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, 'User not found');
+
+  // 2️⃣ Mark account as deleted
+  const deletedUser = await User.findByIdAndUpdate(
+    userId,
+    { isDeleted: true },
+    { new: true },
+  );
+  if (!deletedUser) throw new AppError(400, 'Failed to delete user account');
+
+  // 3️⃣ Send notification email
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; text-align: center;">
+        <h2 style="color: #FF4D4F;">Account Deleted</h2>
+        <p>Hi ${deletedUser.fullName || 'User'},</p>
+        <p>Your account has been successfully deleted as per your request or by admin action.</p>
+        <p>If you did not request this action, please contact our support immediately.</p>
+        <p style="margin-top: 30px; font-size: 12px; color: #999999;">&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail(deletedUser.email, 'Account Deleted', emailHtml);
+
+  return deletedUser;
+};
+
 export const UserServices = {
   registerUserIntoDB,
   vendorRegisterUserIntoDB,
@@ -522,4 +553,5 @@ export const UserServices = {
   getUserByIdFromDB,
   changeStatusIntoDB,
   updateNotificationSettingsIntoDB,
+  deleteUserAccountFromDB,
 };

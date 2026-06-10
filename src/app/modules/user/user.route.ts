@@ -66,4 +66,10 @@ router.patch(
   UserControllers.updateNotificationSettings,
 );
 
+router.delete(
+  '/',
+  auth('user', 'vendor', 'team_member'),
+  UserControllers.deleteUserAccount,
+);
+
 export const UserRoutes = router;

@@ -121,6 +121,19 @@ const updateNotificationSettings = catchAsync(
   },
 );
 
+const deleteUserAccount = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.userId;
+
+  const result = await UserServices.deleteUserAccountFromDB(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 201,
+    message: 'Your account has been deleted successfully.',
+    data: result,
+  });
+});
+
 export const UserControllers = {
   registerUser,
   vendorRegisterUser,
@@ -130,4 +143,5 @@ export const UserControllers = {
   getUserById,
   changeStatus,
   updateNotificationSettings,
+  deleteUserAccount,
 };
