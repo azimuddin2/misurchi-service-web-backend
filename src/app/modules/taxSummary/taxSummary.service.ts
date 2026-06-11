@@ -3,6 +3,8 @@ import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
 import { Payment } from '../payment/payment.model';
 import SubPayment from '../subPayment/sub-payment.module';
+import { User } from '../user/user.model';
+import { stripe } from '../subPayment/sub-payment.utils';
 
 const getSalesTaxSummaryFromDB = async (vendorId: string) => {
   if (!vendorId || !Types.ObjectId.isValid(vendorId)) {
@@ -183,7 +185,133 @@ const getSubscriptionTaxSummaryFromDB = async (vendorId: string) => {
   return result;
 };
 
+const getSalesTaxSummaryDetailFromDB = async (
+  vendorId: string,
+  year: number,
+) => {
+  if (!vendorId || !Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Vendor ID');
+  }
+
+  const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
+  const endOfYear = new Date(`${year}-12-31T23:59:59.999Z`);
+
+  // Step 1: Summary stats for the year
+  const summaryResult = await Payment.aggregate([
+    {
+      $match: {
+        vendor: new Types.ObjectId(vendorId),
+        status: 'paid',
+        isDeleted: false,
+        createdAt: { $gte: startOfYear, $lte: endOfYear },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalSalesRevenue: { $sum: '$price' },
+        platformFees: { $sum: '$adminAmount' },
+        netPayouts: { $sum: '$vendorAmount' },
+        refundIssue: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'refunded'] }, '$price', 0],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        totalSalesRevenue: { $round: ['$totalSalesRevenue', 2] },
+        platformFees: { $round: ['$platformFees', 2] },
+        netPayouts: { $round: ['$netPayouts', 2] },
+        refundIssue: { $round: ['$refundIssue', 2] },
+      },
+    },
+  ]);
+
+  // Step 2: Subscription fees for the year
+  const subFees = await SubPayment.aggregate([
+    {
+      $match: {
+        vendor: new Types.ObjectId(vendorId),
+        isPaid: true,
+        isDeleted: false,
+        paidAt: { $gte: startOfYear, $lte: endOfYear },
+      },
+    },
+    {
+      $lookup: {
+        from: 'plans',
+        localField: 'plan',
+        foreignField: '_id',
+        as: 'planInfo',
+      },
+    },
+    { $unwind: { path: '$planInfo', preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: null,
+        totalSubscriptionFees: { $sum: '$amount' },
+        planName: { $first: '$planInfo.name' },
+      },
+    },
+  ]);
+
+  // Step 3: Payout transactions for the year
+  const payouts = await Payment.find({
+    vendor: new Types.ObjectId(vendorId),
+    status: 'paid',
+    isDeleted: false,
+    createdAt: { $gte: startOfYear, $lte: endOfYear },
+  })
+    .select('trnId createdAt vendorAmount')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // Step 4: Stripe payout schedule
+  let paymentMethod = 'Stripe';
+  try {
+    const user = await User.findById(vendorId).select(
+      'stripeAccountId stripeOnboardingComplete',
+    );
+    if (user?.stripeAccountId && user?.stripeOnboardingComplete) {
+      const account = await stripe.accounts.retrieve(user.stripeAccountId);
+      const interval = account.settings?.payouts?.schedule?.interval;
+      if (interval) {
+        paymentMethod = `Stripe (${interval.charAt(0).toUpperCase() + interval.slice(1)})`;
+      }
+    }
+  } catch {
+    paymentMethod = 'Stripe';
+  }
+
+  const summary = summaryResult[0] || {
+    totalSalesRevenue: 0,
+    platformFees: 0,
+    netPayouts: 0,
+    refundIssue: 0,
+  };
+
+  return {
+    year,
+    totalSalesRevenue: summary.totalSalesRevenue,
+    platformFees: summary.platformFees,
+    netPayouts: summary.netPayouts,
+    subscriptionFeesPaid: subFees[0]?.totalSubscriptionFees ?? 0,
+    planName: subFees[0]?.planName ?? 'Basic Plan',
+    refundIssue: summary.refundIssue,
+    payouts: payouts.map((p) => ({
+      transactionId: p.trnId,
+      paymentDate: p.createdAt,
+      amount: p.vendorAmount,
+      paymentMethod,
+    })),
+  };
+};
+
 export const TaxSummaryService = {
   getSalesTaxSummaryFromDB,
   getSubscriptionTaxSummaryFromDB,
+  getSalesTaxSummaryDetailFromDB,
 };

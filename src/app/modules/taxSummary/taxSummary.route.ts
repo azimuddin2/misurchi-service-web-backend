@@ -17,4 +17,10 @@ router.get(
   TaxSummaryController.getSubscriptionTaxSummary,
 );
 
+router.get(
+  '/sales/:year',
+  auth(USER_ROLE.vendor),
+  TaxSummaryController.getSalesTaxSummaryDetail,
+);
+
 export const TaxSummaryRoutes = router;

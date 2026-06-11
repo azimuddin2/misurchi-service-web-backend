@@ -36,7 +36,27 @@ const getSubscriptionTaxSummary = catchAsync(
   },
 );
 
+const getSalesTaxSummaryDetail = catchAsync(
+  async (req: Request, res: Response) => {
+    const { year } = req.params;
+    const { vendorId } = req.query;
+
+    const result = await TaxSummaryService.getSalesTaxSummaryDetailFromDB(
+      vendorId as string,
+      Number(year),
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Tax summary detail fetched successfully',
+      data: result,
+    });
+  },
+);
+
 export const TaxSummaryController = {
   getSalesTaxSummary,
   getSubscriptionTaxSummary,
+  getSalesTaxSummaryDetail,
 };
