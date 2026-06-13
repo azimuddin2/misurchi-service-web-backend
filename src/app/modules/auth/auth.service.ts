@@ -22,9 +22,16 @@ const loginUser = async (payload: TLoginUser) => {
   const user = await User.findOne({ email: payload.email });
 
   if (!user) throw new AppError(404, 'This user is not found!');
-  if (user.isDeleted) throw new AppError(403, 'This user is deleted!');
+  if (user.isDeleted)
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   if (user.status === 'blocked')
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
 
   const isPasswordMatched = await User.isPasswordMatched(
     payload.password,
@@ -100,9 +107,16 @@ const refreshToken = async (token: string) => {
   const user = await User.findOne({ email });
 
   if (!user) throw new AppError(404, 'This user is not found!');
-  if (user?.isDeleted) throw new AppError(403, 'This user is deleted!');
+  if (user?.isDeleted)
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   if (user?.status === 'blocked')
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
 
   let vendorId: string | undefined = undefined;
   let vendorEmail: string | undefined = undefined;
@@ -166,11 +180,17 @@ const changePassword = async (
   }
 
   if (user?.isDeleted === true) {
-    throw new AppError(403, 'This user is deleted!');
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   }
 
   if (user?.status === 'blocked') {
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
   }
 
   // checking if the password is correct
@@ -289,11 +309,17 @@ const forgotPassword = async (email: string) => {
   }
 
   if (user?.isDeleted === true) {
-    throw new AppError(403, 'This user is deleted!');
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   }
 
   if (user?.status === 'blocked') {
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
   }
 
   // create token and sent to the client
@@ -376,11 +402,17 @@ const resetPassword = async (token: string, payload: TResetPassword) => {
   }
 
   if (user?.isDeleted === true) {
-    throw new AppError(403, 'This user is deleted!');
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   }
 
   if (user?.status === 'blocked') {
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
   }
 
   const verifyExpiresAt = user?.verification?.expiresAt;

@@ -15,7 +15,11 @@ const resendOtpIntoDB = async (email: string) => {
   // 1. Check if user exists
   const existingUser = await User.findOne({ email });
   if (!existingUser) throw new AppError(404, 'This user is not found!');
-  if (existingUser.isDeleted) throw new AppError(403, 'This user is deleted!');
+  if (existingUser.isDeleted)
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   if (existingUser.status === 'blocked')
     throw new AppError(403, 'This user is blocked!');
 
@@ -164,11 +168,17 @@ const verifyOtp = async (token: string, otp: TVerifyOtp) => {
   }
 
   if (user?.isDeleted === true) {
-    throw new AppError(403, 'This user is deleted!');
+    throw new AppError(
+      403,
+      'Your account has been deactivated. For assistance, please contact our support team.',
+    );
   }
 
   if (user?.status === 'blocked') {
-    throw new AppError(403, 'This user is blocked!');
+    throw new AppError(
+      403,
+      'Your account has been blocked. For assistance, please contact our support team.',
+    );
   }
 
   const verifyExpiresAt = user?.verification?.expiresAt;

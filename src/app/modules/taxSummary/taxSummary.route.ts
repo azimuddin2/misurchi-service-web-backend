@@ -7,19 +7,19 @@ const router = express.Router();
 
 router.get(
   '/sales',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   TaxSummaryController.getSalesTaxSummary,
 );
 
 router.get(
   '/subscriptions',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   TaxSummaryController.getSubscriptionTaxSummary,
 );
 
 router.get(
   '/sales/:year',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   TaxSummaryController.getSalesTaxSummaryDetail,
 );
 

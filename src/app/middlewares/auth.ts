@@ -25,7 +25,10 @@ const auth = (...requiredRoles: TUserRole[]) => {
     }
 
     if (user?.isDeleted === true) {
-      throw new AppError(403, 'This user is deleted!');
+      throw new AppError(
+        403,
+        'Your account has been deactivated. For assistance, please contact our support team.',
+      );
     }
 
     if (user?.status === 'blocked') {

@@ -158,6 +158,7 @@ const confirmPayment = async (query: Record<string, any>) => {
               trnId: payment.trnId,
               $push: { trnIds: payment.trnId },
               isPaid: false,
+              status: 'confirmed',
             },
             { new: true, session },
           );
@@ -183,7 +184,7 @@ const confirmPayment = async (query: Record<string, any>) => {
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
-              status: 'pending',
+              status: 'confirmed',
               paymentStatus: 'paid',
               paidAmount: booking.price,
               remainingAmount: 0,
@@ -216,7 +217,7 @@ const confirmPayment = async (query: Record<string, any>) => {
         referenceDoc = await Booking.findByIdAndUpdate(
           payment.reference,
           {
-            status: 'pending',
+            status: 'confirmed',
             paymentStatus: 'paid',
             paidAmount: booking.price,
             remainingAmount: 0,

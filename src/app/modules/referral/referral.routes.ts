@@ -23,4 +23,16 @@ router.get(
   ReferralController.getReferralStats,
 );
 
+router.get(
+  '/admin/all-vendors',
+  auth(USER_ROLE.admin),
+  ReferralController.getAllVendorReferralStats,
+);
+
+router.get(
+  '/admin/vendor-detail/:vendorId',
+  auth(USER_ROLE.admin),
+  ReferralController.getVendorReferralDetail,
+);
+
 export const ReferralRoutes = router;

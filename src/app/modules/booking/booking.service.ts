@@ -355,6 +355,21 @@ const bookingAssignedToMemberIntoDB = async (
     throw new AppError(404, 'Team Member not found');
   }
 
+  // 3. conflict check
+  const conflictBooking = await Booking.findOne({
+    _id: { $ne: id },
+    assignedToMember: assignedMemberId,
+    date: isBookingExists.date,
+    time: isBookingExists.time,
+  });
+
+  if (conflictBooking) {
+    throw new AppError(
+      400,
+      'This team member is already assigned to another booking at this time',
+    );
+  }
+
   // Update booking
   const result = await Booking.findByIdAndUpdate(
     id,
