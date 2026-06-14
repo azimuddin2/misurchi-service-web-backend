@@ -134,6 +134,19 @@ const deleteUserAccount = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const reactivateUserAccount = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await UserServices.reactivateUserAccountFromDB(id);
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: 'Account has been reactivated successfully.',
+      data: result,
+    });
+  },
+);
+
 export const UserControllers = {
   registerUser,
   vendorRegisterUser,
@@ -144,4 +157,5 @@ export const UserControllers = {
   changeStatus,
   updateNotificationSettings,
   deleteUserAccount,
+  reactivateUserAccount,
 };

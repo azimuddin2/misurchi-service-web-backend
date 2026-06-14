@@ -141,6 +141,10 @@ const vendorSchema = new Schema<TVendor>(
       type: Number,
       default: 0,
     },
+    totalReferredUsers: {
+      type: Number,
+      default: 0,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

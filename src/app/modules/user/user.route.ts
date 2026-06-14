@@ -72,4 +72,10 @@ router.delete(
   UserControllers.deleteUserAccount,
 );
 
+router.patch(
+  '/reactivate/:id',
+  auth('admin'),
+  UserControllers.reactivateUserAccount,
+);
+
 export const UserRoutes = router;

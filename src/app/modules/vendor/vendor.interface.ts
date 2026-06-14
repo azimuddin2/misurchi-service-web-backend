@@ -37,6 +37,7 @@ export type TVendor = {
   referralCode: string;
   referralLink: string;
   totalReferralPoints: number;
+  totalReferredUsers: number;
 
   isDeleted: boolean;
   createdAt?: string;

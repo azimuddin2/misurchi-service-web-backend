@@ -163,7 +163,10 @@ const awardReferralPoint = async (vendorId: Types.ObjectId) => {
   await referral.save();
 
   await Vendor.findByIdAndUpdate(referral.referrerId, {
-    $inc: { totalReferralPoints: 1 },
+    $inc: {
+      totalReferralPoints: 1,
+      totalReferredUsers: 1,
+    },
   });
 };
 
@@ -172,21 +175,12 @@ const getAllVendorReferralStatsFromDB = async (
 ) => {
   const { month, ...filters } = query;
 
-  let dateFilter: Record<string, unknown> = {};
-  if (month) {
-    const start = new Date(`${month}-01`);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
-    dateFilter = { completedAt: { $gte: start, $lt: end } };
-  }
-
-  // ✅ সব vendor দেখাবে
   const vendorQuery = Vendor.find({ isDeleted: false }).select(
-    'businessName email referralCode totalReferralPoints',
+    'businessName email referralCode totalReferralPoints totalReferredUsers',
   );
 
   const queryBuilder = new QueryBuilder(vendorQuery, filters)
-    .search(['businessName', 'email'])
+    .search(['businessName', 'email', 'referralCode'])
     .filter()
     .sort()
     .paginate()
@@ -195,23 +189,15 @@ const getAllVendorReferralStatsFromDB = async (
   const meta = await queryBuilder.countTotal();
   const vendors = await queryBuilder.modelQuery;
 
-  const result = await Promise.all(
-    vendors.map(async (vendor, index) => {
-      const totalReferred = await Referral.countDocuments({
-        referrerId: vendor._id,
-        ...dateFilter,
-      });
-
-      return {
-        serial: index + 1,
-        vendorId: vendor._id,
-        name: vendor.email,
-        referralCode: vendor.referralCode,
-        totalReferred: `${totalReferred} Users`, // 0 হলে "0 Users"
-        totalPoints: vendor.totalReferralPoints, // 0 হলে 0
-      };
-    }),
-  );
+  const result = vendors.map((vendor, index) => ({
+    serial: index + 1,
+    vendorId: vendor._id,
+    name: vendor.businessName,
+    referralCode: vendor.referralCode,
+    totalReferredUsers: `${vendor.totalReferredUsers ?? 0} Users`,
+    totalPoints: vendor.totalReferralPoints,
+    worthEquivalent: `$${(vendor.totalReferralPoints * 2.5).toFixed(2)}`,
+  }));
 
   return { meta, result };
 };

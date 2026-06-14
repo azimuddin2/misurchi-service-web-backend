@@ -300,10 +300,16 @@ const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
     vendor: vendorId,
     isDeleted: false,
   })
-    .select('name images type recommendedType status savedServices createdAt')
+    .select(
+      'name images type recommendedType status savedServices createdAt status serviceId description',
+    )
     .populate({
       path: 'vendor',
       select: 'businessName image country state',
+    })
+    .populate({
+      path: 'reviews',
+      select: '_id rating review user',
     });
 
   const queryBuilder = new QueryBuilder(packagesQuery, filters)

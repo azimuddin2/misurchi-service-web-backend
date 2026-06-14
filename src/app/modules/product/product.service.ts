@@ -363,11 +363,15 @@ const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
     isDeleted: false,
   })
     .select(
-      'name images productType recommendedType quantity price discountPrice status createdAt',
+      'name images productType recommendedType quantity price discountPrice status createdAt size colors avgRating reviews productCode description',
     )
     .populate({
       path: 'vendor',
       select: 'businessName image country state',
+    })
+    .populate({
+      path: 'reviews',
+      select: '_id rating review user', // include the fields you need
     });
 
   const queryBuilder = new QueryBuilder(productQuery, filters)

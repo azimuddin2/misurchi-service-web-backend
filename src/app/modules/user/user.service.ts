@@ -353,7 +353,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
 const getAllUsersFromDB = async (query: Record<string, unknown>) => {
   const baseQuery = {
     ...query,
-    isDeleted: false,
+    // isDeleted: false,
     role: { $nin: ['admin'] },
   };
 
@@ -476,6 +476,120 @@ const changeStatusIntoDB = async (id: string, payload: { status: string }) => {
     throw new AppError(404, 'User not found');
   }
 
+  const isBlocked = payload.status === 'blocked';
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account ${isBlocked ? 'Blocked' : 'Unblocked'}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 28px;">${isBlocked ? '🚫' : '✅'}</span>
+              </div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">
+                Account ${isBlocked ? 'Blocked' : 'Reactivated'}
+              </h1>
+              <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">
+                ${isBlocked ? 'Your account access has been restricted' : 'Your account access has been restored'}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+
+              <p style="font-size: 15px; color: #444444; margin: 0 0 16px; line-height: 1.6;">
+                Hi <strong>${result.fullName || 'there'}</strong>,
+              </p>
+
+              <p style="font-size: 15px; color: #555555; margin: 0 0 28px; line-height: 1.7; text-align: center;">
+                ${
+                  isBlocked
+                    ? 'Your account has been <strong>temporarily blocked</strong> by our admin team. You will not be able to log in until your account is reviewed and restored.'
+                    : 'Good news! Your account has been <strong>successfully unblocked</strong>. You can now log in and access all features as usual.'
+                }
+              </p>
+
+              <!-- Account Details Box -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+  <tr>
+    <td>
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; width: 100%; box-sizing: border-box;">
+        <p style="margin: 0 0 10px; font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 2px;">Account Details</p>
+        <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📧 &nbsp;Email: &nbsp;<strong style="color: #111827;">${result.email}</strong></p>
+        <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📋 &nbsp;Status: &nbsp;<strong style="color: #111827;">${isBlocked ? 'Blocked' : 'Active'}</strong></p>
+        <p style="margin: 0; font-size: 14px; color: #6b7280;">📅 &nbsp;Date: &nbsp;<strong style="color: #111827;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+      </div>
+    </td>
+  </tr>
+</table>
+
+              <!-- Info Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 14px 20px; text-align: center;">
+                    <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
+                      ${
+                        isBlocked
+                          ? '💡 &nbsp;If you believe this was a mistake, please contact our support team to appeal this decision.'
+                          : '💡 &nbsp;Welcome back! If you have any questions, feel free to reach out to our support team.'
+                      }
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 12px 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
+                      ⚠️ &nbsp;If you did not expect this notification, please contact our support team immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                This is an automated message, please do not reply.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  await sendEmail(
+    result.email,
+    `Account ${isBlocked ? 'Blocked' : 'Unblocked'} — Scott Clements`,
+    emailHtml,
+  );
+
   return result;
 };
 
@@ -527,21 +641,221 @@ const deleteUserAccountFromDB = async (userId: string) => {
   if (!deletedUser) throw new AppError(400, 'Failed to delete user account');
 
   // 3️⃣ Send notification email
-  const emailHtml = `
-    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 8px; text-align: center;">
-        <h2 style="color: #FF4D4F;">Account Deleted</h2>
-        <p>Hi ${deletedUser.fullName || 'User'},</p>
-        <p>Your account has been successfully deleted as per your request or by admin action.</p>
-        <p>If you did not request this action, please contact our support immediately.</p>
-        <p style="margin-top: 30px; font-size: 12px; color: #999999;">&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
-      </div>
-    </div>
-  `;
+  await sendEmail(
+    deletedUser.email,
+    'Account Deactivated',
+    `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Deactivated</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
 
-  await sendEmail(deletedUser.email, 'Account Deleted', emailHtml);
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 28px;">🔒</span>
+              </div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">Account Deactivated</h1>
+              <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Your account has been successfully deactivated</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+
+              <p style="font-size: 15px; color: #444444; margin: 0 0 24px; line-height: 1.6;">
+                Hi <strong>${deletedUser.fullName || 'there'}</strong>,
+              </p>
+
+              <p style="font-size: 15px; color: #555555; margin: 0 0 28px; line-height: 1.7; text-align: center;">
+                We're confirming that your account has been <strong>successfully deactivated</strong> as per your request. Your data has been securely retained.
+              </p>
+
+                <!-- Info Box -->
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; margin-bottom: 28px;">
+          <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">Account Details</p>
+          <p style="margin: 0; font-size: 14px; color: #6b7280;">Email: <span style="color: #111827; font-weight: 500;">${deletedUser.email}</span></p>
+          <p style="margin: 6px 0 0; font-size: 14px; color: #6b7280;">Deactivated on: <span style="color: #111827; font-weight: 500;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
+        </div>
+
+              <!-- Restore Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 14px 20px; text-align: center;">
+                    <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
+                      💡 &nbsp;Changed your mind? Contact our support team anytime to <strong style="color: #0AA84C;">restore your account</strong> without any data loss.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
+                      ⚠️ &nbsp;If you did not request this action, please contact our support team immediately to secure your account.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                This is an automated message, please do not reply.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `,
+  );
 
   return deletedUser;
+};
+
+const reactivateUserAccountFromDB = async (userId: string) => {
+  // 1️⃣ Check if user exists
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, 'User not found');
+
+  // 2️⃣ Check if already active
+  if (user.isDeleted === false) {
+    throw new AppError(400, 'This account is already active.');
+  }
+
+  // 3️⃣ Reactivate account
+  const reactivatedUser = await User.findByIdAndUpdate(
+    userId,
+    { isDeleted: false },
+    { new: true },
+  );
+  if (!reactivatedUser)
+    throw new AppError(400, 'Failed to reactivate account.');
+
+  // 4️⃣ Send notification email
+  const emailHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Reactivated</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 28px;">✅</span>
+              </div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">Account Reactivated</h1>
+              <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Your account access has been fully restored</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+
+              <p style="font-size: 15px; color: #444444; margin: 0 0 16px; line-height: 1.6;">
+                Hi <strong>${reactivatedUser.fullName || 'there'}</strong>,
+              </p>
+
+              <p style="font-size: 15px; color: #555555; margin: 0 0 28px; line-height: 1.7; text-align: center;">
+                Great news! Your account has been <strong>successfully reactivated</strong> by our admin team. You can now log in and access all features as usual.
+              </p>
+
+              <!-- Account Details Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td>
+                    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; box-sizing: border-box;">
+                      <p style="margin: 0 0 10px; font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 2px;">Account Details</p>
+                      <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📧 &nbsp;Email: &nbsp;<strong style="color: #111827;">${reactivatedUser.email}</strong></p>
+                      <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📋 &nbsp;Status: &nbsp;<strong style="color: #0AA84C;">Active</strong></p>
+                      <p style="margin: 0; font-size: 14px; color: #6b7280;">📅 &nbsp;Reactivated on: &nbsp;<strong style="color: #111827;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Info Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 14px 20px; text-align: center;">
+                    <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
+                      💡 &nbsp;Welcome back! If you have any questions or need assistance, feel free to reach out to our support team.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 12px 16px;">
+                    <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
+                      ⚠️ &nbsp;If you did not expect this notification, please contact our support team immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                This is an automated message, please do not reply.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  await sendEmail(
+    reactivatedUser.email,
+    'Account Reactivated — Scott Clements',
+    emailHtml,
+  );
+
+  return reactivatedUser;
 };
 
 export const UserServices = {
@@ -554,4 +868,5 @@ export const UserServices = {
   changeStatusIntoDB,
   updateNotificationSettingsIntoDB,
   deleteUserAccountFromDB,
+  reactivateUserAccountFromDB,
 };
