@@ -31,6 +31,7 @@ import { ReturnPolicyRoutes } from '../modules/returnPolicy/returnPolicy.route';
 import { TeamMemberRoutes } from '../modules/teamMember/teamMember.route';
 import { ReferralRoutes } from '../modules/referral/referral.routes';
 import { TaxSummaryRoutes } from '../modules/taxSummary/taxSummary.route';
+import { PayoutRequestRoutes } from '../modules/payoutRequest/payoutRequest.route';
 
 const router = Router();
 
@@ -162,6 +163,10 @@ const moduleRoutes = [
   {
     path: '/referral',
     route: ReferralRoutes,
+  },
+  {
+    path: '/payout-requests',
+    route: PayoutRequestRoutes,
   },
 ];
 
