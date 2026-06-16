@@ -20,6 +20,7 @@ import {
 } from './payment.utils';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
+import { ReferralService } from '../referral/referral.service';
 
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
@@ -252,6 +253,11 @@ const confirmPayment = async (query: Record<string, any>) => {
       { $inc: { balance: payment.vendorAmount } },
       { session },
     );
+
+    const payingUser = await User.findById(payment.user).select('vendorId');
+    if (payingUser?.vendorId) {
+      await ReferralService.awardReferralPoint(payingUser.vendorId);
+    }
 
     await session.commitTransaction();
     return payment;

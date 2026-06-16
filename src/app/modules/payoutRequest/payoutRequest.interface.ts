@@ -8,7 +8,7 @@ export type TPayoutRequest = {
   vendorName: string;
   vendorEmail: string;
   totalPoints: number;
-  availableBalance: number; // worthEquivalent amount
+  availableBalance: number;
   method: string; // "Bank"
   status: TPayoutStatus;
   requestedAt?: Date;
