@@ -3,12 +3,14 @@ import config from '../../config';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { AuthServices } from './auth.service';
+import { getRefreshCookieName } from '../../utils/getRefreshCookieName';
 
 const handleLoginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.loginUser(req.body);
   const { accessToken, refreshToken } = result;
+  const cookieName = getRefreshCookieName(req);
 
-  res.cookie('refreshToken', refreshToken, {
+  res.cookie(cookieName, refreshToken, {
     secure: config.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'none',
@@ -24,7 +26,9 @@ const handleLoginUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const handleRefreshToken = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.cookies;
+  const cookieName = getRefreshCookieName(req);
+  const refreshToken = req.cookies[cookieName];
+
   const result = await AuthServices.refreshToken(refreshToken);
 
   sendResponse(res, {
