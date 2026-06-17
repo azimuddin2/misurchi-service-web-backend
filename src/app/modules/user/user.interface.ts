@@ -3,7 +3,7 @@ import { USER_ROLE } from './user.constant';
 
 export type TRole = 'user' | 'vendor' | 'admin' | 'team_member';
 
-export type TStatus = 'ongoing' | 'confirmed' | 'blocked';
+export type TStatus = 'ongoing' | 'confirmed' | 'blocked' | 'deactivated';
 
 export type TSubscribed = 'advance' | 'basic';
 

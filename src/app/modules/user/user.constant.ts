@@ -9,7 +9,12 @@ export const USER_ROLE = {
 
 export const UserRole: TRole[] = ['vendor', 'user', 'admin', 'team_member'];
 
-export const UserStatus: TStatus[] = ['ongoing', 'confirmed', 'blocked'];
+export const UserStatus: TStatus[] = [
+  'ongoing',
+  'confirmed',
+  'blocked',
+  'deactivated',
+];
 
 export const Subscribed: TSubscribed[] = ['advance', 'basic'];
 

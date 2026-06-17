@@ -64,13 +64,15 @@ const updateFAQ = catchAsync(async (req: Request, res: Response) => {
 
 const updateFAQStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  const result = await FAQService.updateFAQStatusIntoDB(id, req.body);
+  const { result, message } = await FAQService.updateFAQStatusIntoDB(
+    id,
+    req.body,
+  );
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'FAQ status updated successfully',
+    message,
     data: result,
   });
 });

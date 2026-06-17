@@ -64,7 +64,11 @@ const updateFAQStatusIntoDB = async (
     new: true,
   });
 
-  return result;
+  const message = payload.isActive
+    ? 'FAQ has been activated successfully'
+    : 'FAQ has been deactivated successfully';
+
+  return { result, message };
 };
 
 export const FAQService = {

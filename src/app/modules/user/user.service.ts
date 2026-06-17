@@ -635,7 +635,7 @@ const deleteUserAccountFromDB = async (userId: string) => {
   // 2️⃣ Mark account as deleted
   const deletedUser = await User.findByIdAndUpdate(
     userId,
-    { isDeleted: true },
+    { isDeleted: true, status: 'deactivated' },
     { new: true },
   );
   if (!deletedUser) throw new AppError(400, 'Failed to delete user account');
@@ -748,7 +748,7 @@ const reactivateUserAccountFromDB = async (userId: string) => {
   // 3️⃣ Reactivate account
   const reactivatedUser = await User.findByIdAndUpdate(
     userId,
-    { isDeleted: false },
+    { isDeleted: false, status: 'ongoing' },
     { new: true },
   );
   if (!reactivatedUser)
