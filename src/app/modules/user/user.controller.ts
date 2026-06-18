@@ -4,7 +4,9 @@ import sendResponse from '../../utils/sendResponse';
 import { UserServices } from './user.service';
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.registerUserIntoDB(req.body);
+  const { refCode, ...payload } = req.body;
+
+  const result = await UserServices.registerUserIntoDB(payload, refCode);
 
   sendResponse(res, {
     statusCode: 201,
@@ -15,9 +17,7 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const vendorRegisterUser = catchAsync(async (req: Request, res: Response) => {
-  const refCode = req.query.ref as string | undefined;
-
-  const result = await UserServices.vendorRegisterUserIntoDB(req.body, refCode);
+  const result = await UserServices.vendorRegisterUserIntoDB(req.body);
 
   sendResponse(res, {
     statusCode: 201,

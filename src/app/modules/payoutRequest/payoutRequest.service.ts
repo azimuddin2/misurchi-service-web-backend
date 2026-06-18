@@ -79,6 +79,12 @@ const approvePayoutRequest = async (requestId: string) => {
   const payoutRequest =
     await PayoutRequest.findById(requestId).populate('vendorId');
 
+  console.log('🔍 [1] payoutRequest:', payoutRequest);
+  console.log(
+    '🔍 [1] payoutRequest.vendorId (populated):',
+    payoutRequest?.vendorId,
+  );
+
   if (!payoutRequest)
     throw new AppError(httpStatus.NOT_FOUND, 'Payout request not found');
 
@@ -87,12 +93,30 @@ const approvePayoutRequest = async (requestId: string) => {
 
   // Get vendor's Stripe connected account details
   const vendor = payoutRequest.vendorId as any;
+
+  console.log('🔍 [2] vendor object:', vendor);
+  console.log('🔍 [3] vendor._id:', vendor?._id);
+  console.log('🔍 [4] vendor._id type:', typeof vendor?._id);
+
   const user = await User.findOne({ vendorId: vendor._id }).select(
-    'stripeAccountId stripeOnboardingComplete',
+    'stripeAccountId stripeOnboardingComplete vendorId email',
   );
+
+  console.log('🔍 [5] User.findOne result:', user);
+
+  if (!user) {
+    console.log('❌ [6] NO USER document found with vendorId:', vendor._id);
+  } else {
+    console.log('🔍 [7] user.stripeAccountId:', user.stripeAccountId);
+    console.log(
+      '🔍 [8] user.stripeOnboardingComplete:',
+      user.stripeOnboardingComplete,
+    );
+  }
 
   // Validate vendor has a connected Stripe account
   if (!user?.stripeAccountId) {
+    console.log('❌ [9] THROWING ERROR — no stripeAccountId found');
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Vendor has no Stripe account connected',
@@ -101,6 +125,7 @@ const approvePayoutRequest = async (requestId: string) => {
 
   // Validate vendor has completed Stripe onboarding
   if (!user?.stripeOnboardingComplete) {
+    console.log('❌ [10] THROWING ERROR — onboarding not complete');
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Vendor Stripe onboarding is not complete',
@@ -110,6 +135,10 @@ const approvePayoutRequest = async (requestId: string) => {
   // Convert amount to cents as required by Stripe
   const amountInCents = Math.round(payoutRequest.availableBalance * 100);
 
+  console.log('🔍 [11] Transferring amount (cents):', amountInCents);
+  console.log('🔍 [12] Currency:', config.currency);
+  console.log('🔍 [13] Destination:', user.stripeAccountId);
+
   // Transfer funds from platform account to vendor's connected Stripe account
   await stripe.transfers.create({
     amount: amountInCents,
@@ -117,6 +146,8 @@ const approvePayoutRequest = async (requestId: string) => {
     destination: user.stripeAccountId,
     description: `Referral payout for ${vendor.businessName}`,
   });
+
+  console.log('✅ [14] Stripe transfer successful');
 
   // Mark request as approved
   payoutRequest.status = 'approved';
@@ -126,6 +157,8 @@ const approvePayoutRequest = async (requestId: string) => {
   await Vendor.findByIdAndUpdate(vendor._id, {
     $set: { totalReferralPoints: 0 },
   });
+
+  console.log('✅ [15] Payout approved and points reset');
 
   return payoutRequest;
 };

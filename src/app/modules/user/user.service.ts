@@ -16,7 +16,7 @@ import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
 import { Subscription } from '../subscription/subscription.model';
 import { Referral } from '../referral/referral.model';
 
-const registerUserIntoDB = async (payload: TUser) => {
+const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
   // 1. Check if user already exists
   const existingUser = await User.findOne({ email: payload.email });
   if (existingUser) {
@@ -45,6 +45,28 @@ const registerUserIntoDB = async (payload: TUser) => {
 
   // 5. Create user in DB
   const result = await User.create(userData);
+
+  // ✅✅✅ এখানে add করো — Step 5 এর পরে ✅✅✅
+  if (refCode) {
+    const referrer = await Vendor.findOne({ referralCode: refCode });
+    if (referrer) {
+      await Referral.create({
+        referrerId: referrer._id,
+        referredUserId: result._id,
+        businessName: result.fullName,
+        status: 'pending',
+      });
+      console.log(
+        '✅ Referral created — referrer:',
+        referrer._id,
+        'customer:',
+        result._id,
+      );
+    } else {
+      console.log('❌ No vendor found with referralCode:', refCode);
+    }
+  }
+  // ✅✅✅ এখানে শেষ ✅✅✅
 
   // 6. Create JWT token (optional for next step)
   const jwtPayload: TJwtPayload = {
@@ -79,6 +101,7 @@ const registerUserIntoDB = async (payload: TUser) => {
         <td align="center">
           <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
             
+            <!-- Header -->
             <tr>
               <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
                 <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
@@ -89,6 +112,7 @@ const registerUserIntoDB = async (payload: TUser) => {
               </td>
             </tr>
 
+            <!-- Body -->
             <tr>
               <td style="padding: 40px;">
                 
@@ -96,32 +120,35 @@ const registerUserIntoDB = async (payload: TUser) => {
                  Please use the code below to verify your email address.
                 </p>
 
+                <!-- OTP Box -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                   <tr>
                     <td align="center">
                       <div style="display: inline-block; background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); border-radius: 10px; padding: 20px 50px;">
                         <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">Your OTP Code</p>
-                        <p style="margin: 0; font-size: 36px; font-weight: 800; color: #ffffff; letter-spacing: 8px; font-family: 'Courier New', monospace;">\${otp}</p>
+                        <p style="margin: 0; font-size: 36px; font-weight: 800; color: #ffffff; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
                       </div>
                     </td>
                   </tr>
                 </table>
 
+                <!-- Expiry Notice -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
                   <tr>
                     <td style="padding: 14px 20px; text-align: center;">
                       <p style="margin: 0; font-size: 13px; color: #555555;">
-                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #0AA84C;">\${expiresAt.toLocaleString()}</strong>
+                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #0AA84C;">${expiresAt.toLocaleString()}</strong>
                       </p>
                     </td>
                   </tr>
                 </table>
 
+                <!-- Security Notice -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
                   <tr>
                     <td style="padding: 12px 16px;">
                       <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
-                        🔒 &nbsp;If you did not request this code, please ignore this email. Do not share this OTP with anyone.
+                        🔒 &nbsp;If yoanyoneu did not request this code, please ignore this email. Do not share this OTP with .
                       </p>
                     </td>
                   </tr>
@@ -130,10 +157,11 @@ const registerUserIntoDB = async (payload: TUser) => {
               </td>
             </tr>
 
+            <!-- Footer -->
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; \${new Date().getFullYear()} <strong style="color: #0AA84C;">Smevine</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -154,7 +182,7 @@ const registerUserIntoDB = async (payload: TUser) => {
   return { accessToken };
 };
 
-const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
+const vendorRegisterUserIntoDB = async (payload: TVendor) => {
   if (payload.password !== payload.confirmPassword) {
     throw new AppError(400, 'Passwords do not match!');
   }
@@ -206,24 +234,6 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
       { vendorId: createdVendor[0]._id },
       { session },
     );
-
-    // ✅ Referral logic
-    if (refCode) {
-      const referrer = await Vendor.findOne({ referralCode: refCode });
-      if (referrer) {
-        await Referral.create(
-          [
-            {
-              referrerId: referrer._id,
-              referredUserId: createdVendor[0]._id,
-              businessName: payload.businessName,
-              status: 'pending',
-            },
-          ],
-          { session },
-        );
-      }
-    }
 
     const jwtPayload: TJwtPayload = {
       userId: createdUser[0]._id,
@@ -318,7 +328,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -564,7 +574,7 @@ const changeStatusIntoDB = async (id: string, payload: { status: string }) => {
           <tr>
             <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>
@@ -711,7 +721,7 @@ const deleteUserAccountFromDB = async (userId: string) => {
           <tr>
             <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>
@@ -829,7 +839,7 @@ const reactivateUserAccountFromDB = async (userId: string) => {
           <tr>
             <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>

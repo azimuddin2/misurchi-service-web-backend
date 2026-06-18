@@ -14,7 +14,7 @@ const getReferralLink = async (vendorId: Types.ObjectId) => {
   if (!vendor) throw new Error('Vendor not found');
 
   if (!vendor.referralLink) {
-    const link = `${config.client_Url}/signup/vendor?ref=${vendor.referralCode}`;
+    const link = `${config.client_Url}/signup/user?ref=${vendor.referralCode}`;
 
     await Vendor.findByIdAndUpdate(
       vendorId,
@@ -47,7 +47,7 @@ const emailReferralLink = async (
 
   const link =
     vendor.referralLink ||
-    `${config.client_Url}/signup/vendor?ref=${vendor.referralCode}`;
+    `${config.client_Url}/signup/user?ref=${vendor.referralCode}`;
 
   // ✅ existing sendEmail (Resend) used for both initial and resend scenarios
   await sendEmail(
@@ -156,17 +156,33 @@ const awardReferralPoint = async (vendorId: Types.ObjectId) => {
     status: 'pending',
   });
 
-  if (!referral) return;
+  if (!referral) {
+    console.log(
+      '❌ [awardReferralPoint] No pending referral found for vendorId:',
+      vendorId,
+    );
+    return;
+  }
 
   referral.status = 'completed';
   referral.completedAt = new Date();
+  referral.pointsAwarded = 1;
   await referral.save();
 
-  await Vendor.findByIdAndUpdate(referral.referrerId, {
-    $inc: {
-      totalReferralPoints: 1,
-      totalReferredUsers: 1,
+  const updatedVendor = await Vendor.findByIdAndUpdate(
+    referral.referrerId,
+    {
+      $inc: {
+        totalReferralPoints: 1,
+        totalReferredUsers: 1,
+      },
     },
+    { new: true },
+  );
+
+  console.log('✅ [awardReferralPoint] Vendor updated:', updatedVendor?._id, {
+    totalReferralPoints: updatedVendor?.totalReferralPoints,
+    totalReferredUsers: updatedVendor?.totalReferredUsers,
   });
 };
 

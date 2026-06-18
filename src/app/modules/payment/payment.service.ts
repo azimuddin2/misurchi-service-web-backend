@@ -254,10 +254,8 @@ const confirmPayment = async (query: Record<string, any>) => {
       { session },
     );
 
-    const payingUser = await User.findById(payment.user).select('vendorId');
-    if (payingUser?.vendorId) {
-      await ReferralService.awardReferralPoint(payingUser.vendorId);
-    }
+    const payingUserId = (payment.user as any)._id;
+    await ReferralService.awardReferralPoint(payingUserId);
 
     await session.commitTransaction();
     return payment;
