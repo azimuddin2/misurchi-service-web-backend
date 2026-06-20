@@ -50,7 +50,7 @@ const createPayoutRequest = async (vendorId: Types.ObjectId) => {
     vendorEmail: vendor.email,
     totalPoints: vendor.totalReferralPoints,
     availableBalance,
-    method: 'Bank',
+    method: 'stripe',
     status: 'pending',
   });
 
@@ -79,86 +79,55 @@ const approvePayoutRequest = async (requestId: string) => {
   const payoutRequest =
     await PayoutRequest.findById(requestId).populate('vendorId');
 
-  console.log('🔍 [1] payoutRequest:', payoutRequest);
-  console.log(
-    '🔍 [1] payoutRequest.vendorId (populated):',
-    payoutRequest?.vendorId,
-  );
-
-  if (!payoutRequest)
+  if (!payoutRequest) {
     throw new AppError(httpStatus.NOT_FOUND, 'Payout request not found');
+  }
 
-  if (payoutRequest.status !== 'pending')
+  if (payoutRequest.status !== 'pending') {
     throw new AppError(httpStatus.BAD_REQUEST, 'Request is already processed');
+  }
 
-  // Get vendor's Stripe connected account details
   const vendor = payoutRequest.vendorId as any;
-
-  console.log('🔍 [2] vendor object:', vendor);
-  console.log('🔍 [3] vendor._id:', vendor?._id);
-  console.log('🔍 [4] vendor._id type:', typeof vendor?._id);
-
-  const user = await User.findOne({ vendorId: vendor._id }).select(
-    'stripeAccountId stripeOnboardingComplete vendorId email',
+  const vendorUser = await User.findById(vendor.userId).select(
+    'stripeAccountId stripeOnboardingComplete',
   );
 
-  console.log('🔍 [5] User.findOne result:', user);
-
-  if (!user) {
-    console.log('❌ [6] NO USER document found with vendorId:', vendor._id);
-  } else {
-    console.log('🔍 [7] user.stripeAccountId:', user.stripeAccountId);
-    console.log(
-      '🔍 [8] user.stripeOnboardingComplete:',
-      user.stripeOnboardingComplete,
+  if (!vendorUser) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'No user account linked to this vendor',
     );
   }
 
-  // Validate vendor has a connected Stripe account
-  if (!user?.stripeAccountId) {
-    console.log('❌ [9] THROWING ERROR — no stripeAccountId found');
+  if (!vendorUser.stripeAccountId) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Vendor has no Stripe account connected',
     );
   }
 
-  // Validate vendor has completed Stripe onboarding
-  if (!user?.stripeOnboardingComplete) {
-    console.log('❌ [10] THROWING ERROR — onboarding not complete');
+  if (!vendorUser.stripeOnboardingComplete) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Vendor Stripe onboarding is not complete',
     );
   }
 
-  // Convert amount to cents as required by Stripe
   const amountInCents = Math.round(payoutRequest.availableBalance * 100);
 
-  console.log('🔍 [11] Transferring amount (cents):', amountInCents);
-  console.log('🔍 [12] Currency:', config.currency);
-  console.log('🔍 [13] Destination:', user.stripeAccountId);
-
-  // Transfer funds from platform account to vendor's connected Stripe account
   await stripe.transfers.create({
     amount: amountInCents,
-    currency: config.currency as string,
-    destination: user.stripeAccountId,
+    currency: (config.currency as string) ?? 'usd',
+    destination: vendorUser.stripeAccountId,
     description: `Referral payout for ${vendor.businessName}`,
   });
 
-  console.log('✅ [14] Stripe transfer successful');
-
-  // Mark request as approved
   payoutRequest.status = 'approved';
   await payoutRequest.save();
 
-  // Reset vendor's referral points to zero after successful payout
   await Vendor.findByIdAndUpdate(vendor._id, {
     $set: { totalReferralPoints: 0 },
   });
-
-  console.log('✅ [15] Payout approved and points reset');
 
   return payoutRequest;
 };

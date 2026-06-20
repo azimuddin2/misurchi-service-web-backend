@@ -9,6 +9,7 @@ export type TPermission =
   | 'manage_offering'
   | 'activity_center'
   | 'filter_transactions'
+  | 'refer_earn'
   | 'respond_to_messages'
   | 'feedback_history'
   | 'shared_calendar'

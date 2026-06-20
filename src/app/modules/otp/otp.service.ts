@@ -132,7 +132,7 @@ const resendOtpIntoDB = async (email: string) => {
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">Scott Clements</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>

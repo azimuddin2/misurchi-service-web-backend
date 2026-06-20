@@ -7,19 +7,19 @@ const router = express.Router();
 
 router.get(
   '/referral-link',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   ReferralController.getReferralLink,
 );
 
 router.post(
   '/email',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   ReferralController.emailReferralLink,
 );
 
 router.get(
   '/stats',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   ReferralController.getReferralStats,
 );
 

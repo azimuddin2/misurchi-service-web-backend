@@ -67,7 +67,7 @@ const createTeamMemberIntoDB = async (
     let teamMemberDocId: any;
 
     // ─────────────────────────────────────────
-    // Case 1: সম্পূর্ণ নতুন user
+    // Case 1: Completely new user
     // ─────────────────────────────────────────
     if (!existingUser) {
       const createdUser = await User.create(
@@ -95,7 +95,7 @@ const createTeamMemberIntoDB = async (
       shouldSendPassword = true;
 
       // New TeamMember doc
-      // pre-save hook চলবে → permissions auto set
+      // pre-save hook will run → permissions auto set
       const createdTeamMember = await TeamMember.create(
         [
           {
@@ -110,7 +110,6 @@ const createTeamMemberIntoDB = async (
             speciality: payload.speciality,
             timeZone: payload.timeZone,
             workHours: payload.workHours,
-            // ✅ permissions দিতে হবে না — pre-save hook দেবে
           },
         ],
         { session },
@@ -127,12 +126,12 @@ const createTeamMemberIntoDB = async (
     } else {
       userId = existingUser._id;
 
-      // এই user এর TeamMember doc খোঁজো
+      // Find this user's TeamMember doc
       const existingTeamMember = await TeamMember.findOne({
         user: existingUser._id,
       });
 
-      // Same vendor এ already আছে → Reject
+      // Same vendor already exists → Reject
       if (
         existingTeamMember &&
         existingTeamMember.vendor.toString() === vendor._id.toString()
@@ -144,22 +143,19 @@ const createTeamMemberIntoDB = async (
       }
 
       if (existingTeamMember) {
-        // ✅ পুরনো vendor এর teamMembers[] থেকে remove করো
+        // ✅ Remove the old vendor from teamMembers[]
         await Vendor.findByIdAndUpdate(
           existingTeamMember.vendor,
           { $pull: { teamMembers: existingTeamMember._id } },
           { session },
         );
 
-        // ✅ Same doc update — নতুন বানাবো না
-        // findByIdAndUpdate এ pre-save hook চলে না
-        // তাই permissions manually set করতে হবে
         await TeamMember.findByIdAndUpdate(
           existingTeamMember._id,
           {
             vendor: vendor._id,
             role: payload.role,
-            permissions: TeamMemberPermission[payload.role], // ✅ manual set
+            permissions: TeamMemberPermission[payload.role],
             firstName: payload.firstName,
             lastName: payload.lastName,
             phone: payload.phone,
@@ -174,8 +170,8 @@ const createTeamMemberIntoDB = async (
 
         teamMemberDocId = existingTeamMember._id;
       } else {
-        // User আছে কিন্তু TeamMember doc নেই (edge case)
-        // pre-save hook চলবে → permissions auto set হবে
+        // User exists but TeamMember doc does not exist (edge ​​case)
+        // pre-save hook will run → permissions will be auto set
         const createdTeamMember = await TeamMember.create(
           [
             {
@@ -198,7 +194,7 @@ const createTeamMemberIntoDB = async (
         teamMemberDocId = createdTeamMember[0]._id;
       }
 
-      // User এর vendorId update করো
+      // Update the user's vendorId
       await User.findByIdAndUpdate(
         existingUser._id,
         { vendorId: vendor._id },
@@ -208,7 +204,7 @@ const createTeamMemberIntoDB = async (
       shouldSendPassword = false;
     }
 
-    // ✅ নতুন vendor এর teamMembers[] তে add করো
+    // ✅ Add the new vendor to teamMembers[]
     await Vendor.findByIdAndUpdate(
       vendor._id,
       { $push: { teamMembers: teamMemberDocId } },
@@ -296,7 +292,7 @@ const updateTeamMemberIntoDB = async (
       payload.image = uploadedUrl as string;
     }
 
-    // ✅ Step 5: Role change হলে permissions update করো
+    // ✅ Step 5: Update permissions if role changes
     if (payload.role && payload.role !== existingTeamMember.role) {
       payload.permissions = TeamMemberPermission[payload.role];
     }

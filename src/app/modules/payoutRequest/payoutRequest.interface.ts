@@ -9,7 +9,7 @@ export type TPayoutRequest = {
   vendorEmail: string;
   totalPoints: number;
   availableBalance: number;
-  method: string; // "Bank"
+  method: string; // "Stripe"
   status: TPayoutStatus;
   requestedAt?: Date;
   createdAt?: Date;

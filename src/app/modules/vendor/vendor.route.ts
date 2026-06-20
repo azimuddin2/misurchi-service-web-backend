@@ -33,7 +33,7 @@ router.patch(
 
 router.put(
   '/choose-offer/:id',
-  auth('vendor'),
+  auth('vendor', 'team_member'),
   validateRequest(VendorValidations.chooseOfferValidationSchema),
   VendorControllers.chooseOffer,
 );

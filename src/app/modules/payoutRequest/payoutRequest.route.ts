@@ -7,13 +7,13 @@ const router = express.Router();
 
 router.post(
   '/',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   PayoutRequestController.createPayoutRequest,
 );
 
 router.get(
   '/my-history',
-  auth(USER_ROLE.vendor),
+  auth(USER_ROLE.vendor, USER_ROLE.team_member),
   PayoutRequestController.getVendorPayoutHistory,
 );
 

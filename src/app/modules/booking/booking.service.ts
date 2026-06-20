@@ -407,7 +407,7 @@ const bookingAssignedToMemberIntoDB = async (
           <tr>
             <td style="background:linear-gradient(135deg,#0AA84C 0%,#087a38 100%);padding:36px 40px;text-align:center;">
               <p style="margin:0 0 8px;color:rgba(255,255,255,0.85);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">
-                Scott Clements
+                SMEVine
               </p>
               <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;line-height:1.3;">
                 New Booking Assigned
@@ -591,7 +591,7 @@ const bookingAssignedToMemberIntoDB = async (
               </p>
               <p style="margin:20px 0 0;font-size:15px;color:#1a1a1a;">
                 Best regards,<br/>
-                <strong style="color:#0AA84C;">Scott Clements Team</strong>
+                <strong style="color:#0AA84C;">SMEVine Team</strong>
               </p>
             </td>
           </tr>
@@ -601,7 +601,7 @@ const bookingAssignedToMemberIntoDB = async (
             <td style="background:#f8f8f8;padding:20px 40px;text-align:center;
               border-top:1px solid #eeeeee;">
               <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.6;">
-                © ${year} Scott Clements. All rights reserved.<br/>
+                © ${year} SMEVine. All rights reserved.<br/>
                 This email was sent because a booking was assigned to you.
               </p>
             </td>

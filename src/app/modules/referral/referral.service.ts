@@ -49,7 +49,6 @@ const emailReferralLink = async (
     vendor.referralLink ||
     `${config.client_Url}/signup/user?ref=${vendor.referralCode}`;
 
-  // ✅ existing sendEmail (Resend) used for both initial and resend scenarios
   await sendEmail(
     recipientEmail,
     `You have a new invitation`,
@@ -81,13 +80,11 @@ const emailReferralLink = async (
             Accept Invitation →
           </a>
         </div>
-
-       
       </div>
 
       <!-- Footer -->
       <div style="background:#f8f9ff; padding:20px 36px; text-align:center; border-top:1px solid #eef0ff;">
-        <p style="margin:0; font-size:12px; color:#bbb;">&copy; ${new Date().getFullYear()} · This is an automated message · Please do not reply</p>
+        <p style="margin:0; font-size:12px; color:#bbb;">&copy; ${new Date().getFullYear()} <strong>SMEVine</strong> · This is an automated message · Please do not reply</p>
       </div>
 
     </div>
@@ -98,6 +95,11 @@ const emailReferralLink = async (
 
 // Vendor Dashboard stats
 const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
+  const vendor = await Vendor.findById(vendorId).select('totalReferralPoints');
+  const totalPoints = vendor?.totalReferralPoints ?? 0;
+
+  const worthEquivalent = (totalPoints * 2.5).toFixed(2);
+
   let dateFilter: Record<string, unknown> = {};
   if (month) {
     const start = new Date(`${month}-01`);
@@ -111,13 +113,6 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
     status: 'completed',
     ...dateFilter,
   }).select('businessName completedAt pointsAwarded');
-
-  const totalPoints = completedReferrals.reduce(
-    (sum, r) => sum + r.pointsAwarded,
-    0,
-  );
-
-  const worthEquivalent = (totalPoints * 2.5).toFixed(2);
 
   const allReferrals = await Referral.find({
     referrerId: vendorId,

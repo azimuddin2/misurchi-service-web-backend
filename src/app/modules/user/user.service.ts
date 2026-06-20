@@ -590,7 +590,7 @@ const changeStatusIntoDB = async (id: string, payload: { status: string }) => {
 
   await sendEmail(
     result.email,
-    `Account ${isBlocked ? 'Blocked' : 'Unblocked'} — Scott Clements`,
+    `Account ${isBlocked ? 'Blocked' : 'Unblocked'} — SMEVine`,
     emailHtml,
   );
 
@@ -855,7 +855,7 @@ const reactivateUserAccountFromDB = async (userId: string) => {
 
   await sendEmail(
     reactivatedUser.email,
-    'Account Reactivated — Scott Clements',
+    'Account Reactivated — SMEVine',
     emailHtml,
   );
 
