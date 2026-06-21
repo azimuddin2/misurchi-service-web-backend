@@ -124,11 +124,33 @@ const deletePlanFromDB = async (id: string) => {
     throw new AppError(404, 'Plan not found');
   }
 
+  if (isPlanExists.isDeleted) {
+    throw new AppError(400, 'This plan is already deleted');
+  }
+
+  // Deactivate both price and product in Stripe
+  try {
+    if (isPlanExists.stripePriceId) {
+      await stripe.prices.update(isPlanExists.stripePriceId, {
+        active: false,
+      });
+    }
+
+    if (isPlanExists.stripeProductId) {
+      await stripe.products.update(isPlanExists.stripeProductId, {
+        active: false,
+      });
+    }
+  } catch (error) {
+    throw new AppError(400, 'Failed to deactivate plan on Stripe');
+  }
+
   const result = await Plan.findByIdAndUpdate(
     id,
-    { isDeleted: true },
+    { isDeleted: true, isActive: false },
     { new: true },
   );
+
   if (!result) {
     throw new AppError(400, 'Failed to delete plan');
   }
