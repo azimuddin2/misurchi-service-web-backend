@@ -14,6 +14,8 @@ import { Subscription } from '../subscription/subscription.model';
 import { VendorServices } from '../vendor/vendor.service';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { TSubscribed } from '../user/user.interface';
+import { NotificationServices } from '../notification/notification.service';
+import { ModeType } from '../notification/notification.interface';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -247,6 +249,14 @@ const confirmPayment = async (query: Record<string, any>) => {
         },
       },
       { new: true, session },
+    );
+
+    // Notify admins
+    await NotificationServices.notifyAdmins(
+      'New Subscription Payment',
+      subscriptionId as any,
+      ModeType.SubscriptionPayment,
+      `${isUserExist.fullName} has successfully purchased the ${plan.name} subscription plan for $${plan.cost}.`,
     );
 
     await session.commitTransaction();

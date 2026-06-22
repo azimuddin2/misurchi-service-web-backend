@@ -3,20 +3,56 @@ import httpStatus from 'http-status';
 import moment from 'moment';
 import AppError from '../../errors/AppError';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { ModeType } from './notification.interface';
+import { ObjectId } from 'mongoose';
+import { User } from '../user/user.model';
+import { USER_ROLE } from '../user/user.constant';
 
 const insertNotificationIntoDB = async (payload: any) => {
-  const result = await Notification.insertMany(payload);
-  if (!result) {
+  const payloadArray = Array.isArray(payload) ? payload : [payload];
+  const result = await Notification.insertMany(payloadArray);
+
+  if (!result || result.length === 0) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Notification created failed');
   }
+
   //@ts-ignore
   const io = global.socketio;
   if (io) {
-    const ver = 'notification::' + payload?.receiver;
-    io.emit(ver, { ...payload, createdAt: moment().format('YYYY-MM-DD') });
+    result.forEach((notification) => {
+      const ver = 'notification::' + notification.receiver;
+      io.emit(ver, {
+        ...notification.toObject(),
+        createdAt: moment().format('YYYY-MM-DD'),
+      });
+    });
   }
 
   return result;
+};
+
+const notifyAdmins = async (
+  message: string,
+  reference: string | ObjectId,
+  model_type: ModeType,
+  description?: string,
+) => {
+  const admins = await User.find({
+    role: { $in: [USER_ROLE.admin] },
+  }).select('_id');
+
+  if (!admins.length) return;
+
+  const payload = admins.map((admin) => ({
+    receiver: admin._id,
+    message,
+    description,
+    reference,
+    model_type,
+    read: false,
+  }));
+
+  return insertNotificationIntoDB(payload);
 };
 
 const getAllNotificationsFromDB = async (query: Record<string, any>) => {
@@ -70,6 +106,7 @@ const deleteNotificationFromDB = async (id: string) => {
 
 export const NotificationServices = {
   insertNotificationIntoDB,
+  notifyAdmins,
   getAllNotificationsFromDB,
   getNotificationByIdFromDB,
   markAsDone,
