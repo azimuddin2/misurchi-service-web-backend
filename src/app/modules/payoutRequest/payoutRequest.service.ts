@@ -7,6 +7,8 @@ import { PayoutRequest } from './payoutRequest.model';
 import { Vendor } from '../vendor/vendor.model';
 import { User } from '../user/user.model';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { NotificationServices } from '../notification/notification.service';
+import { ModeType } from '../notification/notification.interface';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -53,6 +55,14 @@ const createPayoutRequest = async (vendorId: Types.ObjectId) => {
     method: 'stripe',
     status: 'pending',
   });
+
+  // Notify admins
+  await NotificationServices.notifyAdmins(
+    'New Payout Request',
+    payoutRequest._id as any,
+    ModeType.ReferralRequest,
+    `${vendor.businessName} has requested a referral earnings withdrawal of $${availableBalance.toFixed(2)}, pending admin approval.`,
+  );
 
   return payoutRequest;
 };

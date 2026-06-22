@@ -1,6 +1,8 @@
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import { sendEmail } from '../../utils/sendEmail';
+import { ModeType } from '../notification/notification.interface';
+import { NotificationServices } from '../notification/notification.service';
 import { supportSearchableFields } from './support.constant';
 import { TSupport } from './support.interface';
 import { Support } from './support.modal';
@@ -10,6 +12,15 @@ const createSupportIntoDB = async (payload: TSupport) => {
   if (!result) {
     throw new AppError(400, 'Failed to create Support');
   }
+
+  // Notify all admins about the new support message
+  await NotificationServices.notifyAdmins(
+    'New Support Message',
+    result._id as any,
+    ModeType.Support,
+    'A new support message has been submitted and is awaiting your review.',
+  );
+
   return result;
 };
 

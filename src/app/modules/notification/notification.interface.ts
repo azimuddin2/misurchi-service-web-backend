@@ -4,6 +4,9 @@ export enum ModeType {
   Booking = 'Booking',
   Order = 'Order',
   Payment = 'Payment',
+  Support = 'Support',
+  SubscriptionPayment = 'SubscriptionPayment',
+  ReferralRequest = 'ReferralRequest',
 }
 
 export type TNotification = {
