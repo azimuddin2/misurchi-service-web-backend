@@ -692,16 +692,16 @@ const deleteUserAccountFromDB = async (userId: string) => {
           <p style="margin: 6px 0 0; font-size: 14px; color: #6b7280;">Deactivated on: <span style="color: #111827; font-weight: 500;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
         </div>
 
-              <!-- Restore Notice -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 14px 20px; text-align: center;">
-                    <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
-                      💡 &nbsp;Changed your mind? Contact our support team anytime to <strong style="color: #0AA84C;">restore your account</strong> without any data loss.
-                    </p>
-                  </td>
-                </tr>
-              </table>
+             <!-- Restore Notice -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+  <tr>
+    <td style="padding: 14px 20px; text-align: center;">
+      <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
+        💡 &nbsp;Changed your mind? <a href="${config.client_Url}/contact" style="color: #0AA84C; font-weight: 600; text-decoration: underline;">Contact our support team</a> anytime to <strong style="color: #0AA84C;">restore your account</strong> without any data loss.
+      </p>
+    </td>
+  </tr>
+</table>
 
               <!-- Warning Notice -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">

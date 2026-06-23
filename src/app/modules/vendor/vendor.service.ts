@@ -11,7 +11,7 @@ import { Packages } from '../packages/packages.model';
 import { Payment } from '../payment/payment.model';
 import { Booking } from '../booking/booking.model';
 import { Order } from '../order/order.model';
-import { calcChangePercent } from './vendor.utils';
+import { calcChangePercent } from '../../utils/calcChangePercent';
 
 const getAllVendorsFromDB = async (query: Record<string, unknown>) => {
   const { topRated, ...restQuery } = query;

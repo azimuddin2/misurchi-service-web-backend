@@ -2,56 +2,133 @@ import { Payment } from '../payment/payment.model';
 import { User } from '../user/user.model';
 import SubPayment from '../subPayment/sub-payment.module';
 import { Months } from './dashboard.constant';
+import { calcChangePercent } from '../../utils/calcChangePercent';
 
 const getAdminDashboardStats = async () => {
-  // 🔹 1. Total Users
-  const totalUsers = await User.countDocuments({ isDeleted: false });
+  // ── Date ranges ──
+  const now = new Date();
 
-  // 🔹 2. Vendor Commission Earnings (adminAmount from Payment)
-  const [vendorCommissionStats] = await Payment.aggregate([
-    {
-      $match: {
-        status: 'paid',
-        isDeleted: false,
-      },
-    },
-    {
-      $group: { _id: null, total: { $sum: '$adminAmount' } },
-    },
+  const currentFrom = new Date();
+  currentFrom.setDate(now.getDate() - 30);
+
+  const previousTo = new Date();
+  previousTo.setDate(now.getDate() - 30);
+
+  const previousFrom = new Date();
+  previousFrom.setDate(now.getDate() - 60);
+
+  const currentDateFilter = { $gte: currentFrom, $lte: now };
+  const previousDateFilter = { $gte: previousFrom, $lte: previousTo };
+
+  // ── 1. Total Users (cumulative growth) ───
+  // current total = all users created up to now
+  // previous total = all users created up to 30 days ago
+  const [totalUsersNow, totalUsersPrev] = await Promise.all([
+    User.countDocuments({ isDeleted: false, createdAt: { $lte: now } }),
+    User.countDocuments({ isDeleted: false, createdAt: { $lte: previousTo } }),
   ]);
 
-  const totalVendorCommissionEarnings = vendorCommissionStats?.total || 0;
-
-  // 🔹 3. Subscription Payments (from SubPayment model)
-  const [subscriptionStats] = await SubPayment.aggregate([
-    {
-      $match: {
-        isPaid: true,
-        isDeleted: false,
+  // ── 2. Vendor Commission Earnings (current vs previous period) ────
+  const [currentCommissionAgg, prevCommissionAgg] = await Promise.all([
+    Payment.aggregate([
+      {
+        $match: {
+          status: 'paid',
+          isDeleted: false,
+          createdAt: currentDateFilter,
+        },
       },
-    },
-    {
-      $group: { _id: null, total: { $sum: '$amount' } },
-    },
+      { $group: { _id: null, total: { $sum: '$adminAmount' } } },
+    ]),
+    Payment.aggregate([
+      {
+        $match: {
+          status: 'paid',
+          isDeleted: false,
+          createdAt: previousDateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$adminAmount' } } },
+    ]),
   ]);
 
-  const totalSubscriptionIncome = subscriptionStats?.total || 0;
+  const currentVendorCommissionEarnings = currentCommissionAgg[0]?.total ?? 0;
+  const prevVendorCommissionEarnings = prevCommissionAgg[0]?.total ?? 0;
 
-  // 🔹 4. Total Subscription Count
-  const totalSubscriptions = await SubPayment.countDocuments({
-    isPaid: true,
-    isDeleted: false,
-  });
+  // ── 3. Subscription Income (current vs previous period) ──
+  const [currentSubIncomeAgg, prevSubIncomeAgg] = await Promise.all([
+    SubPayment.aggregate([
+      {
+        $match: {
+          isPaid: true,
+          isDeleted: false,
+          createdAt: currentDateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    SubPayment.aggregate([
+      {
+        $match: {
+          isPaid: true,
+          isDeleted: false,
+          createdAt: previousDateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+  ]);
 
-  // 🔹 5. Total combined income (vendor commission + subscriptions)
-  const totalIncome = totalVendorCommissionEarnings + totalSubscriptionIncome;
+  const currentSubscriptionIncome = currentSubIncomeAgg[0]?.total ?? 0;
+  const prevSubscriptionIncome = prevSubIncomeAgg[0]?.total ?? 0;
 
+  // ── 4. Total Subscriptions Count (current vs previous period) ─────
+  const [currentSubCount, prevSubCount] = await Promise.all([
+    SubPayment.countDocuments({
+      isPaid: true,
+      isDeleted: false,
+      createdAt: currentDateFilter,
+    }),
+    SubPayment.countDocuments({
+      isPaid: true,
+      isDeleted: false,
+      createdAt: previousDateFilter,
+    }),
+  ]);
+
+  // ── 5. Total Combined Income ──
+  const currentTotalIncome =
+    currentVendorCommissionEarnings + currentSubscriptionIncome;
+  const prevTotalIncome = prevVendorCommissionEarnings + prevSubscriptionIncome;
+
+  // ── Final Response ──
   return {
-    totalUsers,
-    totalVendorCommissionEarnings,
-    totalSubscriptionIncome,
-    totalSubscriptions,
-    totalIncome,
+    totalUsers: {
+      count: totalUsersNow,
+      changePercent: calcChangePercent(totalUsersNow, totalUsersPrev),
+    },
+    totalVendorCommissionEarnings: {
+      count: currentVendorCommissionEarnings,
+      changePercent: calcChangePercent(
+        currentVendorCommissionEarnings,
+        prevVendorCommissionEarnings,
+      ),
+    },
+    totalSubscriptionIncome: {
+      count: currentSubscriptionIncome,
+      changePercent: calcChangePercent(
+        currentSubscriptionIncome,
+        prevSubscriptionIncome,
+      ),
+    },
+    totalSubscriptions: {
+      count: currentSubCount,
+      changePercent: calcChangePercent(currentSubCount, prevSubCount),
+    },
+    totalIncome: {
+      count: currentTotalIncome,
+      changePercent: calcChangePercent(currentTotalIncome, prevTotalIncome),
+    },
   };
 };
 
