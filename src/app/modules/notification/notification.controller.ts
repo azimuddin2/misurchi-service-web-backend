@@ -3,6 +3,7 @@ import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import { NotificationServices } from './notification.service';
+import { USER_ROLE } from '../user/user.constant';
 
 const insertNotification = catchAsync(async (req: Request, res: Response) => {
   const result = await NotificationServices.insertNotificationIntoDB(req.body);
@@ -56,9 +57,14 @@ const markAsDone = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteNotification = catchAsync(async (req: Request, res: Response) => {
-  const result = await NotificationServices.deleteNotificationFromDB(
-    req?.user?.userId,
-  );
+  const { userId, vendorId, role } = req.user;
+
+  const receiver =
+    role === USER_ROLE.vendor || role === USER_ROLE.team_member
+      ? vendorId
+      : userId;
+
+  const result = await NotificationServices.deleteNotificationFromDB(receiver);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

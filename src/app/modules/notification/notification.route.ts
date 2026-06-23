@@ -5,8 +5,6 @@ import { USER_ROLE } from '../user/user.constant';
 
 const router = Router();
 
-// router.post("/",)
-
 router.get(
   '/',
   auth(
