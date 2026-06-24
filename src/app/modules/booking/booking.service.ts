@@ -11,6 +11,14 @@ import { ModeType } from '../notification/notification.interface';
 import { generateBookingId } from './booking.utils';
 import { TeamMember } from '../teamMember/teamMember.model';
 import { sendEmail } from '../../utils/sendEmail';
+import {
+  bookingCancelledTemplate,
+  bookingConfirmedTemplate,
+  requestApprovedTemplate,
+  requestRejectedTemplate,
+  requestSubmittedTemplate,
+  serviceCompletedTemplate,
+} from './booking.emailTemplates';
 
 const createBookingIntoDB = async (payload: TBooking) => {
   const { service, serviceItemId, date, time } = payload;
@@ -112,6 +120,27 @@ const createBookingIntoDB = async (payload: TBooking) => {
     reference: booking._id,
     model_type: ModeType.Booking,
   });
+
+  // 9️⃣ Send confirmation email to customer
+  const bookingDate = new Date(booking.date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const year = new Date().getFullYear();
+
+  await sendEmail(
+    booking.email,
+    `🎉 Booking Confirmed — ${serviceData.name}`,
+    bookingConfirmedTemplate(
+      booking,
+      serviceData.name,
+      bookingDate,
+      time,
+      year,
+    ),
+  );
 
   return booking;
 };
@@ -287,6 +316,20 @@ const updateBookingRequestIntoDB = async (
     model_type: ModeType.Booking,
   });
 
+  // 7️⃣ Send email to customer confirming the request was received
+  const year = new Date().getFullYear();
+
+  await sendEmail(
+    booking.email,
+    `📋 ${requestLabel} Request Submitted — ${booking.serviceName}`,
+    requestSubmittedTemplate(
+      booking,
+      requestLabel,
+      payload.request?.reason,
+      year,
+    ),
+  );
+
   return booking;
 };
 
@@ -311,7 +354,11 @@ const bookingApprovedRequestIntoDB = async (
   // 4️⃣ Save the updated booking
   const updatedBooking = await booking.save();
 
-  // 5️⃣ Notify user based on approval
+  // 5️⃣ Notify + email user based on approval
+  const requestLabel =
+    booking.request.type === 'cancel' ? 'Cancellation' : 'Reschedule';
+  const year = new Date().getFullYear();
+
   if (vendorApproved) {
     await NotificationServices.insertNotificationIntoDB({
       receiver: booking.user,
@@ -320,6 +367,12 @@ const bookingApprovedRequestIntoDB = async (
       reference: booking._id,
       model_type: ModeType.Booking,
     });
+
+    await sendEmail(
+      booking.email,
+      `✅ ${requestLabel} Request Approved — ${booking.serviceName}`,
+      requestApprovedTemplate(booking, requestLabel, year),
+    );
   } else {
     await NotificationServices.insertNotificationIntoDB({
       receiver: booking.user,
@@ -328,6 +381,12 @@ const bookingApprovedRequestIntoDB = async (
       reference: booking._id,
       model_type: ModeType.Booking,
     });
+
+    await sendEmail(
+      booking.email,
+      `❌ ${requestLabel} Request Declined — ${booking.serviceName}`,
+      requestRejectedTemplate(booking, requestLabel, year),
+    );
   }
 
   return updatedBooking;
@@ -638,6 +697,23 @@ const updateBookingStatusIntoDB = async (
     reference: result?._id,
     model_type: ModeType.Booking,
   });
+
+  // Send email only for completed or cancelled status
+  const year = new Date().getFullYear();
+
+  if (payload.status === 'completed') {
+    await sendEmail(
+      isBookingExists.email,
+      `🎉 Service Completed — ${isBookingExists.serviceName}`,
+      serviceCompletedTemplate(isBookingExists, year),
+    );
+  } else if (payload.status === 'cancelled') {
+    await sendEmail(
+      isBookingExists.email,
+      `🚫 Booking Cancelled — ${isBookingExists.serviceName}`,
+      bookingCancelledTemplate(isBookingExists, year),
+    );
+  }
 
   return result;
 };

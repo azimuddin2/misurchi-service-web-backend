@@ -14,6 +14,14 @@ import { orderSearchableFields } from './order.constant';
 import { generateOrderId } from './order.utils';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
+import { sendEmail } from '../../utils/sendEmail';
+import {
+  orderConfirmedTemplate,
+  orderDeliveredTemplate,
+  orderRequestApprovedTemplate,
+  orderRequestRejectedTemplate,
+  orderRequestSubmittedTemplate,
+} from './order.emailTemplates';
 
 const createOrderIntoDB = async (payload: TOrder) => {
   // Assign backend-specific order id
@@ -78,6 +86,15 @@ const createOrderIntoDB = async (payload: TOrder) => {
       model_type: ModeType.Order,
     }),
   ]);
+
+  // 7️⃣ Send confirmation email to customer
+  const year = new Date().getFullYear();
+
+  await sendEmail(
+    order.customerEmail,
+    `🛍️ Order Confirmed — #${order.orderId}`,
+    orderConfirmedTemplate(order, year),
+  );
 
   return order;
 };
@@ -166,7 +183,7 @@ const requestOrderIntoDB = async (
 
   const { deleteKey, ...requestData } = payload;
 
-  // 🔼 Handle image upload
+  // 1️⃣ Handle image upload
   if (files) {
     const { images } = files as UploadedFiles;
 
@@ -186,7 +203,7 @@ const requestOrderIntoDB = async (
     }
   }
 
-  // 🔼 Handle image deletion
+  // 2️⃣ Handle image deletion
   if (deleteKey && deleteKey.length > 0) {
     const newKey = deleteKey?.map((key: any) => `images/order/${key}`);
 
@@ -203,7 +220,7 @@ const requestOrderIntoDB = async (
     }
   }
 
-  // 🔼 Prepare update object
+  // 3️⃣ Prepare update object
   const update: any = {
     $set: {
       'request.type': requestData.type ?? order.request?.type ?? 'none',
@@ -218,7 +235,7 @@ const requestOrderIntoDB = async (
     update.$push = { 'request.images': { $each: requestData.images } };
   }
 
-  // 🔼 Update DB
+  // 4️⃣ Update DB
   try {
     const updatedOrder = await Order.findByIdAndUpdate(orderId, update, {
       new: true,
@@ -227,7 +244,8 @@ const requestOrderIntoDB = async (
     if (!updatedOrder) {
       throw new AppError(400, 'Order request update failed');
     }
-    // 🔔 Notify vendor
+
+    // 5️⃣ Notify vendor + customer, and send email
     if (requestData.type === 'cancelled' || requestData.type === 'return') {
       const requestLabel =
         requestData.type === 'cancelled' ? 'Cancellation' : 'Return';
@@ -241,7 +259,7 @@ const requestOrderIntoDB = async (
         model_type: ModeType.Order,
       });
 
-      // ✅ Customer notification
+      // Customer notification
       await NotificationServices.insertNotificationIntoDB({
         receiver: updatedOrder.buyer,
         message: `📋 ${requestLabel} Request Submitted`,
@@ -249,6 +267,20 @@ const requestOrderIntoDB = async (
         reference: updatedOrder._id,
         model_type: ModeType.Order,
       });
+
+      // 6️⃣ Send email to customer confirming the request was received
+      const year = new Date().getFullYear();
+
+      await sendEmail(
+        updatedOrder.customerEmail,
+        `📋 ${requestLabel} Request Submitted — #${updatedOrder.orderId}`,
+        orderRequestSubmittedTemplate(
+          updatedOrder,
+          requestLabel,
+          requestData.reason,
+          year,
+        ),
+      );
     }
 
     return updatedOrder;
@@ -278,6 +310,17 @@ const updateOrderStatusIntoDB = async (
     model_type: ModeType.Order,
   });
 
+  // 📧 Send email only when order is delivered
+  if (payload.status === 'delivered') {
+    const year = new Date().getFullYear();
+
+    await sendEmail(
+      isOrderExists.customerEmail,
+      `📦 Order Delivered — #${isOrderExists.orderId}`,
+      orderDeliveredTemplate(isOrderExists, year),
+    );
+  }
+
   return result;
 };
 
@@ -302,9 +345,10 @@ const orderApprovedRequestIntoDB = async (
   // 4️⃣ Save the updated order
   const updatedOrder = await order.save();
 
-  // 🔔 Notify buyer
+  // 5️⃣ Notify + email buyer based on approval
   const requestLabel =
     order.request.type === 'cancelled' ? 'Cancellation' : 'Return';
+  const year = new Date().getFullYear();
 
   if (vendorApproved) {
     await NotificationServices.insertNotificationIntoDB({
@@ -314,6 +358,12 @@ const orderApprovedRequestIntoDB = async (
       reference: order._id,
       model_type: ModeType.Order,
     });
+
+    await sendEmail(
+      order.customerEmail,
+      `✅ ${requestLabel} Request Approved — #${order.orderId}`,
+      orderRequestApprovedTemplate(order, requestLabel, year),
+    );
   } else {
     await NotificationServices.insertNotificationIntoDB({
       receiver: order.buyer,
@@ -322,6 +372,12 @@ const orderApprovedRequestIntoDB = async (
       reference: order._id,
       model_type: ModeType.Order,
     });
+
+    await sendEmail(
+      order.customerEmail,
+      `❌ ${requestLabel} Request Declined — #${order.orderId}`,
+      orderRequestRejectedTemplate(order, requestLabel, year),
+    );
   }
 
   return updatedOrder;

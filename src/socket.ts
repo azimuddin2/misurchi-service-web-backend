@@ -11,6 +11,9 @@ import { Message } from './app/modules/message/message.model';
 import AppError from './app/errors/AppError';
 import getUserDetailsFromToken from './app/helpers/getUserDetailsFromToken';
 import callbackFn from './app/utils/callbackFn';
+import config from './app/config';
+import { NotificationServices } from './app/modules/notification/notification.service';
+import { ModeType } from './app/modules/notification/notification.interface';
 
 const initializeSocketIO = (server: HttpServer) => {
   const io = new Server(server, {
@@ -307,6 +310,31 @@ const initializeSocketIO = (server: HttpServer) => {
           });
           const variable2 = 'new-notifications::' + result.receiver;
           io.emit(variable2, allUnReaddMessage2);
+
+          const [receiver, sender] = await Promise.all([
+            User.findById(result.receiver).select(
+              'role notifications firstName lastName',
+            ),
+            User.findById(result.sender).select('firstName lastName'),
+          ]);
+
+          if (receiver?.notifications) {
+            const inboxUrl =
+              receiver.role === 'vendor'
+                ? `${config.client_Url}/vendor/messages`
+                : `${config.client_Url}/user/message`;
+
+            const notification =
+              await NotificationServices.insertNotificationIntoDB({
+                receiver: receiver._id,
+                message: '💬 New Message',
+                description: `${sender?.firstName || 'Someone'} sent you a new message.\nInbox: ${inboxUrl}`,
+                reference: result._id,
+                model_type: ModeType.Message,
+              });
+
+            io.to(receiverSocket).emit('new-notification', notification);
+          }
 
           //end Notification//
           callbackFn(callback, {

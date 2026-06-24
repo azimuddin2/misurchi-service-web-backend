@@ -185,6 +185,16 @@ const supportMarkHelpfulIntoDB = async (id: string, isHelpful: boolean) => {
     { new: true },
   );
 
+  // Notify admins when a user marks the response as NOT helpful
+  if (isHelpful === false) {
+    await NotificationServices.notifyAdmins(
+      'Feedback Marked Not Helpful',
+      result?._id as any,
+      ModeType.Support,
+      `${result?.firstName} ${result?.lastName} (${result?.email}) marked a support response as not helpful. Please follow up.`,
+    );
+  }
+
   return result;
 };
 

@@ -51,8 +51,6 @@ const createMessages = async (payload: TMessage) => {
   return result;
 };
 
-// Get all messages
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getAllMessages = async (query: Record<string, any>) => {
   const MessageModel = new QueryBuilder(
     Message.find().populate([
@@ -80,7 +78,6 @@ const getAllMessages = async (query: Record<string, any>) => {
   };
 };
 
-// Update messages
 const updateMessages = async (id: string, payload: Partial<TMessage>) => {
   const result = await Message.findByIdAndUpdate(id, payload, { new: true });
   if (!result) {
@@ -89,13 +86,11 @@ const updateMessages = async (id: string, payload: Partial<TMessage>) => {
   return result;
 };
 
-// Get messages by chat ID
 const getMessagesByChatId = async (chatId: string) => {
   const result = await Message.find({ chat: chatId }).sort({ createdAt: -1 });
   return result;
 };
 
-// Get message by ID
 const getMessagesById = async (id: string) => {
   const result = await Message.findById(id).populate([
     {
