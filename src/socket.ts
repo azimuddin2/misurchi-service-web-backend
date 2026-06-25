@@ -37,7 +37,7 @@ const initializeSocketIO = (server: HttpServer) => {
   const onlineUser = new Set();
 
   io.on('connection', async (socket) => {
-    console.log('connected', socket?.id);
+    // console.log('connected', socket?.id);
 
     try {
       //----------------------user token get from front end-------------------------//
@@ -58,7 +58,7 @@ const initializeSocketIO = (server: HttpServer) => {
       userTOSocketId.set(user?._id?.toString(), socket?.id);
 
       socket.on('check', (data, callback) => {
-        console.log(data);
+        // console.log(data);
 
         callbackFn(callback, { success: true });
       });
@@ -67,7 +67,7 @@ const initializeSocketIO = (server: HttpServer) => {
       io.emit('onlineUser', Array.from(onlineUser));
 
       socket.on('message-page', async (userId, callback) => {
-        console.log({ userId });
+        // console.log({ userId });
 
         if (!userId) {
           callbackFn(callback, {
@@ -110,7 +110,7 @@ const initializeSocketIO = (server: HttpServer) => {
             ],
           }).sort({ updatedAt: 1 });
 
-          console.log(getPreMessage);
+          // console.log(getPreMessage);
           io.to(userSocket).emit('message', getPreMessage || []);
 
           // Notification
@@ -313,30 +313,46 @@ const initializeSocketIO = (server: HttpServer) => {
 
           const [receiver, sender] = await Promise.all([
             User.findById(result.receiver).select(
-              'role notifications firstName lastName',
+              'role notifications firstName lastName vendorId',
             ),
             User.findById(result.sender).select('firstName lastName'),
           ]);
 
           if (receiver?.notifications) {
-            const inboxUrl =
-              receiver.role === 'vendor'
-                ? `${config.client_Url}/vendor/messages`
-                : `${config.client_Url}/user/message`;
+            const isVendorSide =
+              receiver.role === 'vendor' || receiver.role === 'team_member';
 
-            const notification =
-              await NotificationServices.insertNotificationIntoDB({
-                receiver: receiver._id,
-                message: '💬 New Message',
-                description: `${sender?.firstName || 'Someone'} sent you a new message.\nInbox: ${inboxUrl}`,
-                reference: result._id,
-                model_type: ModeType.Message,
-              });
+            const notificationReceiverId = isVendorSide
+              ? receiver.vendorId
+              : receiver._id;
 
-            io.to(receiverSocket).emit('new-notification', notification);
+            const senderName =
+              sender?.firstName && sender?.lastName
+                ? `${sender.firstName} ${sender.lastName}`
+                : sender?.firstName || 'Someone';
+
+            if (notificationReceiverId) {
+              const notification =
+                await NotificationServices.insertNotificationIntoDB({
+                  receiver: notificationReceiverId,
+                  message: '💬 New Message',
+                  description: `You have a new message from ${senderName}. Please check your message inbox.`,
+                  reference: result._id,
+                  model_type: ModeType.Message,
+                });
+
+              io.to(receiverSocket).emit('new-notification', notification);
+            } else {
+              console.error(
+                '[WARN] notificationReceiverId is null/undefined — skipping notification. receiver._id:',
+                receiver._id,
+                'role:',
+                receiver.role,
+              );
+            }
           }
 
-          //end Notification//
+          //end Notification
           callbackFn(callback, {
             statusCode: httpStatus.OK,
             success: true,
