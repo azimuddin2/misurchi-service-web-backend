@@ -11,7 +11,6 @@ import { Message } from './app/modules/message/message.model';
 import AppError from './app/errors/AppError';
 import getUserDetailsFromToken from './app/helpers/getUserDetailsFromToken';
 import callbackFn from './app/utils/callbackFn';
-import config from './app/config';
 import { NotificationServices } from './app/modules/notification/notification.service';
 import { ModeType } from './app/modules/notification/notification.interface';
 

@@ -254,6 +254,22 @@ const getAllTeamMemberFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+const getTeamMembersByVendorFromDB = async (query: Record<string, unknown>) => {
+  const { vendor } = query;
+
+  if (!vendor || !mongoose.Types.ObjectId.isValid(vendor as string)) {
+    throw new AppError(400, 'Invalid vendor ID');
+  }
+
+  const result = await TeamMember.find({
+    vendor,
+    role: 'team_member',
+    isDeleted: false,
+  });
+
+  return result;
+};
+
 const getTeamMemberByIdFromDB = async (id: string) => {
   const result = await TeamMember.findById(id).populate('vendor');
 
@@ -336,6 +352,7 @@ const deleteTeamMemberFromDB = async (id: string) => {
 export const TeamMemberServices = {
   createTeamMemberIntoDB,
   getAllTeamMemberFromDB,
+  getTeamMembersByVendorFromDB,
   getTeamMemberByIdFromDB,
   updateTeamMemberIntoDB,
   deleteTeamMemberFromDB,

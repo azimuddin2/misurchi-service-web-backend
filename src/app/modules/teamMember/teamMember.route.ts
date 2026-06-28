@@ -24,6 +24,8 @@ router.get(
   TeamMemberControllers.getAllTeamMember,
 );
 
+router.get('/by-vendor', TeamMemberControllers.getTeamMembersByVendor);
+
 router.get(
   '/:id',
   auth('vendor', 'team_member', 'admin'),

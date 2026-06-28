@@ -57,8 +57,8 @@ const registerUserValidationSchema = z.object({
       image: z.string().optional(),
       location: z
         .object({
-          type: z.string(),
-          coordinates: z.array(z.number()),
+          type: z.string().optional(),
+          coordinates: z.array(z.number()).optional(),
           streetAddress: z.string().optional(),
         })
         .optional(),
@@ -119,13 +119,6 @@ const updateUserValidationSchema = z.object({
       .optional(),
 
     image: z.string().optional(),
-    location: z
-      .object({
-        type: z.string(),
-        coordinates: z.array(z.number()),
-        streetAddress: z.string().optional(),
-      })
-      .optional(),
 
     status: z
       .enum([...UserStatus] as [string, ...string[]])

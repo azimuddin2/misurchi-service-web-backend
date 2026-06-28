@@ -30,6 +30,19 @@ const getAllTeamMember = catchAsync(async (req, res) => {
   });
 });
 
+const getTeamMembersByVendor = catchAsync(async (req, res) => {
+  const result = await TeamMemberServices.getTeamMembersByVendorFromDB(
+    req.query,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Team member retrieved successfully',
+    data: result,
+  });
+});
+
 const getTeamMemberById = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await TeamMemberServices.getTeamMemberByIdFromDB(id);
@@ -73,6 +86,7 @@ const deleteTeamMember = catchAsync(async (req, res) => {
 export const TeamMemberControllers = {
   createTeamMember,
   getAllTeamMember,
+  getTeamMembersByVendor,
   getTeamMemberById,
   updateTeamMember,
   deleteTeamMember,

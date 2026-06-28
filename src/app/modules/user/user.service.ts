@@ -385,6 +385,7 @@ const updateUserProfileIntoDB = async (
   profileFile?: Express.Multer.File,
   coverFile?: Express.Multer.File,
 ) => {
+  console.log(payload);
   // 🔍 Step 1: Check if user exists
   const existingUser = await User.findOne({ email }).select(
     '_id image coverImage',

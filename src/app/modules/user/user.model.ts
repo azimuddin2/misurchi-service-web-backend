@@ -141,7 +141,7 @@ const userSchema = new Schema<TUser, UserModel>(
       },
       coordinates: {
         type: [Number],
-        default: undefined,
+        default: null,
       },
       streetAddress: {
         type: String,
