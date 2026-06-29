@@ -1,5 +1,22 @@
 import z from 'zod';
 import { ChooseOffer } from './vendor.constant';
+import parsePhoneNumberFromString from 'libphonenumber-js';
+
+const phoneValidation = z
+  .string({
+    required_error: 'Phone number is required',
+  })
+  .transform((v) => v.replace(/\s+/g, ''))
+  .superRefine((value, ctx) => {
+    const phoneNumber = parsePhoneNumberFromString(value);
+
+    if (!phoneNumber || !phoneNumber.isValid()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid phone number',
+      });
+    }
+  });
 
 const vendorRegisterUserValidationSchema = z.object({
   body: z
@@ -101,13 +118,7 @@ const updateVendorUserValidationSchema = z.object({
       .email('Invalid email address')
       .optional(),
 
-    phone: z
-      .string({
-        required_error: 'Phone number is required',
-      })
-      .transform((v) => v.replace(/\s+/g, ''))
-      .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'))
-      .optional(),
+    phone: phoneValidation.optional(),
 
     country: z
       .string({

@@ -1,5 +1,22 @@
 import { z } from 'zod';
 import { UserRole, UserStatus } from './user.constant';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+
+const phoneValidation = z
+  .string({
+    required_error: 'Phone number is required',
+  })
+  .transform((v) => v.replace(/\s+/g, ''))
+  .superRefine((value, ctx) => {
+    const phoneNumber = parsePhoneNumberFromString(value);
+
+    if (!phoneNumber || !phoneNumber.isValid()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid phone number',
+      });
+    }
+  });
 
 const registerUserValidationSchema = z.object({
   body: z
@@ -105,13 +122,7 @@ const updateUserValidationSchema = z.object({
       .max(20, 'Last name cannot exceed 20 characters')
       .optional(),
 
-    phone: z
-      .string({
-        required_error: 'Phone number is required',
-      })
-      .transform((v) => v.replace(/\s+/g, ''))
-      .pipe(z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number'))
-      .optional(),
+    phone: phoneValidation.optional(),
 
     role: z
       .enum([...UserRole] as [string, ...string[]])
