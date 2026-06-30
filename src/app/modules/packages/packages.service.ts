@@ -13,6 +13,7 @@ import { generateServiceId, generateTimeSlots } from './packages.utils';
 import { Booking } from '../booking/booking.model';
 import { Vendor } from '../vendor/vendor.model';
 import { User } from '../user/user.model';
+import { TeamMember } from '../teamMember/teamMember.model';
 
 const createPackagesIntoDB = async (payload: TPackages, files: any) => {
   // Check vendor existence
@@ -450,61 +451,73 @@ const updatePackagesHighlightStatusIntoDB = async (
 const getAvailabilityFromDB = async (
   query: Record<string, unknown>,
 ): Promise<TServiceSlots[]> => {
-  // 1️⃣ Extract serviceId and date from query
   const { serviceId, date } = query as { serviceId: string; date: string };
   if (!serviceId || !date) throw new AppError(400, 'Missing serviceId or date');
 
-  // 2️⃣ Fetch the service from DB by serviceId
   const service = await Packages.findOne({ serviceId }).lean();
   if (!service) throw new AppError(404, 'Service not found');
 
-  // 3️⃣ Determine day of the week for the given date (e.g., "monday")
   const selectedDate = new Date(date);
   const dayOfWeek = selectedDate
     .toLocaleDateString('en-US', { weekday: 'long' })
     .toLowerCase();
 
-  // 4️⃣ Get the weekly schedule for that day
   const weeklySchedule = service.availability?.weeklySchedule || {};
   const schedule = weeklySchedule[dayOfWeek as keyof typeof weeklySchedule];
 
-  // 5️⃣ If the service is not enabled on this day, return empty array
   if (!schedule?.enabled) return [];
+
+  const totalMembers = await TeamMember.countDocuments({
+    vendor: service.vendor,
+    isActive: true,
+    isDeleted: false,
+  });
+  const effectiveCapacity = totalMembers > 0 ? totalMembers : 1;
 
   const result: TServiceSlots[] = [];
 
-  // 6️⃣ Loop through each saved service (different durations/prices)
   for (const savedService of service.savedServices) {
-    // 6a️⃣ Convert duration to minutes
     let slotDuration = 60;
     if (savedService.duration.includes('hr'))
       slotDuration = parseFloat(savedService.duration) * 60;
     else if (savedService.duration.includes('min'))
       slotDuration = parseInt(savedService.duration, 10);
 
-    // 6b️⃣ Generate all possible slots for the day based on start/end times and duration
     const slots = generateTimeSlots(
       schedule.startTime,
       schedule.endTime,
       slotDuration,
     );
 
-    // 6c️⃣ Fetch all bookings for this serviceItemId on the selected date
-    const bookedTimesAgg = await Booking.aggregate([
-      { $match: { serviceId, date, serviceItemId: savedService.id } },
-      { $project: { time: 1, _id: 0 } },
+    const bookedCountAgg = await Booking.aggregate([
+      {
+        $match: {
+          serviceId,
+          date,
+          serviceItemId: savedService.id,
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: '$time',
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
-    // 6d️⃣ Create a Set of booked slot times for quick lookup
-    const bookedTimesSet = new Set(bookedTimesAgg.map((b: any) => b.time));
+    const bookedCountMap = new Map<string, number>(
+      bookedCountAgg.map((b: any) => [b._id, b.count]),
+    );
 
-    // 6e️⃣ Mark slots as 'booked' or 'available'
-    const slotsWithStatus: TSlot[] = slots.map((slot) => ({
-      ...slot,
-      status: bookedTimesSet.has(slot.time) ? 'booked' : 'available',
-    }));
+    const slotsWithStatus: TSlot[] = slots.map((slot) => {
+      const bookedCount = bookedCountMap.get(slot.time) || 0;
+      return {
+        ...slot,
+        status: bookedCount >= effectiveCapacity ? 'booked' : 'available',
+      };
+    });
 
-    // 6f️⃣ Push the processed service with slots into result
     result.push({
       serviceItemId: savedService.id,
       name: service.name,
@@ -514,7 +527,6 @@ const getAvailabilityFromDB = async (
     });
   }
 
-  // 7️⃣ Return all services with their slots and statuses
   return result;
 };
 

@@ -129,6 +129,25 @@ const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAvailableTeamMembers = catchAsync(
+  async (req: Request, res: Response) => {
+    const { vendorId, date, time } = req.query;
+
+    const result = await BookingServices.getAvailableTeamMembersFromDB(
+      vendorId as string,
+      date as string,
+      time as string,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Available team members retrieved successfully',
+      data: result,
+    });
+  },
+);
+
 export const BookingControllers = {
   createBooking,
   getAllBookingByVendor,
@@ -139,4 +158,5 @@ export const BookingControllers = {
   bookingApprovedRequest,
   bookingAssignedToMember,
   updateBookingStatus,
+  getAvailableTeamMembers,
 };

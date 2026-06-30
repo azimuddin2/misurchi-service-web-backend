@@ -8,6 +8,26 @@ export const generateBookingId = (): string => {
   return `#BKG-${randomNumber}`;
 };
 
+export const parseTimeToMinutes = (str: string) => {
+  const [time, modifier] = str.trim().split(' ');
+  const [h, m] = time.split(':').map(Number);
+  let hours = h + (modifier === 'PM' && h !== 12 ? 12 : 0);
+  if (modifier === 'AM' && h === 12) hours = 0;
+  return hours * 60 + (m || 0);
+};
+
+export const isTimeOverlapping = (timeA: string, timeB: string) => {
+  const [aStartStr, aEndStr] = timeA.split(' - ');
+  const [bStartStr, bEndStr] = timeB.split(' - ');
+
+  const aStart = parseTimeToMinutes(aStartStr);
+  const aEnd = parseTimeToMinutes(aEndStr);
+  const bStart = parseTimeToMinutes(bStartStr);
+  const bEnd = parseTimeToMinutes(bEndStr);
+
+  return aStart < bEnd && aEnd > bStart;
+};
+
 export const validateTeamMemberForBooking = async (
   vendorId: Types.ObjectId | string,
   memberId: string,
@@ -61,14 +81,16 @@ export const validateTeamMemberForBooking = async (
   return teamMember;
 };
 
-export const getAvailableTeamMembersForSlotFromDB = async (
+export const getAvailableTeamMembersForSlot = async (
   vendorId: string,
   date: string,
   time: string,
 ) => {
   const allMembers = await TeamMember.find({
     vendor: vendorId,
-    status: 'active',
+    role: 'team_member',
+    isActive: true,
+    isDeleted: false,
   }).lean();
 
   if (!allMembers.length) return [];

@@ -19,6 +19,8 @@ router.get(
   BookingControllers.getBookingAppointments,
 );
 
+router.get('/available-members', BookingControllers.getAvailableTeamMembers);
+
 router.get(
   '/',
   auth('vendor', 'team_member'),

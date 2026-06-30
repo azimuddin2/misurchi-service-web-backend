@@ -127,10 +127,15 @@ const bookingSchema = new Schema<TBooking>(
   { timestamps: true },
 );
 
-// ✅ Enforce one-slot-one-booking
 bookingSchema.index(
-  { service: 1, serviceName: 1, date: 1, time: 1 },
-  { unique: true, partialFilterExpression: { isDeleted: false } },
+  { service: 1, serviceItemId: 1, date: 1, time: 1, assignedToMember: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: false,
+      assignedToMember: { $type: 'objectId' },
+    },
+  },
 );
 
 export const Booking = model<TBooking>('Booking', bookingSchema);

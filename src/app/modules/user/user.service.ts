@@ -46,7 +46,6 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
   // 5. Create user in DB
   const result = await User.create(userData);
 
-  // ✅✅✅ এখানে add করো — Step 5 এর পরে ✅✅✅
   if (refCode) {
     const referrer = await Vendor.findOne({ referralCode: refCode });
     if (referrer) {
@@ -66,7 +65,6 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
       console.log('❌ No vendor found with referralCode:', refCode);
     }
   }
-  // ✅✅✅ এখানে শেষ ✅✅✅
 
   // 6. Create JWT token (optional for next step)
   const jwtPayload: TJwtPayload = {

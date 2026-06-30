@@ -8,7 +8,12 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { bookingSearchableFields } from './booking.constant';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
-import { generateBookingId } from './booking.utils';
+import {
+  generateBookingId,
+  isTimeOverlapping,
+  parseTimeToMinutes,
+  validateTeamMemberForBooking,
+} from './booking.utils';
 import { TeamMember } from '../teamMember/teamMember.model';
 import { sendEmail } from '../../utils/sendEmail';
 import {
@@ -23,7 +28,7 @@ import {
 const createBookingIntoDB = async (payload: TBooking) => {
   const { service, serviceItemId, date, time } = payload;
 
-  // Assign backend-specific booking id
+  // 0. Assign backend-specific booking id
   payload.bookingId = generateBookingId();
 
   // 1️⃣ Validate service ObjectId
@@ -32,14 +37,6 @@ const createBookingIntoDB = async (payload: TBooking) => {
 
   // 2️⃣ Past date & time validation
   const [slotStartStr, slotEndStr] = time.split(' - ');
-
-  const parseTimeToMinutes = (str: string) => {
-    const [t, modifier] = str.split(' ');
-    const [h, m] = t.split(':').map(Number);
-    let hours = h + (modifier === 'PM' && h !== 12 ? 12 : 0);
-    if (modifier === 'AM' && h === 12) hours = 0;
-    return hours * 60 + (m || 0);
-  };
 
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -89,16 +86,72 @@ const createBookingIntoDB = async (payload: TBooking) => {
     throw new AppError(400, 'Selected time is outside service working hours');
   }
 
-  // 6️⃣ Check if slot is already booked
-  const existingBooking = await Booking.findOne({
+  const userExistingBookings = await Booking.find({
+    user: payload.user,
+    date,
+    status: { $ne: 'cancelled' },
+  }).lean();
+
+  const conflictingBooking = userExistingBookings.find((b) =>
+    isTimeOverlapping(b.time, time),
+  );
+
+  if (conflictingBooking) {
+    throw new AppError(
+      409,
+      `Just a heads up — you already have "${conflictingBooking.serviceName}" booked at this time (${conflictingBooking.time}). Please pick a different slot.`,
+    );
+  }
+
+  // 6️⃣ Check slot availability based on resource capacity (overlap-aware)
+  const totalMembers = await TeamMember.countDocuments({
+    vendor: serviceData.vendor,
+    role: 'team_member',
+    isActive: true,
+    isDeleted: false,
+  });
+
+  const effectiveCapacity = totalMembers > 0 ? totalMembers : 1;
+
+  const allBookingsOnDate = await Booking.find({
     service,
     serviceItemId,
     date,
-    slotTime: time,
+    status: { $ne: 'cancelled' },
   }).lean();
 
-  if (existingBooking) {
-    throw new AppError(409, 'This time slot is already booked');
+  if (payload.assignedToMember) {
+    const memberConflict = allBookingsOnDate.some(
+      (b) =>
+        b.assignedToMember?.toString() ===
+          payload.assignedToMember?.toString() &&
+        isTimeOverlapping(b.time, time),
+    );
+
+    if (memberConflict) {
+      throw new AppError(
+        409,
+        'This team member is already booked for this time slot',
+      );
+    }
+  } else {
+    const overlappingCount = allBookingsOnDate.filter((b) =>
+      isTimeOverlapping(b.time, time),
+    ).length;
+
+    if (overlappingCount >= effectiveCapacity) {
+      throw new AppError(409, 'This time slot is fully booked');
+    }
+  }
+
+  // 7️⃣ Validate assigned team member (ownership, active status, double-check)
+  if (payload.assignedToMember) {
+    await validateTeamMemberForBooking(
+      serviceData.vendor as string,
+      payload.assignedToMember.toString(),
+      date,
+      time,
+    );
   }
 
   // 7️⃣ Create booking
@@ -718,6 +771,41 @@ const updateBookingStatusIntoDB = async (
   return result;
 };
 
+const getAvailableTeamMembersFromDB = async (
+  vendorId: string,
+  date: string,
+  time: string,
+) => {
+  const allMembers = await TeamMember.find({
+    vendor: vendorId,
+    role: 'team_member',
+    isActive: true,
+    isDeleted: false,
+  }).lean();
+
+  if (!allMembers.length) return [];
+
+  const allBookingsOnDate = await Booking.find({
+    vendor: vendorId,
+    date,
+    status: { $ne: 'cancelled' },
+    assignedToMember: { $ne: null },
+  })
+    .select('assignedToMember time')
+    .lean();
+
+  const busyIds = new Set(
+    allBookingsOnDate
+      .filter((b) => isTimeOverlapping(b.time, time))
+      .map((b) => b.assignedToMember?.toString()),
+  );
+
+  return allMembers.map((m) => ({
+    ...m,
+    isBooked: busyIds.has(m._id.toString()),
+  }));
+};
+
 export const BookingServices = {
   createBookingIntoDB,
   getBookingsByEmailFromDB,
@@ -728,4 +816,5 @@ export const BookingServices = {
   bookingApprovedRequestIntoDB,
   bookingAssignedToMemberIntoDB,
   updateBookingStatusIntoDB,
+  getAvailableTeamMembersFromDB,
 };
