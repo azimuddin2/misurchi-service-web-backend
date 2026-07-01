@@ -264,7 +264,7 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
     })
     .populate({
       path: 'assignedToMember',
-      select: 'firstName lastName email phone role',
+      select: 'firstName lastName email phone image speciality',
     });
 
   return bookings;
@@ -290,8 +290,12 @@ const getBookingsByEmailFromDB = async (email: string) => {
       path: 'service',
       select: 'name images price serviceId',
     })
-    .sort({ createdAt: -1 }) // latest first
-    .select('-__v -isDeleted'); // exclude unwanted fields
+    .populate({
+      path: 'assignedToMember',
+      select: 'firstName lastName email phone speciality image',
+    })
+    .sort({ createdAt: -1 })
+    .select('-__v -isDeleted');
 
   return bookings;
 };
