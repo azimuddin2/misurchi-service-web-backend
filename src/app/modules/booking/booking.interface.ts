@@ -61,3 +61,13 @@ export type TBooking = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type TBookingAssigned = {
+  serviceName: string;
+  date: string;
+  time: string;
+  status: string;
+  name: string;
+  email: string;
+  phone: string;
+};

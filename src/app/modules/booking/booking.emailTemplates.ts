@@ -1,3 +1,5 @@
+import { TBookingAssigned } from './booking.interface';
+
 export const bookingConfirmedTemplate = (
   booking: any,
   serviceName: string,
@@ -441,6 +443,177 @@ export const bookingCancelledTemplate = (booking: any, year: number) => `
               <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.6;">
                 &copy; ${year} <strong style="color:#DC2626;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+export const memberAssignedTemplate = (
+  memberName: string,
+  booking: TBookingAssigned,
+  bookingDate: string,
+  year: number,
+): string => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Booking Assigned</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0AA84C 0%,#087a38 100%);padding:36px 40px;text-align:center;">
+              <p style="margin:0 0 8px;color:rgba(255,255,255,0.85);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">SMEVine</p>
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;line-height:1.3;">New Booking Assigned</h1>
+              <p style="margin:10px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">You have a new appointment to manage</p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:36px 40px 0;">
+              <p style="margin:0;font-size:16px;color:#1a1a1a;line-height:1.6;">Hi <strong>${memberName}</strong>,</p>
+              <p style="margin:12px 0 0;font-size:15px;color:#555555;line-height:1.7;">
+                A new booking has been assigned to you. Please review the details below and make sure everything is prepared before the appointment.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Booking Details -->
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#f8fdf9;border:1px solid #d4edda;border-radius:12px;overflow:hidden;">
+
+                <tr>
+                  <td colspan="2" style="background:#e8f7ee;padding:14px 20px;border-bottom:1px solid #d4edda;">
+                    <p style="margin:0;font-size:13px;font-weight:700;color:#0AA84C;letter-spacing:1px;text-transform:uppercase;">📅 Booking Details</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;width:40%;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Service</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">${booking.serviceName}</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Date</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">${bookingDate}</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Time</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">${booking.time}</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Status</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <span style="display:inline-block;padding:3px 12px;background:#fff3cd;color:#856404;border-radius:20px;font-size:12px;font-weight:600;text-transform:capitalize;border:1px solid #ffc107;">
+                      ${booking.status}
+                    </span>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td colspan="2" style="background:#e8f7ee;padding:14px 20px;border-top:1px solid #d4edda;border-bottom:1px solid #d4edda;">
+                    <p style="margin:0;font-size:13px;font-weight:700;color:#0AA84C;letter-spacing:1px;text-transform:uppercase;">👤 Customer Information</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Name</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">${booking.name}</p>
+                  </td>
+                </tr>
+
+                <tr style="border-bottom:1px solid #e8f0eb;">
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Email</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <a href="mailto:${booking.email}" style="font-size:14px;color:#0AA84C;text-decoration:none;font-weight:500;">${booking.email}</a>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <p style="margin:0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Phone</p>
+                  </td>
+                  <td style="padding:14px 20px;vertical-align:top;">
+                    <a href="tel:${booking.phone}" style="font-size:14px;color:#0AA84C;text-decoration:none;font-weight:500;">${booking.phone}</a>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA Note -->
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:0;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+                      ⚠️ <strong>Action Required:</strong> Please log in to your dashboard to confirm your availability and review the full booking details before the appointment date.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Closing -->
+          <tr>
+            <td style="padding:28px 40px 36px;">
+              <p style="margin:0;font-size:15px;color:#555;line-height:1.7;">
+                If you have any questions or concerns about this booking, please contact your manager or reply to this email.
+              </p>
+              <p style="margin:20px 0 0;font-size:15px;color:#1a1a1a;">
+                Best regards,<br/>
+                <strong style="color:#0AA84C;">SMEVine Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f8f8;padding:20px 40px;text-align:center;border-top:1px solid #eeeeee;">
+              <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.6;">
+                © ${year} SMEVine. All rights reserved.<br/>
+                This email was sent because a booking was assigned to you.
               </p>
             </td>
           </tr>
