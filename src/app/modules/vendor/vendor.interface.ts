@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { TCurrencyCode } from '../../constant/currency';
 
 export type TChooseOffer = 'services' | 'products' | 'both';
 
@@ -11,7 +12,7 @@ export type TVendor = {
   street: string;
   state: string;
   zipCode: string;
-  currency: string;
+  currency: TCurrencyCode;
   timeZone: string;
   workHours: string;
   image?: string | null;

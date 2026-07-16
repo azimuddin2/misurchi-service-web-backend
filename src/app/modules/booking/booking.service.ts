@@ -271,6 +271,48 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
   return bookings;
 };
 
+const getBookingsByAssignedMember = async (query: Record<string, unknown>) => {
+  const { userId, date, ...filters } = query;
+
+  const teamMember = await TeamMember.findOne({ user: userId });
+  const assignedToMember = teamMember?._id;
+
+  if (
+    !assignedToMember ||
+    !mongoose.Types.ObjectId.isValid(assignedToMember as string)
+  ) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  // Base query
+  const bookingQuery: any = { assignedToMember, isDeleted: false };
+
+  // Filter by date if provided
+  if (date) {
+    bookingQuery.date = date;
+  }
+
+  // Apply other dynamic filters
+  Object.assign(bookingQuery, filters);
+
+  // Fetch bookings
+  const bookings = await Booking.find(bookingQuery)
+    .populate({
+      path: 'vendor',
+      select: 'businessName email phone',
+    })
+    .populate({
+      path: 'service',
+      select: 'name images price serviceId',
+    })
+    .populate({
+      path: 'assignedToMember',
+      select: 'firstName lastName email phone image speciality',
+    });
+
+  return bookings;
+};
+
 const getBookingsByEmailFromDB = async (email: string) => {
   // ✅ Validate email
   if (!email) {
@@ -613,6 +655,7 @@ export const BookingServices = {
   updateBookingRequestIntoDB,
   getAllBookingByVendorFromDB,
   getBookingAppointmentsFromDB,
+  getBookingsByAssignedMember,
   bookingApprovedRequestIntoDB,
   bookingAssignedToMemberIntoDB,
   updateBookingStatusIntoDB,

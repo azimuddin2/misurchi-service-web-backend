@@ -15,6 +15,7 @@ export type TPermission =
   | 'shared_calendar'
   | 'assign_tasks'
   | 'team_members'
+  | 'my_workspace'
   | 'settings';
 
 export type TTeamMember = {

@@ -18,6 +18,7 @@ export const AllPermissions: TPermission[] = [
   'shared_calendar',
   'assign_tasks',
   'team_members',
+  'my_workspace',
   'settings',
 ];
 
@@ -28,6 +29,7 @@ export const TeamMemberPermission: Record<TTeamMemberRole, TPermission[]> = {
     'activity_center',
     'filter_transactions',
     'respond_to_messages',
+    'my_workspace',
     'assign_tasks',
     'settings',
   ],

@@ -4,6 +4,7 @@ import config from '../../config';
 import bcrypt from 'bcrypt';
 import { ChooseOffer } from './vendor.constant';
 import crypto from 'crypto';
+import { currencyCodes } from '../../constant/currency';
 
 const vendorSchema = new Schema<TVendor>(
   {
@@ -52,6 +53,10 @@ const vendorSchema = new Schema<TVendor>(
     currency: {
       type: String,
       required: [true, 'Currency is required'],
+      enum: {
+        values: currencyCodes,
+        message: '{VALUE} is not a supported currency',
+      },
     },
     timeZone: {
       type: String,

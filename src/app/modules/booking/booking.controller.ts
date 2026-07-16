@@ -43,6 +43,19 @@ const getBookingAppointments = catchAsync(
   },
 );
 
+const getBookingsByAssignedMember = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await BookingServices.getBookingsByAssignedMember(req.query);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Bookings retrieved successfully',
+      data: result,
+    });
+  },
+);
+
 const getBookingsByEmail = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.query;
   const result = await BookingServices.getBookingsByEmailFromDB(
@@ -152,6 +165,7 @@ export const BookingControllers = {
   createBooking,
   getAllBookingByVendor,
   getBookingAppointments,
+  getBookingsByAssignedMember,
   getBookingsByEmail,
   getBookingById,
   updateBookingRequest,
