@@ -37,4 +37,6 @@ router.post(
   AuthControllers.handleResetPassword,
 );
 
+router.post('/google-login', AuthControllers.handleGoogleLogin);
+
 export const AuthRoutes = router;

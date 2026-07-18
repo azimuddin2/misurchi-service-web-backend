@@ -50,6 +50,8 @@ export type TUser = {
 
   vendorId?: Types.ObjectId;
 
+  loginWith: 'google' | 'apple' | 'credentials';
+
   isDeleted: boolean;
 };
 

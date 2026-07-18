@@ -74,10 +74,24 @@ const handleResetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const handleGoogleLogin = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.googleLogin(req.body);
+
+  const { user, accessToken, refreshToken } = result;
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User logged in with Google successfully!',
+    data: { user, accessToken, refreshToken },
+  });
+});
+
 export const AuthControllers = {
   handleLoginUser,
   handleRefreshToken,
   handleChangePassword,
   handleForgotPassword,
   handleResetPassword,
+  handleGoogleLogin,
 };

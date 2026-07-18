@@ -16,6 +16,12 @@ export const UserStatus: TStatus[] = [
   'deactivated',
 ];
 
+export enum Login_With {
+  google = 'google',
+  apple = 'apple',
+  credentials = 'credentials',
+}
+
 export const Subscribed: TSubscribed[] = ['advance', 'basic'];
 
 export const userSearchableFields = [

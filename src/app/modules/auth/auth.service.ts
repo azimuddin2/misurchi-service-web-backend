@@ -11,12 +11,14 @@ import { verifyToken } from '../../utils/verifyToken';
 import { createToken } from './auth.utils';
 import { JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import httpStatus from 'http-status';
 import { generateOtp } from '../../utils/generateOtp';
 import moment from 'moment';
 import { sendEmail } from '../../utils/sendEmail';
 import { Vendor } from '../vendor/vendor.model';
 import { TeamMember } from '../teamMember/teamMember.model';
 import { TTeamMemberRole } from '../teamMember/teamMember.interface';
+import { Login_With, USER_ROLE } from '../user/user.constant';
 
 const loginUser = async (payload: TLoginUser) => {
   const user = await User.findOne({ email: payload.email });
@@ -441,10 +443,88 @@ const resetPassword = async (token: string, payload: TResetPassword) => {
   return result;
 };
 
+const googleLogin = async (payload: {
+  email: string;
+  fullName: string;
+  picture?: string;
+}) => {
+  if (!payload?.email || !payload?.fullName) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Email and name are required');
+  }
+
+  /* __________________ CHECK USER EXISTS __________________ */
+  const existingUser = await User.isUserExistsByEmail(payload.email);
+
+  /* __________________ EXISTING USER LOGIN __________________ */
+  if (existingUser) {
+    if (existingUser.isDeleted) {
+      throw new AppError(httpStatus.FORBIDDEN, 'User account is deleted');
+    }
+    if (existingUser.status === 'blocked') {
+      throw new AppError(httpStatus.FORBIDDEN, 'User is blocked');
+    }
+
+    /* __________________ CREATE JWT __________________ */
+    const jwtPayload: TJwtPayload = {
+      userId: existingUser._id.toString(),
+      name: existingUser.fullName,
+      email: existingUser.email,
+      role: existingUser.role,
+    };
+
+    const accessToken = createToken(
+      jwtPayload,
+      config.jwt_access_secret!,
+      config.jwt_access_expires_in!,
+    );
+    const refreshToken = createToken(
+      jwtPayload,
+      config.jwt_refresh_secret!,
+      config.jwt_refresh_expires_in!,
+    );
+
+    return { user: existingUser, accessToken, refreshToken };
+  }
+
+  /* __________________ NEW USER CREATE __________________ */
+  const newUser = await User.create({
+    fullName: payload.fullName,
+    email: payload.email,
+    phone: null,
+    role: USER_ROLE.user,
+    loginWith: Login_With.google,
+    isVerified: true,
+    verification: { status: true },
+    image: payload?.picture || null,
+  });
+
+  /* __________________ CREATE JWT FOR NEW USER __________________ */
+  const jwtPayload: TJwtPayload = {
+    userId: newUser._id.toString(),
+    name: newUser.fullName,
+    email: newUser.email,
+    role: newUser.role,
+  };
+
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret!,
+    config.jwt_access_expires_in!,
+  );
+  const refreshToken = createToken(
+    jwtPayload,
+    config.jwt_refresh_secret!,
+    config.jwt_refresh_expires_in!,
+  );
+
+  return { user: newUser, accessToken, refreshToken };
+};
+
 export const AuthServices = {
   loginUser,
   refreshToken,
   changePassword,
   forgotPassword,
   resetPassword,
+  googleLogin,
 };

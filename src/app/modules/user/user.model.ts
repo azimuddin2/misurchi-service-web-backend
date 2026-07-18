@@ -2,7 +2,7 @@ import { model, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { TUser, UserModel } from './user.interface';
 import config from '../../config';
-import { Subscribed, UserRole, UserStatus } from './user.constant';
+import { Login_With, Subscribed, UserRole, UserStatus } from './user.constant';
 
 const userSchema = new Schema<TUser, UserModel>(
   {
@@ -163,6 +163,11 @@ const userSchema = new Schema<TUser, UserModel>(
       type: Schema.Types.ObjectId,
       ref: 'Vendor',
       default: null,
+    },
+    loginWith: {
+      type: String,
+      enum: Login_With,
+      default: Login_With.credentials,
     },
     isDeleted: {
       type: Boolean,
