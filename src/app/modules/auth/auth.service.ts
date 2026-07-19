@@ -464,12 +464,54 @@ const googleLogin = async (payload: {
       throw new AppError(httpStatus.FORBIDDEN, 'User is blocked');
     }
 
+    let vendorId: string | undefined = undefined;
+    let vendorEmail: string | undefined = undefined;
+    let permissions: string[] = [];
+    let teamRole: TTeamMemberRole | undefined = undefined;
+
+    // ✅ If you are a vendor, attach vendor Id/vendor Email.
+    if (existingUser.role === 'vendor') {
+      const vendor = await Vendor.findOne({ userId: existingUser._id }).select(
+        '_id email',
+      );
+      vendorId = vendor?._id.toString();
+      vendorEmail = vendor?.email;
+    }
+
+    // ✅ If team_member, attach permissions/team Role
+    if (existingUser.role === 'team_member') {
+      const teamMember = await TeamMember.findOne({
+        user: existingUser._id,
+        isActive: true,
+        isDeleted: false,
+      })
+        .select('permissions vendor role')
+        .populate('vendor', 'email');
+
+      if (!teamMember) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          'Your team member access is inactive. Please contact your vendor.',
+        );
+      }
+
+      vendorId = (teamMember?.vendor as any)?._id.toString();
+      vendorEmail = (teamMember?.vendor as any)?.email;
+      permissions = teamMember?.permissions ?? [];
+      teamRole = teamMember?.role;
+    }
+
     /* __________________ CREATE JWT __________________ */
     const jwtPayload: TJwtPayload = {
       userId: existingUser._id.toString(),
       name: existingUser.fullName,
       email: existingUser.email,
       role: existingUser.role,
+      image: existingUser.image,
+      vendorId,
+      vendorEmail,
+      permissions,
+      teamRole,
     };
 
     const accessToken = createToken(
@@ -486,7 +528,7 @@ const googleLogin = async (payload: {
     return { user: existingUser, accessToken, refreshToken };
   }
 
-  /* __________________ NEW USER CREATE __________________ */
+  /* __________________ NEW USER CREATE (Just the normal 'user' role) __________________ */
   const newUser = await User.create({
     fullName: payload.fullName,
     email: payload.email,
@@ -504,6 +546,7 @@ const googleLogin = async (payload: {
     name: newUser.fullName,
     email: newUser.email,
     role: newUser.role,
+    image: newUser.image,
   };
 
   const accessToken = createToken(
