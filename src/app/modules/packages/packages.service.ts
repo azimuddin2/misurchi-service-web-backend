@@ -144,7 +144,7 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
 
     computedStages.push({
       $addFields: {
-        // ✅ finalPrice use করো, actual price already calculated
+        // ✅ finalPrice use, actual price already calculated
         _price: { $toDouble: '$_firstService.finalPrice' },
         _discount: {
           $cond: {

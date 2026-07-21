@@ -161,16 +161,16 @@ const createBookingIntoDB = async (payload: TBooking) => {
   // 8️⃣ Send personal notifications
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.user,
-    message: '🎉 Booking Confirmed!',
-    description: `Your booking for "${serviceData.name}" is all set for ${date} at ${time}. We look forward to serving you!`,
+    message: '🕓 Booking Received — Payment Pending',
+    description: `Your booking for "${serviceData.name}" on ${date} at ${time} has been received and your slot is reserved. Please complete payment soon to confirm it.`,
     reference: booking._id,
     model_type: ModeType.Booking,
   });
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking.vendor,
-    message: "📅 You've Got a New Booking!",
-    description: `Great news! A new booking for "${serviceData.name}" has been made for ${date} at ${time}. Please be ready to provide your best service.`,
+    message: '📅 New Booking Request — Awaiting Payment',
+    description: `A new booking request for "${serviceData.name}" has been made for ${date} at ${time}. It will remain pending until the customer completes payment.`,
     reference: booking._id,
     model_type: ModeType.Booking,
   });
@@ -186,7 +186,7 @@ const createBookingIntoDB = async (payload: TBooking) => {
 
   await sendEmail(
     booking.email,
-    `🎉 Booking Confirmed — ${serviceData.name}`,
+    `📋 Booking Received — ${serviceData.name} (Payment Required)`,
     bookingConfirmedTemplate(
       booking,
       serviceData.name,
