@@ -1,5 +1,7 @@
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
+import AppError from '../../errors/AppError';
+import { TeamMember } from '../teamMember/teamMember.model';
 import { TaskServices } from './task.service';
 
 const createTask = catchAsync(async (req, res) => {
@@ -67,12 +69,27 @@ const updateTask = catchAsync(async (req, res) => {
 const updateTaskStatus = catchAsync(async (req, res) => {
   const { id } = req.params;
 
+  const loggedInTeamMember = await TeamMember.findOne({
+    user: req.user.userId,
+    isDeleted: false,
+  });
+
+  if (!loggedInTeamMember) {
+    throw new AppError(404, 'Team member not found for logged in user');
+  }
+
   const payload = {
     status: req.body.status,
     note: req.body.note,
+    blockedInfo: req.body.blockedInfo,
+    reviewers: req.body.reviewers,
   };
 
-  const result = await TaskServices.updateTaskStatusIntoDB(id, payload);
+  const result = await TaskServices.updateTaskStatusIntoDB(
+    id,
+    loggedInTeamMember._id.toString(),
+    payload,
+  );
 
   sendResponse(res, {
     statusCode: 200,

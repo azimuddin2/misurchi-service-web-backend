@@ -12,7 +12,15 @@ export type TStatus =
 export type TNote = {
   text: string;
   status: TStatus;
+  author: Types.ObjectId | TTeamMember;
   createdAt: Date;
+};
+
+export type TBlockedInfo = {
+  reason: string;
+  resolver: Types.ObjectId | TTeamMember;
+  taggedAt: Date;
+  resolvedAt?: Date;
 };
 
 export type TTask = {
@@ -22,7 +30,10 @@ export type TTask = {
   description: string;
   date: string;
   time: string;
+  assignor: Types.ObjectId | TTeamMember;
   assignTeamMember: Types.ObjectId | TTeamMember;
+  reviewers?: (Types.ObjectId | TTeamMember)[];
+  blockedInfo?: TBlockedInfo;
   status: TStatus;
   notes?: TNote[];
   isDeleted: boolean;

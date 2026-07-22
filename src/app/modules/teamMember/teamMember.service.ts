@@ -263,7 +263,7 @@ const getTeamMembersByVendorFromDB = async (query: Record<string, unknown>) => {
 
   const result = await TeamMember.find({
     vendor,
-    role: 'team_member',
+    // role: 'team_member',
     isDeleted: false,
   });
 

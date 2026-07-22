@@ -25,10 +25,36 @@ const taskSchema = new Schema<TTask>(
       type: String,
       required: true,
     },
+    assignor: {
+      type: Schema.Types.ObjectId,
+      required: [true, 'Assignor is required'],
+      ref: 'TeamMember',
+    },
     assignTeamMember: {
       type: Schema.Types.ObjectId,
       required: [true, 'Team member is required'],
       ref: 'TeamMember',
+    },
+    reviewers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'TeamMember',
+      },
+    ],
+    blockedInfo: {
+      reason: {
+        type: String,
+      },
+      resolver: {
+        type: Schema.Types.ObjectId,
+        ref: 'TeamMember',
+      },
+      taggedAt: {
+        type: Date,
+      },
+      resolvedAt: {
+        type: Date,
+      },
     },
     status: {
       type: String,
@@ -47,6 +73,10 @@ const taskSchema = new Schema<TTask>(
         status: {
           type: String,
           required: true,
+        },
+        author: {
+          type: Schema.Types.ObjectId,
+          ref: 'TeamMember',
         },
         createdAt: {
           type: Date,

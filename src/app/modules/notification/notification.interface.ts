@@ -8,6 +8,7 @@ export enum ModeType {
   SubscriptionPayment = 'SubscriptionPayment',
   ReferralRequest = 'ReferralRequest',
   Message = 'Message',
+  Task = 'Task',
 }
 
 export type TNotification = {
