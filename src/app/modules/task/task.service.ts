@@ -8,13 +8,53 @@ import { TeamMember } from '../teamMember/teamMember.model';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
 import { sendEmail } from '../../utils/sendEmail';
-import { taskBlockedTemplate, taskReviewTemplate } from './task.emailTemplate';
+import {
+  taskAssignedTemplate,
+  taskBlockedTemplate,
+  taskReviewTemplate,
+} from './task.emailTemplate';
 
 const createTaskIntoDB = async (payload: TTask) => {
   const result = await Task.create(payload);
   if (!result) {
     throw new AppError(400, 'Failed to create task');
   }
+
+  const assignedMember = await TeamMember.findById(payload.assignTeamMember);
+
+  if (assignedMember) {
+    let assignorName = 'Someone';
+    if (payload.assignor) {
+      const assignorMember = await TeamMember.findById(payload.assignor);
+      if (assignorMember) {
+        assignorName = `${assignorMember.firstName} ${assignorMember.lastName}`;
+      }
+    }
+
+    if (assignedMember.user) {
+      NotificationServices.insertNotificationIntoDB({
+        receiver: assignedMember.user,
+        message: `You've been assigned a new task: "${result.title}"`,
+        description: `Assigned by ${assignorName}`,
+        reference: result._id,
+        model_type: ModeType.Task,
+      }).catch((err) => console.error('Notification error:', err));
+    }
+
+    if (assignedMember.email) {
+      sendEmail(
+        assignedMember.email,
+        `📌 New Task Assigned — ${result.title}`,
+        taskAssignedTemplate(
+          result.title,
+          `${assignedMember.firstName} ${assignedMember.lastName}`,
+          assignorName,
+          new Date().getFullYear(),
+        ),
+      ).catch((err) => console.error('Email error:', err));
+    }
+  }
+
   return result;
 };
 

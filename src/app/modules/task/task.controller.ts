@@ -5,7 +5,19 @@ import { TeamMember } from '../teamMember/teamMember.model';
 import { TaskServices } from './task.service';
 
 const createTask = catchAsync(async (req, res) => {
-  const result = await TaskServices.createTaskIntoDB(req.body);
+  const loggedInTeamMember = await TeamMember.findOne({
+    user: req.user.userId,
+    isDeleted: false,
+  });
+
+  const payload = {
+    ...req.body,
+    assignor: loggedInTeamMember?._id || undefined,
+  };
+
+  console.log(req.body);
+
+  const result = await TaskServices.createTaskIntoDB(payload);
 
   sendResponse(res, {
     statusCode: 201,
