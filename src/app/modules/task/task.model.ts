@@ -28,6 +28,7 @@ const taskSchema = new Schema<TTask>(
     assignor: {
       type: Schema.Types.ObjectId,
       ref: 'TeamMember',
+      default: null,
     },
     assignTeamMember: {
       type: Schema.Types.ObjectId,

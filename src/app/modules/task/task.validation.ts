@@ -19,9 +19,7 @@ const createTaskValidationSchema = z.object({
       required_error: 'Time is required',
     }),
 
-    assignor: z
-      .string()
-      .optional(),
+    assignor: z.string().optional(),
 
     assignTeamMember: z.string({
       required_error: 'Team member is required',
