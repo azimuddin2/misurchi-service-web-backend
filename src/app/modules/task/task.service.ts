@@ -15,6 +15,9 @@ import {
 } from './task.emailTemplate';
 
 const createTaskIntoDB = async (payload: TTask) => {
+
+  console.log('Create Task',payload);
+
   const result = await Task.create(payload);
   if (!result) {
     throw new AppError(400, 'Failed to create task');
