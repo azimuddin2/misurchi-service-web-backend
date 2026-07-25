@@ -15,9 +15,11 @@ const createTask = catchAsync(async (req, res) => {
     assignor: loggedInTeamMember?._id || undefined,
   };
 
-  console.log(req.body);
+  console.log('BODY',payload);
 
   const result = await TaskServices.createTaskIntoDB(payload);
+
+  console.log('Result',result);
 
   sendResponse(res, {
     statusCode: 201,
