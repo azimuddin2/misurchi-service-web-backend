@@ -47,7 +47,7 @@ const emailReferralLink = async (
 
   const link =
     vendor.referralLink ||
-    `${config.client_Url}/signup/user?ref=${vendor.referralCode}`;
+    `${config.client_Url}/user-role?ref=${vendor.referralCode}`;
 
   await sendEmail(
     recipientEmail,

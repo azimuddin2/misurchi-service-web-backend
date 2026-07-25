@@ -27,7 +27,6 @@ const taskSchema = new Schema<TTask>(
     },
     assignor: {
       type: Schema.Types.ObjectId,
-      required: [true, 'Assignor is required'],
       ref: 'TeamMember',
     },
     assignTeamMember: {
