@@ -36,26 +36,16 @@ async function main() {
 main();
 
 process.on('unhandledRejection', (err) => {
-  console.error(chalk.red('😈 unhandledRejection detected, shutting down...'));
-  console.error(err);
-
-  if (err instanceof Error) {
-    console.error(err.stack);
-  }
-
+  console.log(chalk.red(`😈 unhandledRejection detected, shutting down...`));
   if (server) {
     server.close(() => {
       process.exit(1);
     });
-  } else {
-    process.exit(1);
   }
+  process.exit(1);
 });
 
 process.on('uncaughtException', (err) => {
-  console.error(chalk.red('😈 uncaughtException detected, shutting down...'));
-  console.error(err);
-  console.error(err.stack);
-
+  console.log(chalk.red(`😈 uncaughtException detected, shutting down...`));
   process.exit(1);
 });
