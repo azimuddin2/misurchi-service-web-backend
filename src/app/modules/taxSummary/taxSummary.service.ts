@@ -127,6 +127,8 @@ const getSubscriptionTaxSummaryFromDB = async (vendorId: string) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid Vendor ID');
   }
 
+  const now = new Date();
+
   const result = await SubPayment.aggregate([
     {
       $match: {
@@ -176,7 +178,45 @@ const getSubscriptionTaxSummaryFromDB = async (vendorId: string) => {
         paidAt: 1,
         startDate: '$subscriptionInfo.startedAt',
         expirationDate: '$subscriptionInfo.expiredAt',
-        planStatus: '$subscriptionInfo.status',
+        planStatus: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $and: [
+                    { $eq: ['$subscriptionInfo.status', 'active'] },
+                    { $gt: ['$subscriptionInfo.expiredAt', now] },
+                    { $eq: ['$subscriptionInfo.cancelAtPeriodEnd', true] },
+                  ],
+                },
+                then: 'canceling',
+              },
+              {
+                case: {
+                  $and: [
+                    { $eq: ['$subscriptionInfo.status', 'active'] },
+                    { $gt: ['$subscriptionInfo.expiredAt', now] },
+                  ],
+                },
+                then: 'active',
+              },
+              {
+                case: {
+                  $and: [
+                    { $lte: ['$subscriptionInfo.expiredAt', now] },
+                    { $eq: ['$subscriptionInfo.cancelAtPeriodEnd', true] },
+                  ],
+                },
+                then: 'canceled',
+              },
+              {
+                case: { $lte: ['$subscriptionInfo.expiredAt', now] },
+                then: 'expired',
+              },
+            ],
+            default: { $ifNull: ['$subscriptionInfo.status', 'pending'] },
+          },
+        },
         refundIssue: { $literal: 0 },
       },
     },

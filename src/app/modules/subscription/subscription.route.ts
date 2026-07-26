@@ -1,28 +1,36 @@
 import { Router } from 'express';
 import auth from '../../middlewares/auth';
-import { SubscriptionController } from './subscription.controller';
+import { SubscriptionControllers } from './subscription.controller';
 const router = Router();
 
 router.post(
   '/create-subscription',
   auth('vendor'),
-  SubscriptionController.createSubscription,
+  SubscriptionControllers.createSubscription,
 );
-// router.get(
-//   '/my-ongoing-subscription',
-//   auth('vendor'),
-//   subscriptionController.myOngoingSubscription,
-// );
-// router.put(
-//   '/update-subscription/:id',
-//   auth('vendor'),
-//   subscriptionController.updateSubscription,
-// );
 
-// router.delete(
-//   '/delete-subscription/:id',
-//   auth('vendor'),
-//   subscriptionController.cancelPayment,
-// );
+router.get(
+  '/vendor/active/:vendorId',
+  auth('vendor', 'team_member'),
+  SubscriptionControllers.getActiveSubscriptionByVendor,
+);
+
+router.get(
+  '/vendor/status/:vendorId',
+  auth('vendor', 'team_member'),
+  SubscriptionControllers.getVendorSubscriptionStatus,
+);
+
+router.patch(
+  '/cancel-subscription/:vendorId',
+  auth('vendor'),
+  SubscriptionControllers.cancelActiveSubscription,
+);
+
+router.patch(
+  '/resume-subscription/:vendorId',
+  auth('vendor'),
+  SubscriptionControllers.resumeSubscription,
+);
 
 export const SubscriptionRoutes = router;

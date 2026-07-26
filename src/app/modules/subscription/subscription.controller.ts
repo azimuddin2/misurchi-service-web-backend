@@ -51,30 +51,6 @@ const getMySubscription = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const getSubscriptionById = catchAsync(async (req: Request, res: Response) => {
-//   const result = await SubscriptionService.getSubscriptionById(req.params.id);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: 'Subscription fetched successfully',
-//     data: result,
-//   });
-// });
-
-// const getSubscriptionByUserId = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const result = await SubscriptionService.getSubscriptionByUserId(
-//       req.params.userId,
-//     );
-//     sendResponse(res, {
-//       statusCode: 200,
-//       success: true,
-//       message: 'Subscription fetched successfully',
-//       data: result,
-//     });
-//   },
-// );
-
 const updateSubscription = catchAsync(async (req: Request, res: Response) => {
   const result = await SubscriptionService.updateSubscriptionIntoDB(
     req.params.id,
@@ -95,49 +71,64 @@ const updateSubscription = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const deleteSubscription = catchAsync(async (req: Request, res: Response) => {
-//   const result = await SubscriptionService.deleteSubscription(req.params.id);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: 'Subscription deleted successfully',
-//     data: result,
-//   });
-// });
+const getActiveSubscriptionByVendor = catchAsync(async (req, res) => {
+  const { vendorId } = req.params;
+  const result =
+    await SubscriptionService.getActiveSubscriptionByVendorFromDB(vendorId);
 
-// const cancelSubscription = catchAsync(async (req, res) => {
-//   const { id } = req.params;
-//   const subscription = await SubscriptionService.findOne({ _id: id });
-//   // console.log('subscription', subscription);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Active subscription retrieved successfully',
+    data: result,
+  });
+});
 
-//   if (!subscription) {
-//     return res.status(404).json({ message: 'Subscription not found' });
-//   }
+const cancelActiveSubscription = catchAsync(async (req, res) => {
+  const { vendorId } = req.params;
+  const result =
+    await SubscriptionService.cancelActiveSubscriptionFromDB(vendorId);
 
-//   const subscriptionId = subscription.trnId;
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: result.message,
+    data: result.subscription,
+  });
+});
 
-//   // Cancel the subscription on Stripe
-//   const result = await stripeService.cancelStripeSubscription(subscriptionId);
-//   // console.log('result', result);
+const resumeSubscription = catchAsync(async (req, res) => {
+  const { vendorId } = req.params;
+  const result = await SubscriptionService.resumeSubscriptionFromDB(vendorId);
 
-//   // Update the subscription status in the database
-//   await Subscription.findOneAndUpdate(
-//     { _id: id },
-//     { isDeleted: true, isPaid: false, isExpired: true },
-//     { new: true },
-//   );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: result.message,
+    data: result.subscription,
+  });
+});
 
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: 'Subscription canceled successfully',
-//     data: result,
-//   });
-// });
+const getVendorSubscriptionStatus = catchAsync(async (req, res) => {
+  const { vendorId } = req.params;
+  const result =
+    await SubscriptionService.getVendorSubscriptionStatusFromDB(vendorId);
 
-export const SubscriptionController = {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Subscription status retrieved successfully',
+    data: result,
+  });
+});
+
+export const SubscriptionControllers = {
   createSubscription,
   getAllSubscription,
   updateSubscription,
   getMySubscription,
+  getActiveSubscriptionByVendor,
+  cancelActiveSubscription,
+  resumeSubscription,
+  getVendorSubscriptionStatus,
 };

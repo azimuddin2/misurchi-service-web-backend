@@ -17,10 +17,14 @@ export const startCronJobs = () => {
     });
 
     for (const subscription of expiredSubscriptions) {
-      // Mark subscription as expired
+      const finalStatus = subscription.cancelAtPeriodEnd
+        ? 'canceled'
+        : 'expired';
+
+      // Mark subscription accordingly
       await Subscription.findByIdAndUpdate(subscription._id, {
         $set: {
-          status: 'expired',
+          status: finalStatus,
           isExpired: true,
         },
       });
@@ -34,6 +38,8 @@ export const startCronJobs = () => {
       });
     }
 
-    console.log(`✅ ${expiredSubscriptions.length} subscriptions expired.`);
+    console.log(
+      `✅ ${expiredSubscriptions.length} subscriptions processed (expired/canceled).`,
+    );
   });
 };

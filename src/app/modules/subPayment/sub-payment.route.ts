@@ -24,15 +24,4 @@ router.get(
   SubPaymentsController.getSubPaymentByVendor,
 );
 
-router.get(
-  '/vendor/active/:vendorId',
-  auth('vendor', 'team_member'),
-  SubPaymentsController.getActiveSubPaymentByVendor,
-);
-
-router.patch(
-  '/cancel-subscription/:vendorId',
-  SubPaymentsController.cancelActiveSubscription,
-);
-
 export const SubPaymentsRoutes = router;

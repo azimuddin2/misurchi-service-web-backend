@@ -54,6 +54,13 @@ const subscriptionSchema = new Schema<TSubscription, TSubscriptionModel>(
       type: Boolean,
       default: false,
     },
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
+    canceledAt: {
+      type: Date,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

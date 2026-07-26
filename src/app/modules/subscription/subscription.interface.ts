@@ -18,6 +18,8 @@ export type TSubscription = {
   startedAt: Date;
   expiredAt: Date;
   isExpired: boolean;
+  cancelAtPeriodEnd: boolean;
+  canceledAt?: Date;
   isDeleted: boolean;
 };
 

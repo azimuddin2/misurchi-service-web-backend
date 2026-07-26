@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
 import { Plan } from '../plan/plan.model';
@@ -149,7 +149,6 @@ const getSubscriptionByIdFromDB = async (id: string) => {
   return result;
 };
 
-// My subscription
 const getSubscriptionByUserIdFromDB = async (id: string) => {
   const result = await Subscription.findOne({
     user: new Types.ObjectId(id),
@@ -185,6 +184,171 @@ const deleteSubscriptionFromDB = async (id: string) => {
   return result;
 };
 
+const getActiveSubscriptionByVendorFromDB = async (vendorId: string) => {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const activeSubscription = await Subscription.findOne({
+    vendor: vendorId,
+    isDeleted: false,
+    status: 'active',
+    isExpired: false,
+  })
+    .populate('plan')
+    .sort({ createdAt: -1 });
+
+  return activeSubscription;
+};
+
+const cancelActiveSubscriptionFromDB = async (vendorId: string) => {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const now = new Date();
+
+  const activeSubscription = await Subscription.findOne({
+    vendor: vendorId,
+    isPaid: true,
+    status: 'active',
+    isDeleted: false,
+    expiredAt: { $gt: now },
+  });
+
+  if (!activeSubscription) {
+    throw new AppError(404, 'No active subscription found');
+  }
+
+  if (activeSubscription.cancelAtPeriodEnd) {
+    throw new AppError(
+      400,
+      'Subscription is already scheduled for cancellation',
+    );
+  }
+
+  const updatedSubscription = await Subscription.findByIdAndUpdate(
+    activeSubscription._id,
+    {
+      $set: {
+        cancelAtPeriodEnd: true,
+        canceledAt: now,
+      },
+    },
+    { new: true },
+  ).populate('plan');
+
+  return {
+    message: `Your subscription will remain active until ${activeSubscription.expiredAt?.toDateString()}. It will not auto-renew after that.`,
+    subscription: updatedSubscription,
+  };
+};
+
+const resumeSubscriptionFromDB = async (vendorId: string) => {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const now = new Date();
+
+  const subscription = await Subscription.findOne({
+    vendor: vendorId,
+    status: 'active',
+    isDeleted: false,
+    cancelAtPeriodEnd: true,
+    expiredAt: { $gt: now },
+  });
+
+  if (!subscription) {
+    throw new AppError(404, 'No cancellation scheduled to resume');
+  }
+
+  const updatedSubscription = await Subscription.findByIdAndUpdate(
+    subscription._id,
+    {
+      $set: { cancelAtPeriodEnd: false },
+      $unset: { canceledAt: '' },
+    },
+    { new: true },
+  ).populate('plan');
+
+  return {
+    message: 'Subscription resumed successfully. It will auto-renew as usual.',
+    subscription: updatedSubscription,
+  };
+};
+
+const getVendorSubscriptionStatusFromDB = async (vendorId: string) => {
+  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId)) {
+    throw new AppError(400, 'Invalid Vendor ID');
+  }
+
+  const latestSubscription = await Subscription.findOne({
+    vendor: vendorId,
+    isDeleted: false,
+  })
+    .populate('plan')
+    .sort({ createdAt: -1 });
+
+  if (!latestSubscription) {
+    return {
+      hasSubscription: false,
+      status: 'none' as const,
+      subscription: null,
+    };
+  }
+
+  const now = new Date();
+  const isActuallyExpired =
+    latestSubscription.isExpired || latestSubscription.expiredAt < now;
+
+  if (
+    latestSubscription.status === 'active' &&
+    !isActuallyExpired &&
+    !latestSubscription.cancelAtPeriodEnd
+  ) {
+    return {
+      hasSubscription: true,
+      status: 'active' as const,
+      subscription: latestSubscription,
+    };
+  }
+
+  if (
+    latestSubscription.status === 'active' &&
+    !isActuallyExpired &&
+    latestSubscription.cancelAtPeriodEnd
+  ) {
+    return {
+      hasSubscription: true,
+      status: 'canceling' as const,
+      subscription: latestSubscription,
+    };
+  }
+
+  if (isActuallyExpired && latestSubscription.cancelAtPeriodEnd) {
+    return {
+      hasSubscription: false,
+      status: 'canceled' as const,
+      subscription: latestSubscription,
+    };
+  }
+
+  if (isActuallyExpired) {
+    return {
+      hasSubscription: false,
+      status: 'expired' as const,
+      subscription: latestSubscription,
+    };
+  }
+
+  return {
+    hasSubscription: false,
+    status: latestSubscription.status,
+    subscription: latestSubscription,
+  };
+};
+
 export const SubscriptionService = {
   createSubscriptionIntoDB,
   getAllSubscriptionFromDB,
@@ -192,4 +356,8 @@ export const SubscriptionService = {
   getSubscriptionByUserIdFromDB,
   updateSubscriptionIntoDB,
   deleteSubscriptionFromDB,
+  getActiveSubscriptionByVendorFromDB,
+  cancelActiveSubscriptionFromDB,
+  resumeSubscriptionFromDB,
+  getVendorSubscriptionStatusFromDB,
 };

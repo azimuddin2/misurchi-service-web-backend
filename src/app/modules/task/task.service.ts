@@ -15,8 +15,7 @@ import {
 } from './task.emailTemplate';
 
 const createTaskIntoDB = async (payload: TTask) => {
-
-  console.log('Create Task',payload);
+  console.log('Create Task', payload);
 
   const result = await Task.create(payload);
   if (!result) {

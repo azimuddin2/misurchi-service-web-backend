@@ -175,11 +175,9 @@ const confirmPayment = async (query: Record<string, any>) => {
   const { sessionId, paymentId } = query;
   const session = await startSession();
 
-  // Retrieve payment session from Stripe
   const paymentSession = await stripe.checkout.sessions.retrieve(sessionId);
   const paymentIntentId = paymentSession.payment_intent as string;
 
-  // Verify payment is completed
   if (paymentSession.payment_status !== 'paid') {
     throw new AppError(httpStatus.BAD_REQUEST, 'Payment not completed yet');
   }
@@ -187,30 +185,25 @@ const confirmPayment = async (query: Record<string, any>) => {
   try {
     session.startTransaction();
 
-    // Verify payment record exists
     const payment = await SubPayment.findById(paymentId).session(session);
     if (!payment) {
       throw new AppError(httpStatus.NOT_FOUND, 'Payment record not found!');
     }
 
-    // Get user and subscription IDs from payment record
     const userId = payment.user;
     const subscriptionId = payment.subscription;
 
-    // Mark payment as paid
     await SubPayment.findByIdAndUpdate(
       paymentId,
       { $set: { isPaid: true, paidAt: new Date() } },
       { new: true, session },
     );
 
-    // Verify user record exists
     const isUserExist = await User.findById(userId).session(session);
     if (!isUserExist) {
       throw new AppError(httpStatus.NOT_FOUND, 'User record not found!');
     }
 
-    // Verify subscription record exists and populate plan
     const isSubscriptionExist = await Subscription.findById(subscriptionId)
       .populate('plan')
       .session(session);
@@ -221,11 +214,19 @@ const confirmPayment = async (query: Record<string, any>) => {
       );
     }
 
-    // Determine subscribed value based on plan cost
     const plan = isSubscriptionExist.plan as any;
     const subscribedValue: TSubscribed = plan.cost > 0 ? 'advance' : 'basic';
 
-    // Update user subscription status
+    // 👇 Calculate startedAt/expiredAt from the actual moment of payment confirmation
+    const startedAt = new Date();
+    const expiredAt = new Date(startedAt);
+
+    if (isSubscriptionExist.durationType === 'yearly') {
+      expiredAt.setFullYear(expiredAt.getFullYear() + 1);
+    } else {
+      expiredAt.setMonth(expiredAt.getMonth() + 1);
+    }
+
     await User.findByIdAndUpdate(
       userId,
       {
@@ -237,21 +238,20 @@ const confirmPayment = async (query: Record<string, any>) => {
       { new: true, session },
     );
 
-    // Update subscription to active
     await Subscription.findByIdAndUpdate(
       subscriptionId,
       {
         $set: {
           isPaid: true,
           status: 'active',
-          startedAt: new Date(),
+          startedAt,
+          expiredAt,
           isExpired: false,
         },
       },
       { new: true, session },
     );
 
-    // Notify admins
     await NotificationServices.notifyAdmins(
       'New Subscription Payment',
       subscriptionId as any,
@@ -264,7 +264,6 @@ const confirmPayment = async (query: Record<string, any>) => {
   } catch (error: any) {
     await session.abortTransaction();
 
-    // Refund payment if transaction fails
     if (paymentIntentId) {
       try {
         await stripe.refunds.create({ payment_intent: paymentIntentId });
@@ -392,7 +391,7 @@ const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
     })
     .populate({
       path: 'subscription',
-      select: 'startedAt expiredAt status',
+      select: 'startedAt expiredAt status cancelAtPeriodEnd isExpired',
     });
 
   const queryBuilder = new QueryBuilder(subPaymentQuery, filters)
@@ -408,54 +407,6 @@ const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-const getActiveSubPaymentByVendorFromDB = async (vendorId: string) => {
-  if (!vendorId || !mongoose.Types.ObjectId.isValid(vendorId as string)) {
-    throw new AppError(400, 'Invalid Vendor ID');
-  }
-
-  const activeSubscription = await Subscription.findOne({
-    vendor: vendorId,
-    isDeleted: false,
-    status: 'active',
-    isExpired: false,
-  })
-    .populate('plan')
-    .sort({ createdAt: -1 });
-
-  return activeSubscription;
-};
-
-const cancelActiveSubscription = async (vendorId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(vendorId)) {
-    throw new AppError(400, 'Invalid Vendor ID');
-  }
-
-  const now = new Date();
-
-  const activeSubscription = await Subscription.findOne({
-    vendor: vendorId,
-    isPaid: true,
-    status: 'active',
-    expiredAt: { $gt: now },
-    isDeleted: false,
-  });
-
-  console.log('activeSubscription', activeSubscription); // 👈 এটা add করুন
-
-  if (!activeSubscription) {
-    throw new AppError(404, 'No active subscription found');
-  }
-
-  await Subscription.findByIdAndUpdate(activeSubscription._id, {
-    $set: { status: 'canceled' },
-  });
-
-  return {
-    message: `Your subscription will remain active until ${activeSubscription.expiredAt?.toDateString()}. It will not auto-renew after that.`,
-    expiredAt: activeSubscription.expiredAt,
-  };
-};
-
 export const SubPaymentsService = {
   subPayCheckout,
   confirmPayment,
@@ -463,6 +414,4 @@ export const SubPaymentsService = {
   cancelSubPayment,
   getAllSubPaymentFromDB,
   getSubPaymentByVendorFromDB,
-  getActiveSubPaymentByVendorFromDB,
-  cancelActiveSubscription,
 };
