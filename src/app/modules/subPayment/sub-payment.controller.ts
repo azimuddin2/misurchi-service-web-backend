@@ -252,7 +252,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
   `);
 });
 
-const getAllSubPayment = catchAsync(async (req, res) => {
+const getAllSubPayment = catchAsync(async (req:Request, res:Response) => {
   const result = await SubPaymentsService.getAllSubPaymentFromDB(req.query);
 
   sendResponse(res, {
@@ -264,7 +264,7 @@ const getAllSubPayment = catchAsync(async (req, res) => {
   });
 });
 
-const getSubPaymentByVendor = catchAsync(async (req, res) => {
+const getSubPaymentByVendor = catchAsync(async (req:Request, res:Response) => {
   const result = await SubPaymentsService.getSubPaymentByVendorFromDB(
     req.query,
   );

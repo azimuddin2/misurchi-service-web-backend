@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { PolicyService } from './policy.service';
 
-const getPolicy = catchAsync(async (req, res) => {
+const getPolicy = catchAsync(async (req:Request, res:Response) => {
   const result = await PolicyService.getPolicyFromDB();
   sendResponse(res, {
     statusCode: 200,
@@ -12,7 +13,7 @@ const getPolicy = catchAsync(async (req, res) => {
   });
 });
 
-const upsertPolicy = catchAsync(async (req, res) => {
+const upsertPolicy = catchAsync(async (req:Request, res:Response) => {
   const result = await PolicyService.upsertPolicyIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
@@ -22,7 +23,7 @@ const upsertPolicy = catchAsync(async (req, res) => {
   });
 });
 
-const deletePolicy = catchAsync(async (req, res) => {
+const deletePolicy = catchAsync(async (req:Request, res:Response) => {
   const result = await PolicyService.deletePolicyFromDB();
   sendResponse(res, {
     statusCode: 200,

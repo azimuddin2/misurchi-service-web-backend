@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ReviewService } from './review.service';
 
-const createReview = catchAsync(async (req, res) => {
+const createReview = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.createReviewIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createReview = catchAsync(async (req, res) => {
   });
 });
 
-const getAllReviews = catchAsync(async (req, res) => {
+const getAllReviews = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.getAllReviewsFromDB(req.query);
 
   sendResponse(res, {
@@ -25,7 +26,7 @@ const getAllReviews = catchAsync(async (req, res) => {
   });
 });
 
-const getAllReviewByUser = catchAsync(async (req, res) => {
+const getAllReviewByUser = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.getAllReviewByUserFromDB(req.query);
 
   sendResponse(res, {
