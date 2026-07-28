@@ -252,7 +252,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
   `);
 });
 
-const getAllSubPayment = catchAsync(async (req:Request, res:Response) => {
+const getAllSubPayment = catchAsync(async (req: Request, res: Response) => {
   const result = await SubPaymentsService.getAllSubPaymentFromDB(req.query);
 
   sendResponse(res, {
@@ -264,19 +264,21 @@ const getAllSubPayment = catchAsync(async (req:Request, res:Response) => {
   });
 });
 
-const getSubPaymentByVendor = catchAsync(async (req:Request, res:Response) => {
-  const result = await SubPaymentsService.getSubPaymentByVendorFromDB(
-    req.query,
-  );
+const getSubPaymentByVendor = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await SubPaymentsService.getSubPaymentByVendorFromDB(
+      req.query,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Subscription Payments retrieved successfully',
-    meta: result.meta,
-    data: result.result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Subscription Payments retrieved successfully',
+      meta: result.meta,
+      data: result.result,
+    });
+  },
+);
 
 export const SubPaymentsController = {
   subPayCheckout,

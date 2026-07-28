@@ -175,6 +175,21 @@ const createBookingIntoDB = async (payload: TBooking) => {
     model_type: ModeType.Booking,
   });
 
+  // 🔔 Notify assigned team member (if selected during booking)
+  if (booking.assignedToMember) {
+    const assignedMember = await TeamMember.findById(booking.assignedToMember);
+
+    if (assignedMember?.user) {
+      await NotificationServices.insertNotificationIntoDB({
+        receiver: assignedMember.user,
+        message: '📅 You’ve Been Selected for a New Appointment',
+        description: `${booking.name} selected you for "${serviceData.name}" on ${date} at ${time}. Please review your upcoming appointment.`,
+        reference: booking._id,
+        model_type: ModeType.Booking,
+      });
+    }
+  }
+
   // 9️⃣ Send confirmation email to customer
   const bookingDate = new Date(booking.date).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -539,6 +554,14 @@ const bookingAssignedToMemberIntoDB = async (
     receiver: isBookingExists.user,
     message: '📋 Your specialist has been assigned!',
     description: `${teamMemberExists.firstName} ${teamMemberExists.lastName} has been assigned to your booking for "${isBookingExists.serviceName}" on ${isBookingExists.date} at ${isBookingExists.time}.`,
+    reference: isBookingExists._id,
+    model_type: ModeType.Booking,
+  });
+
+  await NotificationServices.insertNotificationIntoDB({
+    receiver: teamMemberExists.user,
+    message: '📅 A New Appointment Has Been Assigned to You',
+    description: `You have been assigned to "${isBookingExists.serviceName}" on ${isBookingExists.date} at ${isBookingExists.time} by the vendor.`,
     reference: isBookingExists._id,
     model_type: ModeType.Booking,
   });
