@@ -356,7 +356,7 @@ const forgotPassword = async (email: string) => {
     'Your OTP for Password Reset',
     `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 24px; border-radius: 10px; border: 1px solid #e0e0e0;">
-    <h2 style="color: #4CAF50; text-align: center; margin-top: 0;">Password Reset OTP</h2>
+    <h2 style="color: #1A73E8; text-align: center; margin-top: 0;">Password Reset OTP</h2>
     
     <p style="font-size: 16px; color: #333; text-align: center;">
       We received a request to reset your password. Use the one-time password (OTP) below:
@@ -364,13 +364,13 @@ const forgotPassword = async (email: string) => {
 
     <div style="background-color: #f4f4f4; padding: 20px; margin: 20px auto; border-radius: 6px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
       <p style="font-size: 18px; color: #013B23; margin-bottom: 10px;">Your OTP:</p>
-      <p style="font-size: 32px; color: #4CAF50; font-weight: bold; margin: 0;">${otp}</p>
+      <p style="font-size: 32px; color: #1A73E8; font-weight: bold; margin: 0;">${otp}</p>
     </div>
 
     <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
       This OTP is valid until:
     </p>
-    <p style="font-size: 14px; color: #013B23; text-align: center; font-weight: bold; margin: 0;">
+    <p style="font-size: 14px; color: #0654b9; text-align: center; font-weight: bold; margin: 0;">
       ${expiresAt.toLocaleString()}
     </p>
 

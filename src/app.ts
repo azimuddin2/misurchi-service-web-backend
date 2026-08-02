@@ -23,7 +23,7 @@ app.use(
 app.use('/api/v1', router);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Misurchi service web backend running');
+  res.send('SmeVine Website Backend Running');
 });
 
 const test = async (req: Request, res: Response) => {

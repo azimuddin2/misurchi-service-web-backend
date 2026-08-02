@@ -131,7 +131,7 @@ const updateSupportIntoDB = async (id: string, payload: Partial<TSupport>) => {
               </blockquote>
 
               <p style="font-size:14px;color:#666;margin:0;"><strong>Admin Reply:</strong></p>
-              <blockquote style="border-left:4px solid #28a745;margin:10px 0;padding-left:10px;color:#222;">
+              <blockquote style="border-left:4px solid #007BFF;margin:10px 0;padding-left:10px;color:#222;">
                 ${payload.messageReply}
               </blockquote>
 

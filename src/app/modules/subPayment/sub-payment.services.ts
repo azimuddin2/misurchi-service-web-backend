@@ -16,6 +16,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { TSubscribed } from '../user/user.interface';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
+import { ReferralService } from '../referral/referral.service';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -258,6 +259,11 @@ const confirmPayment = async (query: Record<string, any>) => {
       ModeType.SubscriptionPayment,
       `${isUserExist.fullName} has successfully purchased the ${plan.name} subscription plan for $${plan.cost}.`,
     );
+
+    const vendorUser = await User.findById(userId).select('vendorId');
+    if (vendorUser?.vendorId) {
+      await ReferralService.awardReferralPoint(vendorUser.vendorId);
+    }
 
     await session.commitTransaction();
     return payment;

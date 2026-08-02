@@ -60,16 +60,16 @@ export const buildEmailWithPassword = (
 
     ${
       payload.role === 'manager'
-        ? `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7f3d0;line-height:1;">
+        ? `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7cef3;line-height:1;">
           <span style="font-size:18px;line-height:1;">&#128188;</span>
           <span>Manager</span>
          </span>`
         : payload.role === 'supervisor'
-          ? `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7f3d0;line-height:1;">
+          ? `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7cef3;line-height:1;">
           <span style="font-size:18px;line-height:1;">&#128737;</span>
           <span>Supervisor</span>
          </span>`
-          : `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7f3d0;line-height:1;">
+          : `<span style="display:inline-flex;align-items:center;gap:10px;background:#e8f5f0;color:#0f6e56;padding:10px 28px;border-radius:99px;font-size:14px;font-weight:700;letter-spacing:0.3px;border:1px solid #a7cef3;line-height:1;">
           <span style="font-size:18px;line-height:1;">&#128100;</span>
           <span>Team Member</span>
          </span>`

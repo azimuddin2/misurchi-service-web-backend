@@ -93,15 +93,15 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OTP Verification</title>
   </head>
-  <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+  <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f4; padding: 40px 0;">
       <tr>
         <td align="center">
           <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
             
             <!-- Header -->
             <tr>
-              <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <td align="center" style="background: #1A73E8; padding: 40px 40px 30px;">
                 <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                   <span style="font-size: 28px;">✉️</span>
                 </div>
@@ -122,7 +122,7 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                   <tr>
                     <td align="center">
-                      <div style="display: inline-block; background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); border-radius: 10px; padding: 20px 50px;">
+                      <div style="display: inline-block; background-color: #1A73E8; border-radius: 10px; padding: 20px 50px;">
                         <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">Your OTP Code</p>
                         <p style="margin: 0; font-size: 36px; font-weight: 800; color: #ffffff; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
                       </div>
@@ -131,18 +131,18 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
                 </table>
 
                 <!-- Expiry Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f8ff; border: 1px solid #d7e6ff; border-radius: 10px; margin-bottom: 24px;">
                   <tr>
                     <td style="padding: 14px 20px; text-align: center;">
                       <p style="margin: 0; font-size: 13px; color: #555555;">
-                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #0AA84C;">${expiresAt.toLocaleString()}</strong>
+                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #1A73E8;">${expiresAt.toLocaleString()}</strong>
                       </p>
                     </td>
                   </tr>
                 </table>
 
                 <!-- Security Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #1A73E8; border-radius: 4px; margin-bottom: 8px;">
                   <tr>
                     <td style="padding: 12px 16px;">
                       <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
@@ -159,7 +159,7 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
             <tr>
               <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -285,7 +285,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
             
             <!-- Header -->
             <tr>
-              <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <td align="center" style=" background: #1A73E8; padding: 40px 40px 30px;">
                 <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                   <span style="font-size: 28px;">✉️</span>
                 </div>
@@ -306,7 +306,7 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                   <tr>
                     <td align="center">
-                      <div style="display: inline-block; background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); border-radius: 10px; padding: 20px 50px;">
+                      <div style="display: inline-block; background: #1A73E8; border-radius: 10px; padding: 20px 50px;">
                         <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">Your OTP Code</p>
                         <p style="margin: 0; font-size: 36px; font-weight: 800; color: #ffffff; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
                       </div>
@@ -315,18 +315,18 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
                 </table>
 
                 <!-- Expiry Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f8ff; border: 1px solid #d7e6ff; border-radius: 10px; margin-bottom: 24px;">
                   <tr>
                     <td style="padding: 14px 20px; text-align: center;">
                       <p style="margin: 0; font-size: 13px; color: #555555;">
-                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #0AA84C;">${expiresAt.toLocaleString()}</strong>
+                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #1A73E8;">${expiresAt.toLocaleString()}</strong>
                       </p>
                     </td>
                   </tr>
                 </table>
 
                 <!-- Security Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #1A73E8; border-radius: 4px; margin-bottom: 8px;">
                   <tr>
                     <td style="padding: 12px 16px;">
                       <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
@@ -341,9 +341,9 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
 
             <!-- Footer -->
             <tr>
-              <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <td style="background-color: #f4f8ff; border-top: 1px solid #d7e6ff; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -672,15 +672,15 @@ const deleteUserAccountFromDB = async (userId: string) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Deactivated</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f4; padding: 40px 0;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
 
           <!-- Header -->
           <tr>
-            <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+            <td align="center" style="background: #1A73E8; padding: 40px 40px 30px;">
               <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 28px;">🔒</span>
               </div>
@@ -709,18 +709,18 @@ const deleteUserAccountFromDB = async (userId: string) => {
         </div>
 
              <!-- Restore Notice -->
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f8ff; border: 1px solid #d7e6ff; border-radius: 8px; margin-bottom: 24px;">
   <tr>
     <td style="padding: 14px 20px; text-align: center;">
       <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
-        💡 &nbsp;Changed your mind? <a href="${config.client_Url}/contact" style="color: #0AA84C; font-weight: 600; text-decoration: underline;">Contact our support team</a> anytime to <strong style="color: #0AA84C;">restore your account</strong> without any data loss.
+        💡 &nbsp;Changed your mind? <a href="${config.client_Url}/contact" style="color: #1A73E8; font-weight: 600; text-decoration: underline;">Contact our support team</a> anytime to <strong style="color: #1A73E8;">restore your account</strong> without any data loss.
       </p>
     </td>
   </tr>
 </table>
 
               <!-- Warning Notice -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #1A73E8; border-radius: 4px; margin-bottom: 8px;">
                 <tr>
                   <td style="padding: 12px 16px;">
                     <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
@@ -735,9 +735,9 @@ const deleteUserAccountFromDB = async (userId: string) => {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+            <td style="background-color: #f4f8ff; border-top: 1px solid #d7e6ff; padding: 20px 40px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>
@@ -783,15 +783,15 @@ const reactivateUserAccountFromDB = async (userId: string) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Reactivated</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f4; padding: 40px 0;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
 
           <!-- Header -->
           <tr>
-            <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+            <td align="center" style="background: #1A73E8; padding: 40px 40px 30px;">
               <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                 <span style="font-size: 28px;">✅</span>
               </div>
@@ -816,10 +816,10 @@ const reactivateUserAccountFromDB = async (userId: string) => {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td>
-                    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px 24px; box-sizing: border-box;">
+                    <div style="background-color: #f4f8ff; border: 1px solid #d7e6ff; border-radius: 8px; padding: 20px 24px; box-sizing: border-box;">
                       <p style="margin: 0 0 10px; font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 2px;">Account Details</p>
                       <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📧 &nbsp;Email: &nbsp;<strong style="color: #111827;">${reactivatedUser.email}</strong></p>
-                      <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📋 &nbsp;Status: &nbsp;<strong style="color: #0AA84C;">Active</strong></p>
+                      <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280;">📋 &nbsp;Status: &nbsp;<strong style="color: #1A73E8;">Active</strong></p>
                       <p style="margin: 0; font-size: 14px; color: #6b7280;">📅 &nbsp;Reactivated on: &nbsp;<strong style="color: #111827;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
                     </div>
                   </td>
@@ -827,7 +827,7 @@ const reactivateUserAccountFromDB = async (userId: string) => {
               </table>
 
               <!-- Info Notice -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f8ff; border: 1px solid #d7e6ff; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 14px 20px; text-align: center;">
                     <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.6;">
@@ -838,7 +838,7 @@ const reactivateUserAccountFromDB = async (userId: string) => {
               </table>
 
               <!-- Warning -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #1A73E8; border-radius: 4px;">
                 <tr>
                   <td style="padding: 12px 16px;">
                     <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
@@ -853,9 +853,9 @@ const reactivateUserAccountFromDB = async (userId: string) => {
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+            <td style="background-color: #f4f8ff; border-top: 1px solid #d7e6ff; padding: 20px 40px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>

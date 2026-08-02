@@ -14,7 +14,7 @@ const getReferralLink = async (vendorId: Types.ObjectId) => {
   if (!vendor) throw new Error('Vendor not found');
 
   if (!vendor.referralLink) {
-    const link = `${config.client_Url}/signup/user?ref=${vendor.referralCode}`;
+    const link = `${config.client_Url}/user-role?ref=${vendor.referralCode}`;
 
     await Vendor.findByIdAndUpdate(
       vendorId,
@@ -57,7 +57,7 @@ const emailReferralLink = async (
     <div style="max-width:560px; margin:auto; background:#ffffff; border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">
 
       <!-- Top banner -->
-      <div style="background:linear-gradient(135deg,#0AA84C,#078a3e); padding:32px 36px 28px; text-align:center;">
+      <div style="background-color: #1A73E8; padding:32px 36px 28px; text-align:center;">
         <div style="width:56px; height:56px; background:rgba(255,255,255,0.15); border-radius:50%; margin:0 auto 14px;">
           🎉
         </div>
@@ -74,12 +74,14 @@ const emailReferralLink = async (
         </p>
 
         <!-- CTA Button -->
-        <div style="text-align:center; margin-bottom:24px;">
-          <a href="${link}"
-            style="display:inline-block; background:#0AA84C; color:#ffffff; padding:14px 36px; border-radius:8px; text-decoration:none; font-size:15px; font-weight:600;">
-            Accept Invitation →
-          </a>
-        </div>
+      <div style="text-align:center; margin-bottom:24px;">
+  <a href="${link}"
+     target="_blank"
+     rel="noopener noreferrer"
+     style="display:inline-block; background-color:#1A73E8; color:#ffffff; padding:14px 36px; border-radius:8px; text-decoration:none; font-size:15px; font-weight:600;">
+    Accept Invitation →
+  </a>
+</div>
       </div>
 
       <!-- Footer -->
@@ -98,7 +100,7 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
   const vendor = await Vendor.findById(vendorId).select('totalReferralPoints');
   const totalPoints = vendor?.totalReferralPoints ?? 0;
 
-  const worthEquivalent = (totalPoints * 2.5).toFixed(2);
+  const worthEquivalent = (totalPoints * 1.5).toFixed(2);
 
   let dateFilter: Record<string, unknown> = {};
   if (month) {
@@ -145,16 +147,16 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
 };
 
 // Award referral points
-const awardReferralPoint = async (vendorId: Types.ObjectId) => {
+const awardReferralPoint = async (referredUserId: Types.ObjectId) => {
   const referral = await Referral.findOne({
-    referredUserId: vendorId,
+    referredUserId: referredUserId,
     status: 'pending',
   });
 
   if (!referral) {
     console.log(
       '❌ [awardReferralPoint] No pending referral found for vendorId:',
-      vendorId,
+      referredUserId,
     );
     return;
   }
@@ -207,7 +209,7 @@ const getAllVendorReferralStatsFromDB = async (
     referralCode: vendor.referralCode,
     totalReferredUsers: `${vendor.totalReferredUsers ?? 0} Users`,
     totalPoints: vendor.totalReferralPoints,
-    worthEquivalent: `$${(vendor.totalReferralPoints * 2.5).toFixed(2)}`,
+    worthEquivalent: `$${(vendor.totalReferralPoints * 1.5).toFixed(2)}`,
   }));
 
   return { meta, result };
@@ -242,7 +244,7 @@ const getVendorReferralDetailFromDB = async (
     status: r.status === 'completed' ? 'Active' : 'Inactive',
     reward:
       r.status === 'completed'
-        ? `$${(r.pointsAwarded * 2.5).toFixed(2)}`
+        ? `$${(r.pointsAwarded * 1.5).toFixed(2)}`
         : '$0',
   }));
 
