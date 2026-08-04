@@ -260,10 +260,8 @@ const confirmPayment = async (query: Record<string, any>) => {
       `${isUserExist.fullName} has successfully purchased the ${plan.name} subscription plan for $${plan.cost}.`,
     );
 
-    const vendorUser = await User.findById(userId).select('vendorId');
-    if (vendorUser?.vendorId) {
-      await ReferralService.awardReferralPoint(vendorUser.vendorId);
-    }
+    const referredUserId = (payment.user as any)._id;
+    await ReferralService.awardReferralPoint(referredUserId);
 
     await session.commitTransaction();
     return payment;

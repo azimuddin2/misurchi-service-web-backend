@@ -270,6 +270,7 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
 
   // Fetch bookings
   const bookings = await Booking.find(bookingQuery)
+    .sort({ date: -1 })
     .populate({
       path: 'vendor',
       select: 'businessName email phone',
@@ -312,6 +313,7 @@ const getBookingsByAssignedMember = async (query: Record<string, unknown>) => {
 
   // Fetch bookings
   const bookings = await Booking.find(bookingQuery)
+    .sort({ date: -1 })
     .populate({
       path: 'vendor',
       select: 'businessName email phone',
