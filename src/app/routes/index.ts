@@ -34,6 +34,7 @@ import { TaxSummaryRoutes } from '../modules/taxSummary/taxSummary.route';
 import { PayoutRequestRoutes } from '../modules/payoutRequest/payoutRequest.route';
 import { FAQRoutes } from '../modules/faq/faq.route';
 import { ContactInfoRoutes } from '../modules/contactInfo/contactInfo.route';
+import { ReferralSettingsRoutes } from '../modules/referralSettings/referralSettings.route';
 
 const router = Router();
 
@@ -177,6 +178,10 @@ const moduleRoutes = [
   {
     path: '/contact-info',
     route: ContactInfoRoutes,
+  },
+  {
+    path: '/referral-settings',
+    route: ReferralSettingsRoutes,
   },
 ];
 

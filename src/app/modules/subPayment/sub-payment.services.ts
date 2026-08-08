@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import config from '../../config';
 import httpStatus from 'http-status';
-import mongoose, { startSession } from 'mongoose';
+import mongoose, { startSession, Types } from 'mongoose';
 import { TSubPayment } from './sub-payment.interface';
 import generateRandomString from '../../utils/generateRandomString';
 import { User } from '../user/user.model';
@@ -260,8 +260,7 @@ const confirmPayment = async (query: Record<string, any>) => {
       `${isUserExist.fullName} has successfully purchased the ${plan.name} subscription plan for $${plan.cost}.`,
     );
 
-    const referredUserId = (payment.user as any)._id;
-    await ReferralService.awardReferralPoint(referredUserId);
+    await ReferralService.awardReferralPoint(userId as any);
 
     await session.commitTransaction();
     return payment;

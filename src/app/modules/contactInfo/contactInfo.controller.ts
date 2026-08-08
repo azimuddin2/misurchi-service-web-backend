@@ -1,9 +1,10 @@
 import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ContactInfoServices } from './contactInfo.service';
 
-const getContactInfo = catchAsync(async (req, res) => {
+const getContactInfo = catchAsync(async (req: Request, res: Response) => {
   const result = await ContactInfoServices.getContactInfoFromDB();
 
   sendResponse(res, {
@@ -14,7 +15,7 @@ const getContactInfo = catchAsync(async (req, res) => {
   });
 });
 
-const updateContactInfo = catchAsync(async (req, res) => {
+const updateContactInfo = catchAsync(async (req: Request, res: Response) => {
   const result = await ContactInfoServices.updateContactInfoIntoDB(req.body);
 
   sendResponse(res, {

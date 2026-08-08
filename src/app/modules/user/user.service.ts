@@ -234,19 +234,28 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
     );
 
     if (refCode) {
-      const referrer = await Vendor.findOne({ referralCode: refCode });
+      console.log('🔍 RefCode received:', refCode);
+
+      const referrer = await Vendor.findOne({
+        referralCode: refCode,
+      });
+
+      console.log('🔍 Referrer:', referrer?._id);
+
       if (referrer) {
-        await Referral.create(
+        const referral = await Referral.create(
           [
             {
               referrerId: referrer._id,
-              referredUserId: createdVendor[0]._id,
+              referredUserId: createdUser[0]._id,
               businessName: payload.businessName,
               status: 'pending',
             },
           ],
           { session },
         );
+
+        console.log('✅ Referral CREATED:', referral);
       }
     }
 
