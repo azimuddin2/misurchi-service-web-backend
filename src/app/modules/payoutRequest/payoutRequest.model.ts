@@ -30,8 +30,17 @@ const payoutRequestSchema = new Schema<TPayoutRequest>(
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'processing', 'approved', 'rejected'],
       default: 'pending',
+    },
+    stripeTransferId: {
+      type: String,
+    },
+    approvedAt: {
+      type: Date,
+    },
+    rejectedAt: {
+      type: Date,
     },
     requestedAt: {
       type: Date,

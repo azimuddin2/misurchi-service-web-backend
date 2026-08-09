@@ -4,6 +4,7 @@ import { Referral } from './referral.model';
 import { sendEmail } from '../../utils/sendEmail';
 import config from '../../config';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { ReferralSettings } from '../referralSettings/referralSettings.model';
 
 // Bring referral link
 const getReferralLink = async (vendorId: Types.ObjectId) => {
@@ -45,9 +46,20 @@ const emailReferralLink = async (
 
   if (!vendor) throw new Error('Vendor not found');
 
-  const link =
-    vendor.referralLink ||
-    `${config.client_Url}/user-role?ref=${vendor.referralCode}`;
+  // Same fallback as getReferralLink, but now we also persist it here so
+  // the link doesn't get silently regenerated (and never saved) on every
+  // single email send.
+  let link = vendor.referralLink;
+
+  if (!link) {
+    link = `${config.client_Url}/user-role?ref=${vendor.referralCode}`;
+
+    await Vendor.findByIdAndUpdate(
+      vendorId,
+      { referralLink: link },
+      { new: true },
+    );
+  }
 
   await sendEmail(
     recipientEmail,
@@ -98,97 +110,196 @@ const emailReferralLink = async (
 // Vendor Dashboard stats
 const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
   const vendor = await Vendor.findById(vendorId).select('totalReferralPoints');
-  const totalPoints = vendor?.totalReferralPoints ?? 0;
 
-  const worthEquivalent = (totalPoints * 1.5).toFixed(2);
+  if (!vendor) {
+    throw new Error('Vendor not found');
+  }
 
+  const totalPoints = vendor.totalReferralPoints ?? 0;
+
+  // Get referral settings from Admin Panel
+  const referralSettings = await ReferralSettings.findOne();
+
+  if (!referralSettings) {
+    throw new Error('Referral settings not configured');
+  }
+
+  // Exact values configured in Admin Panel (used only for display of the
+  // *current* rate — NOT for recalculating past rewards, see below)
+  const pointsPerReferral = referralSettings.pointsPerReferral;
+  const pointValue = referralSettings.pointValue;
+
+  // A referral can only be filtered by "the month it happened in" once we
+  // know which date field actually applies to it:
+  //   - completed referrals -> completedAt
+  //   - pending referrals   -> createdAt (they have no completedAt yet)
+  // Using completedAt for everything (as before) silently drops every
+  // pending referral out of the list whenever a month filter is applied.
   let dateFilter: Record<string, unknown> = {};
+
   if (month) {
     const start = new Date(`${month}-01`);
     const end = new Date(start);
+
     end.setMonth(end.getMonth() + 1);
-    dateFilter = { completedAt: { $gte: start, $lt: end } };
+
+    dateFilter = {
+      $or: [
+        { status: 'completed', completedAt: { $gte: start, $lt: end } },
+        { status: 'pending', createdAt: { $gte: start, $lt: end } },
+      ],
+    };
   }
 
+  // Completed referrals
   const completedReferrals = await Referral.find({
     referrerId: vendorId,
     status: 'completed',
     ...dateFilter,
-  }).select('businessName completedAt pointsAwarded');
+  }).select('businessName completedAt pointsAwarded rewardValue');
 
+  // All referrals / transactions
   const allReferrals = await Referral.find({
     referrerId: vendorId,
     ...dateFilter,
   })
     .sort({ createdAt: -1 })
-    .select('businessName status pointsAwarded createdAt completedAt');
+    .select(
+      'businessName status pointsAwarded createdAt completedAt rewardValue',
+    );
 
-  const transactions = allReferrals.map((r, i) => ({
-    transactionId: `#PAY-${String(i + 1).padStart(4, '0')}`,
-    points: r.status === 'completed' ? r.pointsAwarded : 0,
+  // Total value earned so far = sum of each completed referral's reward
+  // snapshot (pointsAwarded * pointValue AT THAT TIME), not
+  // totalPoints * current pointValue. This keeps past earnings stable
+  // even if Admin changes pointValue later.
+  const worthEquivalent = completedReferrals
+    .reduce((sum, referral) => sum + (referral.rewardValue ?? 0), 0)
+    .toFixed(2);
+
+  const transactions = allReferrals.map((referral, index) => ({
+    transactionId: `#PAY-${String(index + 1).padStart(4, '0')}`,
+
+    points: referral.status === 'completed' ? referral.pointsAwarded : 0,
+
     method: 'Points',
-    referee: r.businessName,
-    date: (r.completedAt || r.createdAt)?.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    status: r.status,
+
+    referee: referral.businessName,
+
+    date: (referral.completedAt || referral.createdAt)?.toLocaleDateString(
+      'en-US',
+      {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      },
+    ),
+
+    status: referral.status,
   }));
 
   return {
-    pointsPerReferral: 1,
+    // Admin Panel values (current rate, shown for reference)
+    pointsPerReferral,
+    pointValue,
+
+    // Vendor's total earned points
     totalPoints,
+
+    // Total value = sum of reward snapshots from completed referrals
     worthEquivalent: `$${worthEquivalent}`,
+
     payoutNotice: 'Request Payout Only After Earning $200.00',
-    businessNames: completedReferrals.map((r) => r.businessName).join(', '),
+
+    businessNames: completedReferrals
+      .map((referral) => referral.businessName)
+      .join(', '),
+
     transactions,
   };
 };
 
 // Award referral points
 const awardReferralPoint = async (referredUserId: Types.ObjectId) => {
-  const referral = await Referral.findOne({
-    referredUserId: referredUserId,
-    status: 'pending',
-  });
+  // Get referral settings from Admin Panel
+  const referralSettings = await ReferralSettings.findOne();
+
+  if (!referralSettings) {
+    throw new Error('Referral settings not configured');
+  }
+
+  // Exact points configured in Admin Panel
+  const pointsPerReferral = referralSettings.pointsPerReferral;
+  const pointValue = referralSettings.pointValue;
+  const rewardValue = pointsPerReferral * pointValue;
+
+  // Atomic find-and-update: only ONE call can ever transition a given
+  // pending referral to completed. If this runs twice concurrently
+  // (webhook retry, duplicate event, etc.) the second call simply finds
+  // nothing to update and returns early, instead of double-awarding
+  // points to the vendor.
+  const referral = await Referral.findOneAndUpdate(
+    { referredUserId, status: 'pending' },
+    {
+      status: 'completed',
+      completedAt: new Date(),
+      pointsAwarded: pointsPerReferral,
+      pointValueAtCompletion: pointValue,
+      rewardValue,
+    },
+    { new: true },
+  );
 
   if (!referral) {
     console.log(
-      '❌ [awardReferralPoint] No pending referral found for vendorId:',
+      '❌ [awardReferralPoint] No pending referral found for user:',
       referredUserId,
     );
     return;
   }
 
-  referral.status = 'completed';
-  referral.completedAt = new Date();
-  referral.pointsAwarded = 1;
-  await referral.save();
-
   const updatedVendor = await Vendor.findByIdAndUpdate(
     referral.referrerId,
     {
       $inc: {
-        totalReferralPoints: 1,
+        totalReferralPoints: pointsPerReferral,
         totalReferredUsers: 1,
       },
     },
     { new: true },
   );
 
-  console.log('✅ [awardReferralPoint] Vendor updated:', updatedVendor?._id, {
-    totalReferralPoints: updatedVendor?.totalReferralPoints,
-    totalReferredUsers: updatedVendor?.totalReferredUsers,
+  if (!updatedVendor) {
+    // Referral is already marked completed at this point, so we can't
+    // silently pretend nothing happened — log loudly so this
+    // inconsistent state (completed referral, missing vendor) can be
+    // investigated and reconciled.
+    console.error(
+      '⚠️ [awardReferralPoint] Referral marked completed but vendor not found:',
+      referral.referrerId,
+    );
+    return;
+  }
+
+  console.log('✅ [awardReferralPoint] Vendor updated:', updatedVendor._id, {
+    pointsAwarded: pointsPerReferral,
+    totalReferralPoints: updatedVendor.totalReferralPoints,
+    totalReferredUsers: updatedVendor.totalReferredUsers,
   });
 };
 
 const getAllVendorReferralStatsFromDB = async (
   query: Record<string, unknown>,
 ) => {
+  // NOTE: `month` is intentionally stripped out before it reaches
+  // QueryBuilder (it isn't a real Vendor field and would break the
+  // generic filter()). It currently has no filtering effect on this
+  // endpoint — kept as a no-op passthrough for API-shape compatibility
+  // until/unless per-month admin stats are actually required.
   const { month, ...filters } = query;
 
-  const vendorQuery = Vendor.find({ isDeleted: false }).select(
+  const vendorQuery = Vendor.find({
+    isDeleted: false,
+  }).select(
     'businessName email referralCode totalReferralPoints totalReferredUsers',
   );
 
@@ -202,26 +313,49 @@ const getAllVendorReferralStatsFromDB = async (
   const meta = await queryBuilder.countTotal();
   const vendors = await queryBuilder.modelQuery;
 
-  const result = vendors.map((vendor, index) => ({
-    serial: index + 1,
-    vendorId: vendor._id,
-    name: vendor.businessName,
-    referralCode: vendor.referralCode,
-    totalReferredUsers: `${vendor.totalReferredUsers ?? 0} Users`,
-    totalPoints: vendor.totalReferralPoints,
-    worthEquivalent: `$${(vendor.totalReferralPoints * 1.5).toFixed(2)}`,
-  }));
+  // Get referral settings from Admin Panel
+  const referralSettings = await ReferralSettings.findOne();
 
-  return { meta, result };
+  if (!referralSettings) {
+    throw new Error('Referral settings not configured');
+  }
+
+  // Exact value configured in Admin Panel
+  const pointValue = referralSettings.pointValue;
+
+  const result = vendors.map((vendor, index) => {
+    const totalPoints = vendor.totalReferralPoints ?? 0;
+
+    // Total points × value per point
+    const worthEquivalent = (totalPoints * pointValue).toFixed(2);
+
+    return {
+      serial: index + 1,
+      vendorId: vendor._id,
+      name: vendor.businessName,
+      referralCode: vendor.referralCode,
+
+      totalReferredUsers: `${vendor.totalReferredUsers ?? 0} Users`,
+
+      totalPoints,
+
+      worthEquivalent: `$${worthEquivalent}`,
+    };
+  });
+
+  return {
+    meta,
+    result,
+  };
 };
 
 const getVendorReferralDetailFromDB = async (
   vendorId: string,
   query: Record<string, unknown>,
 ) => {
-  const referralQuery = Referral.find({ referrerId: vendorId }).select(
-    'businessName createdAt status pointsAwarded',
-  );
+  const referralQuery = Referral.find({
+    referrerId: vendorId,
+  }).select('businessName createdAt status pointsAwarded rewardValue');
 
   const queryBuilder = new QueryBuilder(referralQuery, query)
     .search(['businessName'])
@@ -233,22 +367,41 @@ const getVendorReferralDetailFromDB = async (
   const meta = await queryBuilder.countTotal();
   const referrals = await queryBuilder.modelQuery;
 
-  const result = referrals.map((r, index) => ({
-    serial: index + 1,
-    referredUser: r.businessName,
-    dateJoined: r.createdAt?.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    status: r.status === 'completed' ? 'Active' : 'Inactive',
-    reward:
-      r.status === 'completed'
-        ? `$${(r.pointsAwarded * 1.5).toFixed(2)}`
-        : '$0',
-  }));
+  const result = referrals.map((referral, index) => {
+    const pointsAwarded = referral.pointsAwarded ?? 0;
 
-  return { meta, result };
+    // Use the reward snapshot taken at completion time instead of
+    // recalculating against the admin panel's current pointValue, so a
+    // later rate change doesn't retroactively change what a vendor
+    // already earned.
+    const reward =
+      referral.status === 'completed'
+        ? `$${(referral.rewardValue ?? 0).toFixed(2)}`
+        : '$0.00';
+
+    return {
+      serial: index + 1,
+
+      referredUser: referral.businessName,
+
+      dateJoined: referral.createdAt?.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+
+      status: referral.status === 'completed' ? 'Active' : 'Inactive',
+
+      points: pointsAwarded,
+
+      reward,
+    };
+  });
+
+  return {
+    meta,
+    result,
+  };
 };
 
 export const ReferralService = {

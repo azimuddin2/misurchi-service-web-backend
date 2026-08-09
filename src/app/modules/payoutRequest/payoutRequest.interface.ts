@@ -1,16 +1,22 @@
 import { Types } from 'mongoose';
-import { TVendor } from '../vendor/vendor.interface';
 
-export type TPayoutStatus = 'pending' | 'approved' | 'rejected';
+export type TPayoutRequestStatus =
+  | 'pending'
+  | 'processing'
+  | 'approved'
+  | 'rejected';
 
 export type TPayoutRequest = {
-  vendorId: Types.ObjectId | TVendor;
+  vendorId: Types.ObjectId;
   vendorName: string;
   vendorEmail: string;
   totalPoints: number;
   availableBalance: number;
-  method: string; // "Stripe"
-  status: TPayoutStatus;
+  method: string;
+  status: TPayoutRequestStatus;
+  stripeTransferId?: string;
+  approvedAt?: Date;
+  rejectedAt?: Date;
   requestedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;

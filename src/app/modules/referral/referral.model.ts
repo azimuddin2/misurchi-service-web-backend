@@ -26,6 +26,21 @@ const referralSchema = new Schema<TReferral>(
       type: Number,
       default: 1,
     },
+    pointValueAtCompletion: {
+      type: Number,
+    },
+    rewardValue: {
+      type: Number,
+      default: 0,
+    },
+    paidOut: {
+      type: Boolean,
+      default: false,
+    },
+    payoutRequestId: {
+      type: Schema.Types.ObjectId,
+      ref: 'PayoutRequest',
+    },
     completedAt: {
       type: Date,
     },

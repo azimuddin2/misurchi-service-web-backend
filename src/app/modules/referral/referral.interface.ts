@@ -8,6 +8,10 @@ export type TReferral = {
   businessName: string;
   status: TReferralStatus;
   pointsAwarded: number;
+  pointValueAtCompletion?: number;
+  rewardValue?: number;
+  paidOut?: boolean;
+  payoutRequestId?: Types.ObjectId;
   completedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
