@@ -33,6 +33,11 @@ const payoutRequestSchema = new Schema<TPayoutRequest>(
       enum: ['pending', 'processing', 'approved', 'rejected'],
       default: 'pending',
     },
+    referralIds: {
+      type: [Schema.Types.ObjectId],
+      ref: 'Referral',
+      default: [],
+    },
     stripeTransferId: {
       type: String,
     },

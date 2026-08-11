@@ -14,6 +14,7 @@ export type TPayoutRequest = {
   availableBalance: number;
   method: string;
   status: TPayoutRequestStatus;
+  referralIds?: Types.ObjectId[];
   stripeTransferId?: string;
   approvedAt?: Date;
   rejectedAt?: Date;

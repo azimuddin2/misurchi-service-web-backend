@@ -115,8 +115,6 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
     throw new Error('Vendor not found');
   }
 
-  const totalPoints = vendor.totalReferralPoints ?? 0;
-
   // Get referral settings from Admin Panel
   const referralSettings = await ReferralSettings.findOne();
 
@@ -124,17 +122,9 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
     throw new Error('Referral settings not configured');
   }
 
-  // Exact values configured in Admin Panel (used only for display of the
-  // *current* rate — NOT for recalculating past rewards, see below)
   const pointsPerReferral = referralSettings.pointsPerReferral;
   const pointValue = referralSettings.pointValue;
 
-  // A referral can only be filtered by "the month it happened in" once we
-  // know which date field actually applies to it:
-  //   - completed referrals -> completedAt
-  //   - pending referrals   -> createdAt (they have no completedAt yet)
-  // Using completedAt for everything (as before) silently drops every
-  // pending referral out of the list whenever a month filter is applied.
   let dateFilter: Record<string, unknown> = {};
 
   if (month) {
@@ -151,14 +141,17 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
     };
   }
 
-  // Completed referrals
+  // Only NOT-YET-PAID completed referrals count toward the current
+  // balance. Once paid via an approved PayoutRequest, they must drop
+  // out of this figure — otherwise a vendor who already got paid would
+  // still show that same reward as "current worth".
   const completedReferrals = await Referral.find({
     referrerId: vendorId,
     status: 'completed',
+    paidOut: false,
     ...dateFilter,
   }).select('businessName completedAt pointsAwarded rewardValue');
 
-  // All referrals / transactions
   const allReferrals = await Referral.find({
     referrerId: vendorId,
     ...dateFilter,
@@ -168,52 +161,40 @@ const getReferralStats = async (vendorId: Types.ObjectId, month?: string) => {
       'businessName status pointsAwarded createdAt completedAt rewardValue',
     );
 
-  // Total value earned so far = sum of each completed referral's reward
-  // snapshot (pointsAwarded * pointValue AT THAT TIME), not
-  // totalPoints * current pointValue. This keeps past earnings stable
-  // even if Admin changes pointValue later.
+  // totalPoints must come from the SAME data set as worthEquivalent
+  // (unpaid, month-filtered completed referrals) — not
+  // vendor.totalReferralPoints, which is an all-time running balance
+  // that can drift out of sync after payouts.
+  const totalPoints = completedReferrals.reduce(
+    (sum, referral) => sum + (referral.pointsAwarded ?? 0),
+    0,
+  );
+
   const worthEquivalent = completedReferrals
     .reduce((sum, referral) => sum + (referral.rewardValue ?? 0), 0)
     .toFixed(2);
 
   const transactions = allReferrals.map((referral, index) => ({
     transactionId: `#PAY-${String(index + 1).padStart(4, '0')}`,
-
     points: referral.status === 'completed' ? referral.pointsAwarded : 0,
-
     method: 'Points',
-
     referee: referral.businessName,
-
     date: (referral.completedAt || referral.createdAt)?.toLocaleDateString(
       'en-US',
-      {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      },
+      { month: 'short', day: 'numeric', year: 'numeric' },
     ),
-
     status: referral.status,
   }));
 
   return {
-    // Admin Panel values (current rate, shown for reference)
     pointsPerReferral,
     pointValue,
-
-    // Vendor's total earned points
     totalPoints,
-
-    // Total value = sum of reward snapshots from completed referrals
     worthEquivalent: `$${worthEquivalent}`,
-
     payoutNotice: 'Request Payout Only After Earning $200.00',
-
     businessNames: completedReferrals
       .map((referral) => referral.businessName)
       .join(', '),
-
     transactions,
   };
 };
@@ -290,11 +271,6 @@ const awardReferralPoint = async (referredUserId: Types.ObjectId) => {
 const getAllVendorReferralStatsFromDB = async (
   query: Record<string, unknown>,
 ) => {
-  // NOTE: `month` is intentionally stripped out before it reaches
-  // QueryBuilder (it isn't a real Vendor field and would break the
-  // generic filter()). It currently has no filtering effect on this
-  // endpoint — kept as a no-op passthrough for API-shape compatibility
-  // until/unless per-month admin stats are actually required.
   const { month, ...filters } = query;
 
   const vendorQuery = Vendor.find({
@@ -313,33 +289,49 @@ const getAllVendorReferralStatsFromDB = async (
   const meta = await queryBuilder.countTotal();
   const vendors = await queryBuilder.modelQuery;
 
-  // Get referral settings from Admin Panel
-  const referralSettings = await ReferralSettings.findOne();
+  const vendorIds = vendors.map((vendor) => vendor._id);
 
-  if (!referralSettings) {
-    throw new Error('Referral settings not configured');
-  }
+  const unpaidTotalsByVendor = await Referral.aggregate([
+    {
+      $match: {
+        referrerId: { $in: vendorIds },
+        status: 'completed',
+        paidOut: false,
+      },
+    },
+    {
+      $group: {
+        _id: '$referrerId',
+        totalPoints: { $sum: '$pointsAwarded' },
+        worthEquivalent: { $sum: '$rewardValue' },
+      },
+    },
+  ]);
 
-  // Exact value configured in Admin Panel
-  const pointValue = referralSettings.pointValue;
+  const totalsMap = new Map(
+    unpaidTotalsByVendor.map((entry) => [
+      entry._id.toString(),
+      {
+        totalPoints: entry.totalPoints,
+        worthEquivalent: entry.worthEquivalent,
+      },
+    ]),
+  );
 
   const result = vendors.map((vendor, index) => {
-    const totalPoints = vendor.totalReferralPoints ?? 0;
-
-    // Total points × value per point
-    const worthEquivalent = (totalPoints * pointValue).toFixed(2);
+    const totals = totalsMap.get((vendor._id as Types.ObjectId).toString()) ?? {
+      totalPoints: 0,
+      worthEquivalent: 0,
+    };
 
     return {
       serial: index + 1,
       vendorId: vendor._id,
       name: vendor.businessName,
       referralCode: vendor.referralCode,
-
       totalReferredUsers: `${vendor.totalReferredUsers ?? 0} Users`,
-
-      totalPoints,
-
-      worthEquivalent: `$${worthEquivalent}`,
+      totalPoints: totals.totalPoints,
+      worthEquivalent: `$${totals.worthEquivalent.toFixed(2)}`,
     };
   });
 
