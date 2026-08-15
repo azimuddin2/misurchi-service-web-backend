@@ -25,6 +25,8 @@ import {
   requestSubmittedTemplate,
   serviceCompletedTemplate,
 } from './booking.emailTemplates';
+import { Vendor } from '../vendor/vendor.model';
+import { DateTime } from 'luxon';
 
 const createBookingIntoDB = async (payload: TBooking) => {
   const { service, serviceItemId, date, time } = payload;
@@ -36,12 +38,23 @@ const createBookingIntoDB = async (payload: TBooking) => {
   if (!Types.ObjectId.isValid(service))
     throw new AppError(400, 'Invalid service ID');
 
-  // 2️⃣ Past date & time validation
+  // 2️⃣ Fetch service (moved up — need vendor timezone before date validation)
+  const serviceData = await Packages.findById(service).lean();
+  if (!serviceData) {
+    throw new AppError(404, 'Service not found');
+  }
+
+  const vendorData = await Vendor.findById(serviceData.vendor).lean();
+  const vendorTimezone = vendorData?.timeZone || 'UTC+0';
+
+  // 3️⃣ Past date & time validation (timezone-aware)
   const [slotStartStr, slotEndStr] = time.split(' - ');
 
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const bookingDateStr = new Date(date).toISOString().split('T')[0];
+  const now = DateTime.now().setZone(vendorTimezone);
+  const todayStr = now.toFormat('yyyy-MM-dd');
+  const bookingDateStr = DateTime.fromISO(date, {
+    zone: vendorTimezone,
+  }).toFormat('yyyy-MM-dd');
 
   // Past date check
   if (bookingDateStr < todayStr) {
@@ -50,7 +63,7 @@ const createBookingIntoDB = async (payload: TBooking) => {
 
   // Same day — past time check
   if (bookingDateStr === todayStr) {
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const currentMinutes = now.hour * 60 + now.minute;
     const slotStart = parseTimeToMinutes(slotStartStr);
 
     if (slotStart <= currentMinutes) {
@@ -61,15 +74,9 @@ const createBookingIntoDB = async (payload: TBooking) => {
     }
   }
 
-  // 3️⃣ Fetch service
-  const serviceData = await Packages.findById(service).lean();
-  if (!serviceData) {
-    throw new AppError(404, 'Service not found');
-  }
-
   // 4️⃣ Check day schedule
-  const dayOfWeek = new Date(date)
-    .toLocaleDateString('en-US', { weekday: 'long' })
+  const dayOfWeek = DateTime.fromISO(date, { zone: vendorTimezone })
+    .toFormat('cccc')
     .toLowerCase() as TWeekDay;
 
   const schedule = serviceData.availability?.weeklySchedule?.[dayOfWeek];

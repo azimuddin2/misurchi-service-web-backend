@@ -20,8 +20,6 @@ const vendorRegisterUser = catchAsync(async (req: Request, res: Response) => {
   const { refCode, ...payload } = req.body;
   const result = await UserServices.vendorRegisterUserIntoDB(payload, refCode);
 
-  console.log('🔍 Vendor Registration Result:', refCode);
-
   sendResponse(res, {
     statusCode: 201,
     success: true,

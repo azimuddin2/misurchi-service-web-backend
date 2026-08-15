@@ -246,6 +246,12 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
                     $options: 'i',
                   },
                 },
+                {
+                  'vendor.country': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
               ],
             },
           },

@@ -307,6 +307,12 @@ const getAllProductFromDB = async (query: Record<string, unknown>) => {
                     $options: 'i',
                   },
                 },
+                {
+                  'vendor.country': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
               ],
             },
           },
@@ -414,7 +420,7 @@ const updateProductIntoDB = async (
     throw new AppError(404, 'This product not found');
   }
 
-  const { deleteKey, ...updateData } = payload; // color isn't used, so removed it
+  const { deleteKey, ...updateData } = payload;
 
   // Handle image upload to S3
   if (files) {

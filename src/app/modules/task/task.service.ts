@@ -13,6 +13,7 @@ import {
   taskBlockedTemplate,
   taskReviewTemplate,
 } from './task.emailTemplate';
+import { Vendor } from '../vendor/vendor.model';
 
 const createTaskIntoDB = async (payload: TTask) => {
   console.log('Create Task', payload);
@@ -306,6 +307,9 @@ const updateTaskStatusIntoDB = async (
     updateData['blockedInfo.resolvedAt'] = new Date();
   }
 
+  // ✅ Owner-ke reviewer hisebe select kora hoyeche kina, seta track korar jonno
+  let ownerReviewerId: string | null = null;
+
   // Status "Needs Review" -> reviewers set kora
   if (payload.status === 'Needs Review') {
     if (!payload.reviewers || payload.reviewers.length === 0) {
@@ -315,29 +319,77 @@ const updateTaskStatusIntoDB = async (
       );
     }
 
-    const reviewerRecords = await TeamMember.find({
-      _id: { $in: payload.reviewers },
-      isDeleted: false,
-    });
-
-    if (reviewerRecords.length !== payload.reviewers.length) {
-      throw new AppError(400, 'One or more reviewers not found');
-    }
-
-    const invalidReviewers = reviewerRecords.filter(
-      (member) => member.role !== 'manager' && member.role !== 'supervisor',
+    // ✅ Owner (vendor) ke reviewer id gulor moddhe theke alada kora
+    const vendorIdStr = isTaskExists.vendor.toString();
+    const isOwnerSelected = payload.reviewers.includes(vendorIdStr);
+    const teamMemberReviewerIds = payload.reviewers.filter(
+      (rid) => rid !== vendorIdStr,
     );
 
-    if (invalidReviewers.length > 0) {
-      throw new AppError(
-        400,
-        'Only manager or supervisor can be assigned as reviewer',
+    let reviewerRecords: any[] = [];
+
+    // ✅ Baki (team member) reviewer gulo age jevabe validate hoto, sheivabei hobe
+    if (teamMemberReviewerIds.length > 0) {
+      reviewerRecords = await TeamMember.find({
+        _id: { $in: teamMemberReviewerIds },
+        isDeleted: false,
+      });
+
+      if (reviewerRecords.length !== teamMemberReviewerIds.length) {
+        throw new AppError(400, 'One or more reviewers not found');
+      }
+
+      const invalidReviewers = reviewerRecords.filter(
+        (member) => member.role !== 'manager' && member.role !== 'supervisor',
       );
+
+      if (invalidReviewers.length > 0) {
+        throw new AppError(
+          400,
+          'Only manager or supervisor can be assigned as reviewer',
+        );
+      }
     }
 
+    // ✅ Owner-ke shomporke validate kora ebong notification/email pathano
+    if (isOwnerSelected) {
+      const ownerData = await Vendor.findById(vendorIdStr);
+
+      if (!ownerData) {
+        throw new AppError(404, 'Vendor (business owner) not found');
+      }
+
+      ownerReviewerId = vendorIdStr;
+
+      // Email pathano
+      if (ownerData.email) {
+        sendEmail(
+          ownerData.email,
+          `📝 Review Requested — ${isTaskExists.title}`,
+          taskReviewTemplate(
+            isTaskExists.title,
+            `${ownerData.firstName} ${ownerData.lastName}`,
+            taggedByName,
+            new Date().getFullYear(),
+          ),
+        ).catch((err) => console.error('Owner email error:', err));
+      }
+
+      // ✅ In-app notification — booking notification-er moto pattern follow kora,
+      // sorasori vendorId babohar kora hocche (Vendor.userId na)
+      NotificationServices.insertNotificationIntoDB({
+        receiver: vendorIdStr,
+        message: `You've been tagged to review the task: "${isTaskExists.title}"`,
+        description: `Tagged by ${taggedByName}`,
+        reference: isTaskExists._id,
+        model_type: ModeType.Task,
+      }).catch((err) => console.error('Owner notification error:', err));
+    }
+
+    // Shob reviewer id (owner + team member) database e store kora
     updateData.reviewers = payload.reviewers;
 
-    // Notification + Email - protiti reviewer-ke pathano
+    // Notification + Email - protiti team-member reviewer-ke pathano
     reviewerRecords.forEach((reviewer) => {
       if (reviewer.user) {
         NotificationServices.insertNotificationIntoDB({
@@ -395,6 +447,32 @@ const updateTaskStatusIntoDB = async (
       path: 'blockedInfo.resolver',
       select: 'firstName lastName email role image',
     });
+
+  // ✅ Owner reviewer hisebe thakle, "reviewers" populate e tar entry
+  // null/missing thakbe (karon owner TeamMember collection e nei) —
+  // tai eta manually actual owner data diye thik kora hocche
+  if (ownerReviewerId && result) {
+    const ownerVendor = await Vendor.findById(ownerReviewerId).select(
+      'firstName lastName email',
+    );
+
+    if (ownerVendor) {
+      const ownerAsReviewerShape = {
+        _id: ownerVendor._id,
+        firstName: ownerVendor.firstName,
+        lastName: ownerVendor.lastName,
+        email: ownerVendor.email,
+        role: 'owner',
+      };
+
+      const resultObj: any = result;
+      resultObj.reviewers = resultObj.reviewers.map((r: any) =>
+        r === null || r === undefined || r._id?.toString() === ownerReviewerId
+          ? ownerAsReviewerShape
+          : r,
+      );
+    }
+  }
 
   return result;
 };
