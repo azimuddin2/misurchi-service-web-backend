@@ -21,6 +21,8 @@ import {
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
 import { ReferralService } from '../referral/referral.service';
+import { sendEmail } from '../../utils/sendEmail';
+import { bookingConfirmedTemplate } from '../booking/booking.emailTemplates';
 
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
@@ -76,6 +78,8 @@ const createPayment = async (payload: TPayment) => {
 const confirmPayment = async (query: Record<string, any>) => {
   const { sessionId, paymentId } = query;
   const session = await startSession();
+
+  const year = new Date().getFullYear();
 
   try {
     const paymentSession =
@@ -149,7 +153,8 @@ const confirmPayment = async (query: Record<string, any>) => {
         const isFirstPayment = booking.paymentStatus === 'pending';
 
         if (isFirstPayment) {
-          // First 50% payment
+          // ─── First 50% payment — booking is NOT fully paid yet ───
+          // Rule: no "Confirmed" email here. Only in-app notifications.
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
@@ -167,7 +172,7 @@ const confirmPayment = async (query: Record<string, any>) => {
           // 🔔 Half Payment (First 50%) Notifications
           await NotificationServices.insertNotificationIntoDB({
             receiver: payment.user,
-            message: '💳 First Payment Confirmed!',
+            message: '💳 First Payment Received!',
             description: `Your first payment of $${booking.price / 2} for "${booking.serviceName}" has been received. Please complete the remaining $${booking.price / 2} to fully confirm your booking.`,
             reference: payment._id,
             model_type: ModeType.Payment,
@@ -180,8 +185,11 @@ const confirmPayment = async (query: Record<string, any>) => {
             reference: payment._id,
             model_type: ModeType.Payment,
           });
+
+          // ❌ No "Confirmed" email sent here — payment is only half done.
+          // (Optional: send a separate "partial payment received" email template here later.)
         } else {
-          // Second 50% payment
+          // ─── Second (final) 50% payment — booking is now FULLY paid ───
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
@@ -212,9 +220,28 @@ const confirmPayment = async (query: Record<string, any>) => {
             reference: payment._id,
             model_type: ModeType.Payment,
           });
+
+          // ✅ referenceDoc is assigned above — safe to use referenceDoc.date here
+          const bookingDate = new Date(referenceDoc.date).toLocaleDateString(
+            'en-US',
+            { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+          );
+
+          await sendEmail(
+            referenceDoc.email,
+            `✅ Booking Confirmed — ${booking.serviceName}`,
+            bookingConfirmedTemplate(
+              referenceDoc,
+              booking.serviceName,
+              bookingDate,
+              referenceDoc.time,
+              year,
+              booking.price, // full amount — fully paid now
+            ),
+          );
         }
       } else {
-        // Full / later payment
+        // ─── Full / one-time payment — booking is FULLY paid ───
         referenceDoc = await Booking.findByIdAndUpdate(
           payment.reference,
           {
@@ -245,6 +272,25 @@ const confirmPayment = async (query: Record<string, any>) => {
           reference: payment._id,
           model_type: ModeType.Payment,
         });
+
+        // ✅ referenceDoc is assigned above — safe to use referenceDoc.date here
+        const bookingDate = new Date(referenceDoc.date).toLocaleDateString(
+          'en-US',
+          { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+        );
+
+        await sendEmail(
+          referenceDoc.email,
+          `✅ Booking Confirmed — ${booking.serviceName}`,
+          bookingConfirmedTemplate(
+            referenceDoc,
+            booking.serviceName,
+            bookingDate,
+            referenceDoc.time,
+            year,
+            booking.price, // full amount — fully paid now
+          ),
+        );
       }
     }
 

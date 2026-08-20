@@ -252,6 +252,18 @@ const getAllPackagesFromDB = async (query: Record<string, unknown>) => {
                     $options: 'i',
                   },
                 },
+                {
+                  'vendor.state': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
+                {
+                  'vendor.street': {
+                    $regex: String(searchTerm),
+                    $options: 'i',
+                  },
+                },
               ],
             },
           },

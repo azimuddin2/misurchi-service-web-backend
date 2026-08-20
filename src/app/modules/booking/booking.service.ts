@@ -18,7 +18,7 @@ import { TeamMember } from '../teamMember/teamMember.model';
 import { sendEmail } from '../../utils/sendEmail';
 import {
   bookingCancelledTemplate,
-  bookingConfirmedTemplate,
+  bookingReceivedTemplate,
   memberAssignedTemplate,
   requestApprovedTemplate,
   requestRejectedTemplate,
@@ -209,13 +209,7 @@ const createBookingIntoDB = async (payload: TBooking) => {
   await sendEmail(
     booking.email,
     `📋 Booking Received — ${serviceData.name} (Payment Required)`,
-    bookingConfirmedTemplate(
-      booking,
-      serviceData.name,
-      bookingDate,
-      time,
-      year,
-    ),
+    bookingReceivedTemplate(booking, serviceData.name, bookingDate, time, year),
   );
 
   return booking;
