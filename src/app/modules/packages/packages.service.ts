@@ -320,7 +320,7 @@ const getAllPackagesByVendorFromDB = async (query: Record<string, unknown>) => {
     isDeleted: false,
   })
     .select(
-      'name images type recommendedType status savedServices createdAt status serviceId description',
+      'name images type recommendedType status savedServices createdAt status serviceId',
     )
     .populate({
       path: 'vendor',
@@ -383,7 +383,7 @@ const updatePackagesIntoDB = async (
       }));
 
       uploadedImages = await uploadManyToS3(imgsArray);
-      console.log(uploadedImages, { id }, 'Uploaded to S3 ✅');
+      console.log(uploadedImages, { id }, 'Uploaded to S3');
     }
   }
 

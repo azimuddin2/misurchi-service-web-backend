@@ -157,7 +157,7 @@ const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
 
             <!-- Footer -->
             <tr>
-              <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <td style="background-color: #f0f2f4; border-top: 1px solid #f0f2f4; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
                   &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.

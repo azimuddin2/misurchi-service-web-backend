@@ -642,7 +642,7 @@ export const bookingReceivedTemplate = (
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Booking Received</title>
 </head>
-<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background-color:#f0f4f0;">
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background-color: #f0f2f4;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f0;padding:40px 0;">
     <tr>
       <td align="center">
@@ -694,9 +694,9 @@ export const bookingReceivedTemplate = (
 
           <!-- Footer -->
           <tr>
-            <td style="background-color:#f8fdf9;border-top:1px solid #e8f5ee;padding:20px 40px;text-align:center;">
+            <td style="background-color: #f0f2f4; border-top:1px solid #f0f2f4;padding:20px 40px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.6;">
-                &copy; ${year} <strong style="color:#0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                &copy; ${year} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                 This is an automated message, please do not reply.
               </p>
             </td>
