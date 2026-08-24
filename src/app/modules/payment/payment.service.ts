@@ -22,8 +22,10 @@ import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
 import { ReferralService } from '../referral/referral.service';
 import { sendEmail } from '../../utils/sendEmail';
-import { bookingConfirmedTemplate } from '../booking/booking.emailTemplates';
-import { halfPaymentReceivedTemplate } from './payment.emailTemplates';
+import {
+  bookingConfirmedTemplate,
+  halfPaymentReceivedTemplate,
+} from './payment.emailTemplates';
 
 const createPayment = async (payload: TPayment) => {
   const session = await startSession();
@@ -141,20 +143,12 @@ const confirmPayment = async (query: Record<string, any>) => {
         reference: payment._id,
         model_type: ModeType.Payment,
       });
-    }
 
-    // ─── Service Booking Payment ─────────────────────────────────
-    if (payment.modelType === 'Booking') {
+      // ─── Service Booking Payment ─────────────────────────────────
+    } else if (payment.modelType === 'Booking') {
       const booking = await Booking.findById(payment.reference).session(
         session,
       );
-
-      // ✅ referenceDoc is assigned above — safe to use referenceDoc.date here
-      const bookingDate = new Date(referenceDoc.date).toLocaleDateString(
-        'en-US',
-        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
-      );
-
       if (!booking) {
         throw new AppError(httpStatus.NOT_FOUND, 'Booking not found');
       }
@@ -163,18 +157,21 @@ const confirmPayment = async (query: Record<string, any>) => {
         const isFirstPayment = booking.paymentStatus === 'pending';
 
         if (isFirstPayment) {
-          // ─── First 50% payment — booking is NOT fully paid yet ───
-          // Rule: no "Confirmed" email here. Only in-app notifications.
+          // ─── First 50% payment ───
+          // Booking status becomes 'confirmed' in DB, but the email sent
+          // is the "Partial Payment Received" template (not the full
+          // "Booking Confirmed" template), since the remaining balance
+          // is still due.
           referenceDoc = await Booking.findByIdAndUpdate(
             payment.reference,
             {
+              status: 'confirmed',
               paymentStatus: 'half-paid',
               paidAmount: booking.price / 2,
               remainingAmount: booking.price / 2,
               trnId: payment.trnId,
               $push: { trnIds: payment.trnId },
               isPaid: false,
-              status: 'confirmed',
             },
             { new: true, session },
           );
@@ -196,6 +193,13 @@ const confirmPayment = async (query: Record<string, any>) => {
             model_type: ModeType.Payment,
           });
 
+          // ✅ referenceDoc is assigned above — safe to use referenceDoc.date here
+          const bookingDate = new Date(referenceDoc.date).toLocaleDateString(
+            'en-US',
+            { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+          );
+
+          // 📧 "Partial Payment Received" template — no "Confirmed" wording
           await sendEmail(
             referenceDoc.email,
             `💳 Partial Payment Received — ${booking.serviceName}`,
@@ -207,7 +211,6 @@ const confirmPayment = async (query: Record<string, any>) => {
               year,
               booking.price / 2, // paidAmount
               booking.price / 2, // remainingAmount
-              'https://yourapp.com/pay/xyz', // optional paymentLink
             ),
           );
         } else {
@@ -243,6 +246,13 @@ const confirmPayment = async (query: Record<string, any>) => {
             model_type: ModeType.Payment,
           });
 
+          // ✅ referenceDoc is assigned above — safe to use referenceDoc.date here
+          const bookingDate = new Date(referenceDoc.date).toLocaleDateString(
+            'en-US',
+            { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+          );
+
+          // 📧 Booking fully paid now — "Confirmed" template applies
           await sendEmail(
             referenceDoc.email,
             `✅ Booking Confirmed — ${booking.serviceName}`,
@@ -295,6 +305,7 @@ const confirmPayment = async (query: Record<string, any>) => {
           { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
         );
 
+        // 📧 Full payment — "Confirmed" template applies
         await sendEmail(
           referenceDoc.email,
           `✅ Booking Confirmed — ${booking.serviceName}`,
@@ -304,7 +315,7 @@ const confirmPayment = async (query: Record<string, any>) => {
             bookingDate,
             referenceDoc.time,
             year,
-            booking.price,
+            booking.price, // full amount — fully paid now
           ),
         );
       }
