@@ -3,8 +3,16 @@ import { TFollow } from './follow.interface';
 
 const FollowSchema = new Schema<TFollow>(
   {
-    follower: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    vendor: { type: Schema.Types.ObjectId, ref: 'Vendor', required: true },
+    follower: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'Vendor',
+      required: true,
+    },
   },
   { timestamps: true },
 );

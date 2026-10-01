@@ -8,11 +8,23 @@ const BookingRequestSchema = new Schema<IBookingRequest>({
     enum: ['none', 'cancel', 'reschedule'],
     default: 'none',
   },
-  reason: { type: String },
-  newDate: { type: String },
-  newTime: { type: String },
-  vendorApproved: { type: Boolean, default: null },
-  updatedAt: { type: Date, default: Date.now },
+  reason: {
+    type: String,
+  },
+  newDate: {
+    type: String,
+  },
+  newTime: {
+    type: String,
+  },
+  vendorApproved: {
+    type: Boolean,
+    default: null,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const bookingSchema = new Schema<TBooking>(
@@ -108,10 +120,21 @@ const bookingSchema = new Schema<TBooking>(
       type: Boolean,
       default: false,
     },
-    isPaid: { type: Boolean, default: false },
-    paidAmount: { type: Number, default: 0 },
-    remainingAmount: { type: Number, default: 0 },
-    trnId: { type: String },
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    paidAmount: {
+      type: Number,
+      default: 0,
+    },
+    remainingAmount: {
+      type: Number,
+      default: 0,
+    },
+    trnId: {
+      type: String,
+    },
     trnIds: [{ type: String }],
     assignedToMember: {
       type: Schema.Types.ObjectId,

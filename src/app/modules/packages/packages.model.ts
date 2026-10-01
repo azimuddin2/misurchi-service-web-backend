@@ -4,28 +4,58 @@ import { HighlightStatus } from './packages.constant';
 
 const imageSchema = new Schema(
   {
-    url: { type: String, required: true },
-    key: { type: String, required: true },
+    url: {
+      type: String,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
   },
   { _id: false },
 );
 
 const ServicePricingSchema = new Schema<TServicePricing>(
   {
-    id: { type: String, required: true },
-    duration: { type: String, required: true },
-    price: { type: String, required: true },
-    discount: { type: String },
-    finalPrice: { type: String, required: true },
+    id: {
+      type: String,
+      required: true,
+    },
+    duration: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: String,
+      required: true,
+    },
+    discount: {
+      type: String,
+    },
+    finalPrice: {
+      type: String,
+      required: true,
+    },
   },
   { _id: false },
 );
 
 const DayScheduleSchema = new Schema<TDaySchedule>(
   {
-    enabled: { type: Boolean, required: true, default: false },
-    startTime: { type: String, required: true },
-    endTime: { type: String, required: true },
+    enabled: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    startTime: {
+      type: String,
+      required: true,
+    },
+    endTime: {
+      type: String,
+      required: true,
+    },
   },
   { _id: false },
 );
@@ -42,19 +72,36 @@ const packagesSchema = new Schema<TPackages>(
       required: [true, 'User Id is required'],
       ref: 'User',
     },
-    deleteKey: [{ type: String, required: true }],
-    serviceId: { type: String, required: true },
-    name: { type: String, required: true },
+    deleteKey: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    serviceId: {
+      type: String,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
     images: {
       type: [imageSchema],
       required: true,
     },
-    type: { type: String, required: true },
+    type: {
+      type: String,
+      required: true,
+    },
     recommendedType: {
       type: [String],
       required: false,
     },
-    savedServices: { type: [ServicePricingSchema], required: true },
+    savedServices: {
+      type: [ServicePricingSchema],
+      required: true,
+    },
     description: { type: String },
     status: {
       type: String,
@@ -86,7 +133,10 @@ const packagesSchema = new Schema<TPackages>(
       type: Number,
       default: 0,
     },
-    isDeleted: { type: Boolean, default: false },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

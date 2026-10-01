@@ -14,19 +14,16 @@ const paymentSchema = new Schema<TPayment>(
       ref: 'Vendor',
       required: true,
     },
-
     modelType: {
       type: String,
       enum: Object.values(PAYMENT_MODEL_TYPE),
       required: true,
     },
-
     reference: {
       type: Schema.Types.ObjectId,
       required: true,
       refPath: 'modelType', // 👈 dynamic reference (Order / Booking)
     },
-
     status: {
       type: String,
       enum: {
@@ -35,7 +32,6 @@ const paymentSchema = new Schema<TPayment>(
       },
       default: 'pending',
     },
-
     deliveryStatus: {
       type: String,
       enum: ['pending', 'ongoing', 'shipped', 'delivered'],
@@ -44,14 +40,29 @@ const paymentSchema = new Schema<TPayment>(
       },
       default: 'pending',
     },
-
-    trnId: { type: String, required: true },
-    adminAmount: { type: Number, required: true },
-    vendorAmount: { type: Number, required: true },
-    paymentIntentId: { type: String },
-    price: { type: Number, required: true },
-
-    isDeleted: { type: Boolean, default: false },
+    trnId: {
+      type: String,
+      required: true,
+    },
+    adminAmount: {
+      type: Number,
+      required: true,
+    },
+    vendorAmount: {
+      type: Number,
+      required: true,
+    },
+    paymentIntentId: {
+      type: String,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

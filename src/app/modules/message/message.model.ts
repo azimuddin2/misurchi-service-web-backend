@@ -13,7 +13,6 @@ const messageSchema = new Schema<TMessage>(
         default: null,
       },
     ],
-
     seen: {
       type: Boolean,
       default: false,
@@ -28,7 +27,6 @@ const messageSchema = new Schema<TMessage>(
       required: true,
       ref: 'User',
     },
-
     chat: {
       type: Types.ObjectId,
       required: true,

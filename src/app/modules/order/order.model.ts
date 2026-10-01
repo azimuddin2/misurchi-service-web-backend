@@ -4,26 +4,53 @@ import { OrderStatus } from './order.constant';
 
 const orderProductSchema = new Schema(
   {
-    name: { type: String, required: true },
-    image: { type: String, required: true },
+    name: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String,
+      required: true,
+    },
     product: {
       type: Schema.Types.ObjectId,
       required: [true, 'Product Id is required'],
       ref: 'Product',
     },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true },
-    discount: { type: Number, default: 0 },
-    size: { type: String, required: true },
-    color: { type: String, required: true },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    size: {
+      type: String,
+      required: true,
+    },
+    color: {
+      type: String,
+      required: true,
+    },
   },
-  { _id: false }, // prevent creating extra _id for each product item
+  { _id: false },
 );
 
 const ImageSchema = new Schema(
   {
-    url: { type: String, required: true },
-    key: { type: String, required: true },
+    url: {
+      type: String,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
   },
   { _id: false },
 );
@@ -35,10 +62,20 @@ const OrderRequestSchema = new Schema(
       enum: ['none', 'cancelled', 'return'],
       default: 'none',
     },
-    images: { type: [ImageSchema], default: [] },
-    reason: { type: String },
-    vendorApproved: { type: Boolean, default: null },
-    updatedAt: { type: Date },
+    images: {
+      type: [ImageSchema],
+      default: [],
+    },
+    reason: {
+      type: String,
+    },
+    vendorApproved: {
+      type: Boolean,
+      default: null,
+    },
+    updatedAt: {
+      type: Date,
+    },
   },
   { _id: false },
 );
@@ -54,30 +91,36 @@ const orderSchema = new Schema<TOrder>(
       type: [orderProductSchema],
       required: true,
     },
-
     vendor: {
       type: Schema.Types.ObjectId,
       required: [true, 'Vendor Id is required'],
       ref: 'Vendor',
     },
-
     buyer: {
       type: Schema.Types.ObjectId,
       required: [true, 'User Id is required'],
       ref: 'User',
     },
-
-    customerName: { type: String, required: true, trim: true },
+    customerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     customerEmail: {
       type: String,
       required: true,
       lowercase: true,
       trim: true,
     },
-    customerPhone: { type: String, required: true, trim: true },
-
-    totalPrice: { type: Number, required: true },
-
+    customerPhone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
       enum: {
@@ -86,26 +129,45 @@ const orderSchema = new Schema<TOrder>(
       },
       default: 'pending',
     },
-
-    request: { type: OrderRequestSchema, default: () => ({}) },
-
-    isPaid: { type: Boolean, default: false },
-    trnId: { type: String },
-
-    billingDetails: {
-      country: { type: String, required: true },
-      city: { type: String },
-      state: { type: String },
-      zipCode: { type: String, required: true },
-      address: { type: String, required: true },
+    request: {
+      type: OrderRequestSchema,
+      default: () => ({}),
     },
-
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    trnId: {
+      type: String,
+    },
+    billingDetails: {
+      country: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+      },
+      state: {
+        type: String,
+      },
+      zipCode: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: String,
+        required: true,
+      },
+    },
     isReviewed: {
       type: Boolean,
       default: false,
     },
-
-    isDeleted: { type: Boolean, default: false },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

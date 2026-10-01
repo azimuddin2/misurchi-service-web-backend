@@ -8,7 +8,6 @@ const ReferralSettingsSchema = new Schema<TReferralSettings>(
       required: [true, 'Referral points are required'],
       min: [1, 'Points must be at least 1'],
     },
-
     pointValue: {
       type: Number,
       required: [true, 'Point value is required'],

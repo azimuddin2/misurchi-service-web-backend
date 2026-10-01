@@ -3,8 +3,14 @@ import { TImageUpload } from './imageUpload.interface';
 
 const imageUploadSchema = new Schema<TImageUpload>(
   {
-    url: { type: String, required: true },
-    key: { type: String, required: true },
+    url: {
+      type: String,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
