@@ -1,8 +1,9 @@
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { TeamMemberServices } from './teamMember.service';
+import { Request, Response } from 'express';
 
-const createTeamMember = catchAsync(async (req, res) => {
+const createTeamMember = catchAsync(async (req: Request, res: Response) => {
   const vendorUserId = req.user.userId;
   const result = await TeamMemberServices.createTeamMemberIntoDB(
     vendorUserId,
@@ -18,7 +19,7 @@ const createTeamMember = catchAsync(async (req, res) => {
   });
 });
 
-const getAllTeamMember = catchAsync(async (req, res) => {
+const getAllTeamMember = catchAsync(async (req: Request, res: Response) => {
   const result = await TeamMemberServices.getAllTeamMemberFromDB(req.query);
 
   sendResponse(res, {
@@ -30,20 +31,22 @@ const getAllTeamMember = catchAsync(async (req, res) => {
   });
 });
 
-const getTeamMembersByVendor = catchAsync(async (req, res) => {
-  const result = await TeamMemberServices.getTeamMembersByVendorFromDB(
-    req.query,
-  );
+const getTeamMembersByVendor = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await TeamMemberServices.getTeamMembersByVendorFromDB(
+      req.query,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Team member retrieved successfully',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Team member retrieved successfully',
+      data: result,
+    });
+  },
+);
 
-const getTeamMemberById = catchAsync(async (req, res) => {
+const getTeamMemberById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TeamMemberServices.getTeamMemberByIdFromDB(id);
 
@@ -55,7 +58,7 @@ const getTeamMemberById = catchAsync(async (req, res) => {
   });
 });
 
-const updateTeamMember = catchAsync(async (req, res) => {
+const updateTeamMember = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TeamMemberServices.updateTeamMemberIntoDB(
     id,
@@ -71,7 +74,7 @@ const updateTeamMember = catchAsync(async (req, res) => {
   });
 });
 
-const deleteTeamMember = catchAsync(async (req, res) => {
+const deleteTeamMember = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TeamMemberServices.deleteTeamMemberFromDB(id);
 

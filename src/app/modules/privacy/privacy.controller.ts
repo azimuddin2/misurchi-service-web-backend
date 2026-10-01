@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { PrivacyService } from './privacy.service';
 
-const getPrivacy = catchAsync(async (req, res) => {
+const getPrivacy = catchAsync(async (req: Request, res: Response) => {
   const result = await PrivacyService.getPrivacyFromDB();
   sendResponse(res, {
     statusCode: 200,
@@ -12,7 +13,7 @@ const getPrivacy = catchAsync(async (req, res) => {
   });
 });
 
-const upsertPrivacy = catchAsync(async (req, res) => {
+const upsertPrivacy = catchAsync(async (req: Request, res: Response) => {
   const result = await PrivacyService.upsertPrivacyIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
@@ -22,7 +23,7 @@ const upsertPrivacy = catchAsync(async (req, res) => {
   });
 });
 
-const deletePrivacy = catchAsync(async (req, res) => {
+const deletePrivacy = catchAsync(async (req: Request, res: Response) => {
   const result = await PrivacyService.deletePrivacyFromDB();
   sendResponse(res, {
     statusCode: 200,

@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ProductTypeServices } from './productType.service';
 
-const createProductType = catchAsync(async (req, res) => {
+const createProductType = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductTypeServices.createProductTypeIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createProductType = catchAsync(async (req, res) => {
   });
 });
 
-const getAllProductType = catchAsync(async (req, res) => {
+const getAllProductType = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductTypeServices.getAllProductTypeFromDB(req.query);
 
   sendResponse(res, {
@@ -25,7 +26,7 @@ const getAllProductType = catchAsync(async (req, res) => {
   });
 });
 
-const getProductTypeById = catchAsync(async (req, res) => {
+const getProductTypeById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductTypeServices.getProductTypeByIdFromDB(id);
 
@@ -37,7 +38,7 @@ const getProductTypeById = catchAsync(async (req, res) => {
   });
 });
 
-const updateProductType = catchAsync(async (req, res) => {
+const updateProductType = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductTypeServices.updateProductTypeIntoDB(
     id,
@@ -52,7 +53,7 @@ const updateProductType = catchAsync(async (req, res) => {
   });
 });
 
-const deleteProductType = catchAsync(async (req, res) => {
+const deleteProductType = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductTypeServices.deleteProductTypeFromDB(id);
 

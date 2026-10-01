@@ -6,7 +6,7 @@ import { ReferralService } from './referral.service';
 import { Request, Response } from 'express';
 
 const getReferralLink = catchAsync(async (req: Request, res: Response) => {
-  const vendorId = req.user.vendorId as unknown as Types.ObjectId;
+  const vendorId = req.user.vendorId as Types.ObjectId;
 
   const result = await ReferralService.getReferralLink(vendorId);
 
@@ -19,7 +19,7 @@ const getReferralLink = catchAsync(async (req: Request, res: Response) => {
 });
 
 const emailReferralLink = catchAsync(async (req: Request, res: Response) => {
-  const vendorId = req.user.vendorId as unknown as Types.ObjectId;
+  const vendorId = req.user.vendorId as Types.ObjectId;
   const { recipientEmail } = req.body;
 
   await ReferralService.emailReferralLink(vendorId, recipientEmail);
@@ -33,7 +33,7 @@ const emailReferralLink = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getReferralStats = catchAsync(async (req: Request, res: Response) => {
-  const vendorId = req.user.vendorId as unknown as Types.ObjectId;
+  const vendorId = req.user.vendorId as Types.ObjectId;
   const month = req.query.month as string | undefined;
 
   const result = await ReferralService.getReferralStats(vendorId, month);

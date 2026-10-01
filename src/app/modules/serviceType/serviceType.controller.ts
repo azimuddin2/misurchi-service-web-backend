@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ServiceTypeServices } from './serviceType.service';
 
-const createServiceType = catchAsync(async (req, res) => {
+const createServiceType = catchAsync(async (req: Request, res: Response) => {
   const result = await ServiceTypeServices.createServiceTypeIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createServiceType = catchAsync(async (req, res) => {
   });
 });
 
-const getAllServiceType = catchAsync(async (req, res) => {
+const getAllServiceType = catchAsync(async (req: Request, res: Response) => {
   const result = await ServiceTypeServices.getAllServiceTypeFromDB(req.query);
 
   sendResponse(res, {
@@ -25,7 +26,7 @@ const getAllServiceType = catchAsync(async (req, res) => {
   });
 });
 
-const getServiceTypeById = catchAsync(async (req, res) => {
+const getServiceTypeById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ServiceTypeServices.getServiceTypeByIdFromDB(id);
 
@@ -37,7 +38,7 @@ const getServiceTypeById = catchAsync(async (req, res) => {
   });
 });
 
-const updateServiceType = catchAsync(async (req, res) => {
+const updateServiceType = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ServiceTypeServices.updateServiceTypeIntoDB(
     id,
@@ -52,7 +53,7 @@ const updateServiceType = catchAsync(async (req, res) => {
   });
 });
 
-const deleteServiceType = catchAsync(async (req, res) => {
+const deleteServiceType = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ServiceTypeServices.deleteServiceTypeFromDB(id);
 

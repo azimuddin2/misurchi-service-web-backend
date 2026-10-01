@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { AboutService } from './about.service';
 
-const getAbout = catchAsync(async (req, res) => {
+const getAbout = catchAsync(async (req: Request, res: Response) => {
   const result = await AboutService.getAboutFromDB();
   sendResponse(res, {
     statusCode: 200,
@@ -12,7 +13,7 @@ const getAbout = catchAsync(async (req, res) => {
   });
 });
 
-const upsertAbout = catchAsync(async (req, res) => {
+const upsertAbout = catchAsync(async (req: Request, res: Response) => {
   const result = await AboutService.upsertAboutIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
@@ -22,7 +23,7 @@ const upsertAbout = catchAsync(async (req, res) => {
   });
 });
 
-const deleteAbout = catchAsync(async (req, res) => {
+const deleteAbout = catchAsync(async (req: Request, res: Response) => {
   const result = await AboutService.deleteAboutFromDB();
   sendResponse(res, {
     statusCode: 200,

@@ -23,7 +23,6 @@ const createMessages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get all messages
 const getAllMessages = catchAsync(async (req: Request, res: Response) => {
   const result = await MessagesService.getAllMessages(req.query);
   sendResponse(res, {
@@ -34,7 +33,6 @@ const getAllMessages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get messages by chat ID
 const getMessagesByChatId = catchAsync(async (req: Request, res: Response) => {
   const result = await MessagesService.getMessagesByChatId(req.params.chatId);
   sendResponse(res, {
@@ -45,7 +43,6 @@ const getMessagesByChatId = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get message by ID
 const getMessagesById = catchAsync(async (req: Request, res: Response) => {
   const result = await MessagesService.getMessagesById(req.params.id);
   sendResponse(res, {
@@ -56,7 +53,6 @@ const getMessagesById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Update message
 const updateMessages = catchAsync(async (req: Request, res: Response) => {
   if (req.file) {
     const message = await Message.findById(req.params.id);
@@ -80,7 +76,6 @@ const updateMessages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-//seen messages
 const seenMessage = catchAsync(async (req: Request, res: Response) => {
   const chatList: IChat | null = await Chat.findById(req.params.chatId);
   if (!chatList) {
@@ -113,7 +108,7 @@ const seenMessage = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-// Delete message
+
 const deleteMessages = catchAsync(async (req: Request, res: Response) => {
   const result = await MessagesService.deleteMessages(req.params.id);
   sendResponse(res, {

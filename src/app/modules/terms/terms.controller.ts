@@ -1,8 +1,9 @@
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { TermsService } from './terms.service';
+import { Request, Response } from 'express';
 
-const getTerms = catchAsync(async (req, res) => {
+const getTerms = catchAsync(async (req: Request, res: Response) => {
   const result = await TermsService.getTermsFromDB();
   sendResponse(res, {
     statusCode: 200,
@@ -12,7 +13,7 @@ const getTerms = catchAsync(async (req, res) => {
   });
 });
 
-const upsertTerms = catchAsync(async (req, res) => {
+const upsertTerms = catchAsync(async (req: Request, res: Response) => {
   const result = await TermsService.upsertTermsIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
@@ -22,7 +23,7 @@ const upsertTerms = catchAsync(async (req, res) => {
   });
 });
 
-const deleteTerms = catchAsync(async (req, res) => {
+const deleteTerms = catchAsync(async (req: Request, res: Response) => {
   const result = await TermsService.deleteTermsFromDB();
   sendResponse(res, {
     statusCode: 200,

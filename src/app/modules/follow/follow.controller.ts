@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { FollowServices } from './follow.service';
 
-const followVendor = catchAsync(async (req, res) => {
+const followVendor = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.userId;
   const { vendorId } = req.params;
 
@@ -16,7 +17,7 @@ const followVendor = catchAsync(async (req, res) => {
   });
 });
 
-const unfollowVendor = catchAsync(async (req, res) => {
+const unfollowVendor = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.userId;
   const { vendorId } = req.params;
 
@@ -33,22 +34,24 @@ const unfollowVendor = catchAsync(async (req, res) => {
   });
 });
 
-const getVendorFollowersCount = catchAsync(async (req, res) => {
-  const { vendorId } = req.params;
-  const currentUserId = req.user?.userId; // ✅ now passed from auth
+const getVendorFollowersCount = catchAsync(
+  async (req: Request, res: Response) => {
+    const { vendorId } = req.params;
+    const currentUserId = req.user?.userId;
 
-  const result = await FollowServices.getVendorFollowersCountFromDB(
-    vendorId,
-    currentUserId,
-  );
+    const result = await FollowServices.getVendorFollowersCountFromDB(
+      vendorId,
+      currentUserId,
+    );
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Followers count retrieved successfully',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Followers count retrieved successfully',
+      data: result,
+    });
+  },
+);
 
 export const FollowControllers = {
   followVendor,

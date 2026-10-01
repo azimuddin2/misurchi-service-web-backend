@@ -3,8 +3,9 @@ import sendResponse from '../../utils/sendResponse';
 import AppError from '../../errors/AppError';
 import { TeamMember } from '../teamMember/teamMember.model';
 import { TaskServices } from './task.service';
+import { Request, Response } from 'express';
 
-const createTask = catchAsync(async (req, res) => {
+const createTask = catchAsync(async (req: Request, res: Response) => {
   const loggedInTeamMember = await TeamMember.findOne({
     user: req.user.userId,
     isDeleted: false,
@@ -25,7 +26,7 @@ const createTask = catchAsync(async (req, res) => {
   });
 });
 
-const getAllTasks = catchAsync(async (req, res) => {
+const getAllTasks = catchAsync(async (req: Request, res: Response) => {
   const result = await TaskServices.getAllTasksFromDB(req.query);
 
   sendResponse(res, {
@@ -37,22 +38,24 @@ const getAllTasks = catchAsync(async (req, res) => {
   });
 });
 
-const getTasksByTeamMemberId = catchAsync(async (req, res) => {
-  const { userId } = req.params;
-  const result = await TaskServices.getTasksByTeamMemberIdFromDB(
-    userId,
-    req.query,
-  );
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Tasks fetched successfully',
-    meta: result.meta,
-    data: result.result,
-  });
-});
+const getTasksByTeamMemberId = catchAsync(
+  async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const result = await TaskServices.getTasksByTeamMemberIdFromDB(
+      userId,
+      req.query,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Tasks fetched successfully',
+      meta: result.meta,
+      data: result.result,
+    });
+  },
+);
 
-const getTaskById = catchAsync(async (req, res) => {
+const getTaskById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TaskServices.getTaskByIdFromDB(id);
 
@@ -64,7 +67,7 @@ const getTaskById = catchAsync(async (req, res) => {
   });
 });
 
-const updateTask = catchAsync(async (req, res) => {
+const updateTask = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TaskServices.updateTaskIntoDB(id, req.body);
 
@@ -76,7 +79,7 @@ const updateTask = catchAsync(async (req, res) => {
   });
 });
 
-const updateTaskStatus = catchAsync(async (req, res) => {
+const updateTaskStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const loggedInTeamMember = await TeamMember.findOne({
@@ -109,7 +112,7 @@ const updateTaskStatus = catchAsync(async (req, res) => {
   });
 });
 
-const deleteTask = catchAsync(async (req, res) => {
+const deleteTask = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TaskServices.deleteTaskFromDB(id);
 

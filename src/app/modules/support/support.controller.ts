@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { SupportServices } from './support.service';
 
-const createSupport = catchAsync(async (req, res) => {
+const createSupport = catchAsync(async (req: Request, res: Response) => {
   const result = await SupportServices.createSupportIntoDB(req.body);
 
   sendResponse(res, {
@@ -13,7 +14,7 @@ const createSupport = catchAsync(async (req, res) => {
   });
 });
 
-const getAllSupport = catchAsync(async (req, res) => {
+const getAllSupport = catchAsync(async (req: Request, res: Response) => {
   const result = await SupportServices.getAllSupportFromDB(req.query);
 
   sendResponse(res, {
@@ -25,7 +26,7 @@ const getAllSupport = catchAsync(async (req, res) => {
   });
 });
 
-const getSupportByEmail = catchAsync(async (req, res) => {
+const getSupportByEmail = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.params;
   const result = await SupportServices.getSupportByEmailFromDB(
     email,
@@ -41,7 +42,7 @@ const getSupportByEmail = catchAsync(async (req, res) => {
   });
 });
 
-const getSupportById = catchAsync(async (req, res) => {
+const getSupportById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await SupportServices.getSupportByIdFromDB(id);
 
@@ -53,7 +54,7 @@ const getSupportById = catchAsync(async (req, res) => {
   });
 });
 
-const updateSupport = catchAsync(async (req, res) => {
+const updateSupport = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await SupportServices.updateSupportIntoDB(id, req.body);
 
@@ -65,7 +66,7 @@ const updateSupport = catchAsync(async (req, res) => {
   });
 });
 
-const supportMarkHelpful = catchAsync(async (req, res) => {
+const supportMarkHelpful = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { isHelpful } = req.body;
   const result = await SupportServices.supportMarkHelpfulIntoDB(id, isHelpful);
@@ -78,7 +79,7 @@ const supportMarkHelpful = catchAsync(async (req, res) => {
   });
 });
 
-const deleteSupport = catchAsync(async (req, res) => {
+const deleteSupport = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await SupportServices.deleteSupportFromDB(id);
 
