@@ -70,7 +70,6 @@ const createProductIntoDB = async (payload: TProduct, files: any) => {
 };
 
 const getAllProductFromDB = async (query: Record<string, unknown>) => {
-  console.log('Received query:', query);
   const {
     minPrice,
     maxPrice,
@@ -389,7 +388,7 @@ const getAllProductByVendorFromDB = async (query: Record<string, unknown>) => {
     })
     .populate({
       path: 'reviews',
-      select: '_id rating review user', // include the fields you need
+      select: '_id rating review user',
     });
 
   const queryBuilder = new QueryBuilder(productQuery, filters)
@@ -411,7 +410,7 @@ const getProductByIdFromDB = async (id: string) => {
     .populate('user')
     .populate({
       path: 'reviews',
-      select: '_id rating review user', // include the fields you need
+      select: '_id rating review user',
     });
 
   if (!result) {

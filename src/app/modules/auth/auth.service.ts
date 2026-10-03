@@ -355,31 +355,79 @@ const forgotPassword = async (email: string) => {
     email,
     'Your OTP for Password Reset',
     `
-  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 24px; border-radius: 10px; border: 1px solid #e0e0e0;">
-    <h2 style="color: #1A73E8; text-align: center; margin-top: 0;">Password Reset OTP</h2>
-    
-    <p style="font-size: 16px; color: #333; text-align: center;">
-      We received a request to reset your password. Use the one-time password (OTP) below:
-    </p>
-
-    <div style="background-color: #f4f4f4; padding: 20px; margin: 20px auto; border-radius: 6px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-      <p style="font-size: 18px; color: #013B23; margin-bottom: 10px;">Your OTP:</p>
-      <p style="font-size: 32px; color: #1A73E8; font-weight: bold; margin: 0;">${otp}</p>
-    </div>
-
-    <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
-      This OTP is valid until:
-    </p>
-    <p style="font-size: 14px; color: #0654b9; text-align: center; font-weight: bold; margin: 0;">
-      ${expiresAt.toLocaleString()}
-    </p>
-
-    <hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;" />
-
-    <p style="font-size: 13px; color: #999; text-align: center;">
-      If you did not request this, please ignore this email.
-    </p>
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:#f3f4f6;">
+    Your password reset code is ${otp}.
   </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f4f6;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background-color:#ffffff; border-radius:12px; border:1px solid #e5e7eb; border-top:4px solid #1A73E8;">
+
+          <tr>
+            <td style="padding:40px 40px 8px; font-family:Arial, Helvetica, sans-serif;">
+              <h1 style="margin:0 0 14px; font-size:24px; line-height:32px; font-weight:700; color:#111827;">
+                Reset your password
+              </h1>
+              <p style="margin:0; font-size:15px; line-height:24px; color:#4b5563;">
+                We received a request to reset the password for your account.
+                Enter the one-time password below to continue.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="background-color:#f0f6ff; border:1px solid #d6e6ff; border-radius:10px; padding:26px 16px;">
+                    <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#6b7280; margin-bottom:10px;">
+                      Your OTP
+                    </div>
+                    <div style="font-family:'Courier New', Courier, monospace; font-size:38px; line-height:44px; font-weight:700; letter-spacing:10px; color:#1A73E8; padding-left:10px;">
+                      ${otp}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 40px 32px; font-family:Arial, Helvetica, sans-serif;">
+              <p style="margin:0 0 6px; font-size:14px; line-height:22px; color:#6b7280;">
+                This OTP is valid until
+              </p>
+              <p style="margin:0; font-size:15px; line-height:22px; font-weight:700; color:#111827;">
+                ${expiresAt.toLocaleString()}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 40px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#fff8e6; border-left:4px solid #f5a623; border-radius:6px; padding:14px 16px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#7a5b00;">
+                    <strong>Never share this code with anyone.</strong> We will never ask you for your OTP.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color:#f9fafb; border-top:1px solid #e5e7eb; border-radius:0 0 12px 12px; padding:22px 40px; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#9ca3af; text-align:center;">
+              If you did not request this, please ignore this email. Your password will not change.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
   `,
   );
 
@@ -458,10 +506,16 @@ const googleLogin = async (payload: {
   /* __________________ EXISTING USER LOGIN __________________ */
   if (existingUser) {
     if (existingUser.isDeleted) {
-      throw new AppError(httpStatus.FORBIDDEN, 'User account is deleted');
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'Your account has been deactivated. For assistance, please contact our support team.',
+      );
     }
     if (existingUser.status === 'blocked') {
-      throw new AppError(httpStatus.FORBIDDEN, 'User is blocked');
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'Your account has been blocked. For assistance, please contact our support team.',
+      );
     }
 
     let vendorId: string | undefined = undefined;

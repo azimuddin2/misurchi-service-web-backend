@@ -381,7 +381,6 @@ const vendorRegisterUserIntoDB = async (payload: TVendor, refCode?: string) => {
 const getAllUsersFromDB = async (query: Record<string, unknown>) => {
   const baseQuery = {
     ...query,
-    // isDeleted: false,
     role: { $nin: ['admin'] },
   };
 

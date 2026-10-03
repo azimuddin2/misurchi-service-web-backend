@@ -57,7 +57,7 @@ const createPackagesIntoDB = async (payload: TPackages, files: any) => {
       }));
 
       try {
-        payload.images = await uploadManyToS3(imgsArray); // Await all uploads before proceeding
+        payload.images = await uploadManyToS3(imgsArray);
       } catch (error) {
         throw new AppError(500, 'Image upload failed');
       }
@@ -409,7 +409,6 @@ const updatePackagesIntoDB = async (
   }
 
   // ✅ Update other fields
-  console.log('UPDATE Data ----------', updateData);
   const result = await Packages.findByIdAndUpdate(id, updateData, {
     new: true,
   });

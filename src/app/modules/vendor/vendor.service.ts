@@ -38,11 +38,21 @@ const getAllVendorsFromDB = async (query: Record<string, unknown>) => {
 
 const getVendorProfileFromDB = async (email: string) => {
   const result = await Vendor.findOne({ email: email }).populate('userId');
+
+  if (!result) {
+    throw new AppError(404, 'Vendor not found');
+  }
+
   return result;
 };
 
 const getVendorUserByIdFromDB = async (id: string) => {
   const result = await Vendor.findById(id).populate('userId');
+
+  if (!result) {
+    throw new AppError(404, 'Vendor not found');
+  }
+
   return result;
 };
 
