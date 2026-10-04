@@ -139,6 +139,7 @@ const reactivateUserAccount = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await UserServices.reactivateUserAccountFromDB(id);
+
     sendResponse(res, {
       success: true,
       statusCode: 200,
@@ -147,6 +148,18 @@ const reactivateUserAccount = catchAsync(
     });
   },
 );
+
+const removeUserByAdmin = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await UserServices.removeUserByAdminFromDB(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'User has been removed successfully.',
+    data: result,
+  });
+});
 
 export const UserControllers = {
   registerUser,
@@ -159,4 +172,5 @@ export const UserControllers = {
   updateNotificationSettings,
   deleteUserAccount,
   reactivateUserAccount,
+  removeUserByAdmin,
 };

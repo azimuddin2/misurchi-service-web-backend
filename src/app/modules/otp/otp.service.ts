@@ -66,15 +66,15 @@ const resendOtpIntoDB = async (email: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OTP Verification</title>
   </head>
-  <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f0;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f0; padding: 40px 0;">
+  <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f4; padding: 40px 0;">
       <tr>
         <td align="center">
           <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(10,168,76,0.1);">
             
             <!-- Header -->
             <tr>
-              <td align="center" style="background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); padding: 40px 40px 30px;">
+              <td align="center"  style="background: #1A73E8; padding: 40px 40px 30px;">
                 <div style="width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                   <span style="font-size: 28px;">✉️</span>
                 </div>
@@ -95,7 +95,7 @@ const resendOtpIntoDB = async (email: string) => {
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                   <tr>
                     <td align="center">
-                      <div style="display: inline-block; background: linear-gradient(135deg, #0AA84C 0%, #078a3e 100%); border-radius: 10px; padding: 20px 50px;">
+                      <div style="display: inline-block; background: linear-gradient(135deg, #1A73E8 0%, #1A73E8 100%); border-radius: 10px; padding: 20px 50px;">
                         <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;">Your OTP Code</p>
                         <p style="margin: 0; font-size: 36px; font-weight: 800; color: #ffffff; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
                       </div>
@@ -104,18 +104,18 @@ const resendOtpIntoDB = async (email: string) => {
                 </table>
 
                 <!-- Expiry Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fdf9; border: 1px solid #d4f0e0; border-radius: 8px; margin-bottom: 24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f4; border: 1px solid #f0f2f4; border-radius: 8px; margin-bottom: 24px;">
                   <tr>
                     <td style="padding: 14px 20px; text-align: center;">
                       <p style="margin: 0; font-size: 13px; color: #555555;">
-                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #0AA84C;">${expiresAt.toLocaleString()}</strong>
+                        ⏱️ &nbsp;This code expires at &nbsp;<strong style="color: #1A73E8;">${expiresAt.toLocaleString()}</strong>
                       </p>
                     </td>
                   </tr>
                 </table>
 
                 <!-- Security Notice -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #0AA84C; border-radius: 4px; margin-bottom: 8px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff8f0; border-left: 4px solid #1A73E8; border-radius: 4px; margin-bottom: 8px;">
                   <tr>
                     <td style="padding: 12px 16px;">
                       <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
@@ -130,9 +130,9 @@ const resendOtpIntoDB = async (email: string) => {
 
             <!-- Footer -->
             <tr>
-              <td style="background-color: #f8fdf9; border-top: 1px solid #e8f5ee; padding: 20px 40px; text-align: center;">
+              <td style="background-color: #f0f2f4; border-top: 1px solid #f0f2f4; padding: 20px 40px; text-align: center;">
                 <p style="margin: 0; font-size: 12px; color: #aaaaaa; line-height: 1.6;">
-                  &copy; ${new Date().getFullYear()} <strong style="color: #0AA84C;">SMEVine</strong>. All rights reserved.<br/>
+                  &copy; ${new Date().getFullYear()} <strong style="color: #1A73E8;">SMEVine</strong>. All rights reserved.<br/>
                   This is an automated message, please do not reply.
                 </p>
               </td>
@@ -195,6 +195,7 @@ const verifyOtp = async (token: string, otp: TVerifyOtp) => {
     user?._id,
     {
       $set: {
+        status: 'confirmed',
         isVerified: user?.isVerified === false ? true : user?.isVerified,
         verification: {
           otp: 0,

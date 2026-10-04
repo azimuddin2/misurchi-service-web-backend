@@ -15,6 +15,7 @@ import { userSearchableFields } from './user.constant';
 import { deleteFromS3, uploadToS3 } from '../../utils/awsS3FileUploader';
 import { Subscription } from '../subscription/subscription.model';
 import { Referral } from '../referral/referral.model';
+import { TeamMember } from '../teamMember/teamMember.model';
 
 const registerUserIntoDB = async (payload: TUser, refCode?: string) => {
   // 1. Check if user already exists
@@ -886,6 +887,97 @@ const reactivateUserAccountFromDB = async (userId: string) => {
   return reactivatedUser;
 };
 
+const removeUserByAdminFromDB = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+
+  if (user.role === 'admin') {
+    throw new AppError(403, 'Admin account cannot be removed');
+  }
+
+  const { email, fullName } = user;
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    // ── Case 1: User Vendor ──
+    const vendor = await Vendor.findOne({
+      $or: [{ _id: user.vendorId }, { userId: user._id }],
+    }).session(session);
+
+    if (vendor) {
+      const teamMembers = await TeamMember.find({ vendor: vendor._id })
+        .select('user')
+        .session(session);
+
+      const teamUserIds = teamMembers.map((tm) => tm.user).filter(Boolean);
+
+      if (teamUserIds.length) {
+        await User.deleteMany({ _id: { $in: teamUserIds } }, { session });
+      }
+
+      await TeamMember.deleteMany({ vendor: vendor._id }, { session });
+
+      await Referral.deleteMany({ referrerId: vendor._id }, { session });
+
+      await Vendor.deleteOne({ _id: vendor._id }, { session });
+    }
+
+    // ── Case 2: User Team Member ──
+    const memberDocs = await TeamMember.find({ user: user._id })
+      .select('_id')
+      .session(session);
+    const memberIds = memberDocs.map((m) => m._id);
+
+    if (memberIds.length) {
+      await Vendor.updateMany(
+        { teamMembers: { $in: memberIds } },
+        { $pull: { teamMembers: { $in: memberIds } } },
+        { session },
+      );
+      await TeamMember.deleteMany({ _id: { $in: memberIds } }, { session });
+    }
+
+    // ── Case 3: User keu refer korechilo ──
+    const referral = await Referral.findOneAndDelete(
+      { referredUserId: user._id },
+      { session },
+    );
+    if (referral) {
+      await Vendor.updateOne(
+        { _id: referral.referrerId },
+        { $inc: { totalReferredUsers: -1 } },
+        { session },
+      );
+    }
+
+    // ── Main user ──
+    await User.deleteOne({ _id: user._id }, { session });
+
+    await session.commitTransaction();
+  } catch (error: any) {
+    await session.abortTransaction();
+    throw new AppError(500, error.message || 'Failed to remove user');
+  } finally {
+    session.endSession();
+  }
+
+  try {
+    await sendEmail(
+      email,
+      'Account Removed',
+      `Hi ${fullName || 'there'}, your account has been removed by an administrator.`,
+    );
+  } catch (e) {
+    console.error('Remove email failed:', e);
+  }
+
+  return { removedUserId: userId };
+};
+
 export const UserServices = {
   registerUserIntoDB,
   vendorRegisterUserIntoDB,
@@ -897,4 +989,5 @@ export const UserServices = {
   updateNotificationSettingsIntoDB,
   deleteUserAccountFromDB,
   reactivateUserAccountFromDB,
+  removeUserByAdminFromDB,
 };
