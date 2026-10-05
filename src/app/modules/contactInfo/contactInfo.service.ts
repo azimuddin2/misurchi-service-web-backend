@@ -4,11 +4,6 @@ import { TContactInfo } from './contactInfo.interface';
 
 const getContactInfoFromDB = async () => {
   const result = await ContactInfo.findOne();
-
-  if (!result) {
-    throw new AppError(404, 'Contact info not found');
-  }
-
   return result;
 };
 
