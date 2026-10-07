@@ -222,7 +222,6 @@ const getAllBookingByVendorFromDB = async (query: Record<string, unknown>) => {
     throw new AppError(400, 'Invalid Vendor ID');
   }
 
-  // Base query -> always exclude deleted service
   let bookingQuery = Booking.find({ vendor, isDeleted: false })
     .populate({
       path: 'vendor',

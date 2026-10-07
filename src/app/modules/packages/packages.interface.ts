@@ -47,16 +47,16 @@ export type TPackages = {
   type: string;
   recommendedType: string[];
   savedServices: TServicePricing[];
-  description: string; // optional
+  description: string;
   images: TImage[];
   status?: TStatus;
   highlightStatus: THighlightStatus;
 
   availability: {
-    weeklySchedule: Partial<Record<TWeekDay, TDaySchedule>>; // not all days required
+    weeklySchedule: Partial<Record<TWeekDay, TDaySchedule>>;
   };
 
-  reviews?: Types.ObjectId[]; // can store populated reviews
+  reviews?: Types.ObjectId[];
   avgRating?: number;
 
   isDeleted: boolean;

@@ -401,7 +401,12 @@ const getAllPaymentFromDB = async (query: Record<string, unknown>) => {
     .populate({
       path: 'reference',
       select:
-        'orderId bookingId products serviceName date time duration price status',
+        'orderId bookingId products serviceName serviceImage service date time duration price status',
+      populate: {
+        path: 'service',
+        select: 'name images',
+        strictPopulate: false,
+      },
     });
 
   const queryBuilder = new QueryBuilder(paymentQuery, filters)
