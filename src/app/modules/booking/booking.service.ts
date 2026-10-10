@@ -427,7 +427,7 @@ const updateBookingRequestIntoDB = async (
 
   await NotificationServices.insertNotificationIntoDB({
     receiver: booking?.vendor,
-    message: `⚠️ New ${requestLabel} Request`,
+    message: `⚠️ Booking ${requestLabel} Request`,
     description: `A buyer has requested a ${requestLabel.toLowerCase()} for "${booking.serviceName}". Please review from your dashboard.`,
     reference: booking?._id,
     model_type: ModeType.Booking,
@@ -645,7 +645,7 @@ const getAvailableTeamMembersFromDB = async (
 ) => {
   const allMembers = await TeamMember.find({
     vendor: vendorId,
-    role: 'team_member',
+    // role: 'team_member',
     isActive: true,
     isDeleted: false,
   }).lean();
