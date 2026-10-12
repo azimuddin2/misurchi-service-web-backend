@@ -1,4 +1,3 @@
-// src/class/stripe.ts
 import { Stripe as StripeType } from 'stripe';
 import config from '../config';
 
@@ -141,7 +140,7 @@ class StripeServices<T> {
     }
   }
 
-  // getCheckoutSession — total থেকে fee calculate
+  // getCheckoutSession — total fee calculate
   public async getCheckoutSession(
     products: IProduct[],
     success_url: string,
@@ -157,7 +156,6 @@ class StripeServices<T> {
         quantity: p.quantity,
       }));
 
-      // ✅ সব items এর total amount
       const totalAmount = lineItems.reduce(
         (sum, item) => sum + item.price_data.unit_amount * (item.quantity ?? 1),
         0,
@@ -176,8 +174,8 @@ class StripeServices<T> {
         currency,
         ...(vendorAccountId && {
           payment_intent_data: {
-            application_fee_amount: applicationFee, // ✅ platform এ থাকবে
-            transfer_data: { destination: vendorAccountId }, // ✅ vendor এ যাবে
+            application_fee_amount: applicationFee,
+            transfer_data: { destination: vendorAccountId },
           },
         }),
         invoice_creation: { enabled: true },

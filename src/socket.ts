@@ -28,10 +28,6 @@ const initializeSocketIO = (server: HttpServer) => {
     return userTOSocketId.get(userid?.toString()) as string;
   }
 
-  function getUserId(socketid: string) {
-    return socketTOUserId.get(socketid?.toString()) as string;
-  }
-
   // Online users
   const onlineUser = new Set();
 

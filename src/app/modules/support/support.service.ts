@@ -135,7 +135,6 @@ const updateSupportIntoDB = async (id: string, payload: Partial<TSupport>) => {
                 ${payload.messageReply}
               </blockquote>
 
-              <!-- ✅ Status info email এ দেখাবে -->
               <p style="font-size:14px;color:#666;margin:10px 0 4px 0;"><strong>Ticket Status:</strong></p>
               <p style="font-size:14px;font-weight:bold;color:${
                 payload.status === 'Resolved'
@@ -155,7 +154,7 @@ const updateSupportIntoDB = async (id: string, payload: Partial<TSupport>) => {
                 Best Regards,<br/>
                 <strong>Support Team</strong><br/>
                 SMEVine
-              </p>
+              </p>g
             </td>
           </tr>
         </table>
