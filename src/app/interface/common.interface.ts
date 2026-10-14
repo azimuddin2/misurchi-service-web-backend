@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface UploadedFiles {
   image?: Express.Multer.File[];
   logo?: Express.Multer.File[];

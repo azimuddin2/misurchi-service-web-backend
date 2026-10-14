@@ -32,7 +32,10 @@ const auth = (...requiredRoles: TUserRole[]) => {
     }
 
     if (user?.status === 'blocked') {
-      throw new AppError(403, 'This user is blocked!');
+      throw new AppError(
+        403,
+        'Your account has been blocked. For assistance, please contact our support team.',
+      );
     }
 
     if (requiredRoles && !requiredRoles.includes(role)) {

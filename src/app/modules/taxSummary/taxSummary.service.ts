@@ -2,9 +2,9 @@ import { Types } from 'mongoose';
 import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
 import { Payment } from '../payment/payment.model';
-import SubPayment from '../subPayment/sub-payment.module';
 import { User } from '../user/user.model';
 import { stripe } from '../subPayment/sub-payment.utils';
+import { SubPayment } from '../subPayment/sub-payment.module';
 
 const getSalesTaxSummaryFromDB = async (vendorId: string) => {
   if (!vendorId || !Types.ObjectId.isValid(vendorId)) {

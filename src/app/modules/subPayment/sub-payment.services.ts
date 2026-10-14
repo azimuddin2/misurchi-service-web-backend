@@ -1,12 +1,11 @@
 import Stripe from 'stripe';
 import config from '../../config';
 import httpStatus from 'http-status';
-import mongoose, { startSession, Types } from 'mongoose';
+import mongoose, { startSession } from 'mongoose';
 import { TSubPayment } from './sub-payment.interface';
 import generateRandomString from '../../utils/generateRandomString';
 import { User } from '../user/user.model';
 import AppError from '../../errors/AppError';
-import SubPayment from './sub-payment.module';
 import { Plan } from '../plan/plan.model';
 import { createCheckoutSession } from './sub-payment.utils';
 import { Request } from 'express';
@@ -17,6 +16,7 @@ import { TSubscribed } from '../user/user.interface';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
 import { ReferralService } from '../referral/referral.service';
+import { SubPayment } from './sub-payment.module';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
   apiVersion: '2025-08-27.basil',
@@ -117,6 +117,7 @@ const subPayCheckout = async (payload: TSubPayment) => {
     tranId,
     amount: plan.cost || 0,
     subscription: subscription._id as any,
+    subscriptionType: plan.cost > 0 ? 'advance' : 'basic',
   };
 
   const createdPayment = await SubPayment.create(modifyPayload);
@@ -310,14 +311,12 @@ const webhook = async (req: Request) => {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         console.log('💸 Subscription payment succeeded', invoice);
-        // Optionally: Add coins/credits based on invoice.customer
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         console.log('❌ Subscription canceled', subscription);
-        // Optionally: Disable user's subscription
         break;
       }
 
@@ -358,7 +357,6 @@ const cancelSubPayment = async (paymentId: string) => {
 const getAllSubPaymentFromDB = async (query: Record<string, unknown>) => {
   const { ...filters } = query;
 
-  // Base query -> always exclude deleted payments
   let subPaymentQuery = SubPayment.find({ isDeleted: false, isPaid: true })
     .populate('vendor', 'businessName email chooseOffer')
     .populate('user');

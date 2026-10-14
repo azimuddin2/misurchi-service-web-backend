@@ -19,6 +19,11 @@ const SubPaymentSchema = new Schema<TSubPayment>(
       type: Schema.Types.ObjectId,
       ref: 'Subscription',
     },
+    subscriptionType: {
+      type: String,
+      enum: ['advance', 'basic'],
+      default: null,
+    },
     durationType: {
       type: String,
       enum: ['monthly', 'yearly'],
@@ -50,13 +55,11 @@ const SubPaymentSchema = new Schema<TSubPayment>(
 );
 
 SubPaymentSchema.pre('find', function (next) {
-  //@ts-ignore
   this.find({ isDeleted: { $ne: true } });
   next();
 });
 
 SubPaymentSchema.pre('findOne', function (next) {
-  //@ts-ignore
   this.find({ isDeleted: { $ne: true } });
   next();
 });
@@ -65,7 +68,5 @@ SubPaymentSchema.pre('aggregate', function (next) {
   this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
   next();
 });
-// Create and export the model
-const SubPayment = model<TSubPayment>('SubPayment', SubPaymentSchema);
 
-export default SubPayment;
+export const SubPayment = model<TSubPayment>('SubPayment', SubPaymentSchema);
