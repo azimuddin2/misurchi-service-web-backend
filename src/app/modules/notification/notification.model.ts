@@ -10,7 +10,6 @@ const notificationSchema = new Schema<TNotification>(
     },
     reference: {
       type: Schema.Types.ObjectId,
-      //   dynamic reference
       refPath: 'model_type',
       required: [true, 'Receiver id is required'],
     },

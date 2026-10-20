@@ -67,7 +67,6 @@ const planSchema = new Schema<TPlan>(
       },
       default: '1month',
     },
-    // Stripe fields
     stripeProductId: {
       type: String,
     },

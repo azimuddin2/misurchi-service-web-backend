@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { TVendor } from '../vendor/vendor.interface';
 import { TUser } from '../user/user.interface';
+import { TReview } from '../review/review.interface';
 
 export type TProductImage = {
   url: string;
@@ -25,14 +26,14 @@ export type TProduct = {
   quantity: number;
   price: number;
   discountPrice?: string | null;
-  colors: string[]; // e.g., ["Crimson Red", "Soft Nude"]
+  colors: string[];
   recommendedType: string[];
-  size: string[]; // e.g., "5 ml"
+  size: string[];
   status: TProductStatus;
   highlightStatus: THighlightStatus;
   description: string;
   deleteKey: string[];
-  reviews?: Types.ObjectId[]; // can store populated reviews
+  reviews?: Types.ObjectId[] | TReview[];
   avgRating?: number;
   isDeleted: boolean;
 };

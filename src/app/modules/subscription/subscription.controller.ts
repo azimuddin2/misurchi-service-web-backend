@@ -5,11 +5,8 @@ import { SubscriptionService } from './subscription.service';
 import { SubPaymentsService } from '../subPayment/sub-payment.services';
 
 const createSubscription = catchAsync(async (req: Request, res: Response) => {
-  // console.log('user', req.user);
-
   req.body.user = req?.user?.userId;
   const result = await SubscriptionService.createSubscriptionIntoDB(req.body);
-  // console.log('createSubscription result', result);
 
   const createPayment = await SubPaymentsService.subPayCheckout({
     // @ts-ignore
@@ -19,7 +16,6 @@ const createSubscription = catchAsync(async (req: Request, res: Response) => {
     user: req?.user?.userId,
     durationType: result?.durationType,
   });
-  // console.log('createPayment', createPayment);
 
   sendResponse(res, {
     statusCode: 200,

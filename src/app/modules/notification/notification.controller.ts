@@ -33,7 +33,7 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getNotificationById = catchAsync(async (req, res) => {
+const getNotificationById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await NotificationServices.getNotificationByIdFromDB(id);
 

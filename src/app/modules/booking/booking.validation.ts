@@ -48,7 +48,6 @@ const createBookingValidationSchema = z.object({
       .string({ required_error: 'Time is required' })
       .min(1, 'Time is required'),
 
-    // Optional booking request field
     request: BookingRequestSchemaZod.optional(),
   }),
 });
@@ -99,7 +98,6 @@ const updateBookingValidationSchema = z.object({
       .min(1, 'Time is required')
       .optional(),
 
-    // Optional booking request field
     request: BookingRequestSchemaZod.optional(),
   }),
 });
@@ -108,7 +106,7 @@ const assignedMemberValidationSchema = z.object({
   body: z.object({
     assignedToMember: z
       .string({ required_error: 'Please select a member to assign' })
-      .min(1, 'Assigned member cannot be empty'), // ensures non-empty string
+      .min(1, 'Assigned member cannot be empty'),
   }),
 });
 

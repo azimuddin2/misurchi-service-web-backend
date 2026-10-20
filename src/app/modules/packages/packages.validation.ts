@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { HighlightStatus, ServiceStatus } from './packages.constant';
 
-// ---------- Sub Schemas ----------
 const ServicePricingSchema = z.object({
   id: z.string({ required_error: 'Service ID is required' }),
   duration: z.string({ required_error: 'Duration is required' }),
@@ -16,10 +15,9 @@ const DayScheduleSchema = z.object({
   endTime: z.string({ required_error: 'End time is required' }), // e.g. "17:00"
 });
 
-// ---------- Main Create Validation ----------
-export const createPackagesValidationSchema = z.object({
+const createPackagesValidationSchema = z.object({
   body: z.object({
-    vendor: z.string({ required_error: 'Vendor ID is required' }), // ObjectId (string)
+    vendor: z.string({ required_error: 'Vendor ID is required' }),
     name: z.string({ required_error: 'Name is required' }),
     type: z.string({ required_error: 'Type is required' }),
     savedServices: z
@@ -41,8 +39,7 @@ export const createPackagesValidationSchema = z.object({
   }),
 });
 
-// ---------- Update Validation (all optional) ----------
-export const updatePackagesValidationSchema = z.object({
+const updatePackagesValidationSchema = z.object({
   body: z.object({
     deleteKey: z.array(z.string()).optional(),
     name: z.string().optional(),

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { DurationType, SubscriptionStatus } from './subscription.constant';
 
-// ✅ Zod Schema for Subscription Creation
 const createSubscriptionValidationSchema = z.object({
   body: z.object({
     user: z
@@ -42,7 +41,6 @@ const createSubscriptionValidationSchema = z.object({
   }),
 });
 
-// ✅ Zod Schema for Subscription Update
 const updateSubscriptionValidationSchema = z.object({
   body: z.object({
     durationType: z.enum([...DurationType] as [string, ...string[]]).optional(),

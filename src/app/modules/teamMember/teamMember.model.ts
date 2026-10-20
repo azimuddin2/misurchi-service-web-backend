@@ -98,7 +98,6 @@ const teamMemberSchema = new Schema<TTeamMember>(
   },
 );
 
-// ✅ Fixed by uncommenting the pre-save hook
 // Permissions will be auto set based on the role when created
 teamMemberSchema.pre('save', function (next) {
   if (this.isNew) {

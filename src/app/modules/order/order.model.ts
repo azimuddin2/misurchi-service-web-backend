@@ -80,7 +80,6 @@ const OrderRequestSchema = new Schema(
   { _id: false },
 );
 
-// Main Schema
 const orderSchema = new Schema<TOrder>(
   {
     orderId: {

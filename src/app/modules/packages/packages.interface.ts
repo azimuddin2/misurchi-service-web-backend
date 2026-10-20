@@ -36,7 +36,6 @@ export type TImage = {
   key: string;
 };
 
-// Main ServiceData type
 export type TPackages = {
   vendor: Types.ObjectId | TVendor | string;
   user: Types.ObjectId | TUser | string;

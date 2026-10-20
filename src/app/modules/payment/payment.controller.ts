@@ -327,7 +327,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
 `);
 });
 
-const getAllPayment = catchAsync(async (req, res) => {
+const getAllPayment = catchAsync(async (req: Request, res: Response) => {
   const result = await PaymentService.getAllPaymentFromDB(req.query);
 
   sendResponse(res, {
@@ -339,7 +339,7 @@ const getAllPayment = catchAsync(async (req, res) => {
   });
 });
 
-const getAllPaymentByAdmin = catchAsync(async (req, res) => {
+const getAllPaymentByAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await PaymentService.getAllPaymentByAdminFromDB(req.query);
 
   sendResponse(res, {
