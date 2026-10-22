@@ -1,10 +1,7 @@
 import { Types } from 'mongoose';
 
 export type TPayoutRequestStatus =
-  | 'pending'
-  | 'processing'
-  | 'approved'
-  | 'rejected';
+  'pending' | 'processing' | 'approved' | 'rejected';
 
 export type TPayoutRequest = {
   vendorId: Types.ObjectId;

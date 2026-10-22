@@ -23,15 +23,13 @@ app.use(
 app.use('/api/v1', router);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('SmeVine Website Backend Running');
+  res.json({
+    success: true,
+    message: 'SmeVine Backend Running',
+  });
 });
 
-const test = async (req: Request, res: Response) => {
-  // Promise.reject();
-};
-app.get('/', test);
-
-app.use(globalErrorHandler);
 app.use(notFound);
+app.use(globalErrorHandler);
 
 export default app;

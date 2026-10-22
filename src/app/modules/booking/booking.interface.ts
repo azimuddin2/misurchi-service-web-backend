@@ -2,18 +2,12 @@ import { Types } from 'mongoose';
 import { TTeamMember } from '../teamMember/teamMember.interface';
 
 export type TBookingStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'cancelled'
-  | 'ongoing'
-  | 'completed';
+  'pending' | 'confirmed' | 'cancelled' | 'ongoing' | 'completed';
+
 export type TPaymentType = 'half' | 'full' | 'later';
+
 export type TPaymentStatus =
-  | 'pending'
-  | 'paid'
-  | 'half-paid'
-  | 'refunded'
-  | 'failed';
+  'pending' | 'paid' | 'half-paid' | 'refunded' | 'failed';
 
 export type TBookingRequestType = 'none' | 'cancel' | 'reschedule';
 

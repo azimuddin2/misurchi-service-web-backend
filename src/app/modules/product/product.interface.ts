@@ -9,10 +9,7 @@ export type TProductImage = {
 };
 
 export type TProductStatus =
-  | 'Available'
-  | 'Out of Stock'
-  | 'TBC'
-  | 'Discontinued';
+  'Available' | 'Out of Stock' | 'TBC' | 'Discontinued';
 
 export type THighlightStatus = 'Highlighted' | 'Highlight';
 
