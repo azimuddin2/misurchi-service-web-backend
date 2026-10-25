@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { chatController } from './chat.controller';
-import { chatValidation } from './chat.validation';
+import { chatControllers } from './chat.controller';
+import { chatValidations } from './chat.validation';
 import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { USER_ROLE } from '../user/user.constant';
@@ -15,8 +15,8 @@ router.post(
     USER_ROLE.user,
     USER_ROLE.team_member,
   ),
-  validateRequest(chatValidation.createChatValidation),
-  chatController.createChat,
+  validateRequest(chatValidations.createChatValidation),
+  chatControllers.createChat,
 );
 
 router.patch(
@@ -27,8 +27,8 @@ router.patch(
     USER_ROLE.user,
     USER_ROLE.team_member,
   ),
-  validateRequest(chatValidation.createChatValidation),
-  chatController.updateChat,
+  validateRequest(chatValidations.createChatValidation),
+  chatControllers.updateChat,
 );
 
 router.delete(
@@ -39,7 +39,7 @@ router.delete(
     USER_ROLE.user,
     USER_ROLE.team_member,
   ),
-  chatController.deleteChat,
+  chatControllers.deleteChat,
 );
 
 router.get(
@@ -50,7 +50,7 @@ router.get(
     USER_ROLE.user,
     USER_ROLE.team_member,
   ),
-  chatController.getMyChatList,
+  chatControllers.getMyChatList,
 );
 
 router.get(
@@ -61,7 +61,7 @@ router.get(
     USER_ROLE.user,
     USER_ROLE.team_member,
   ),
-  chatController.getChatById,
+  chatControllers.getChatById,
 );
 
 export const chatRoutes = router;

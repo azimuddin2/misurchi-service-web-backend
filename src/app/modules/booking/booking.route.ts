@@ -1,7 +1,7 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
-import { BookingValidation } from './booking.validation';
+import { BookingValidations } from './booking.validation';
 import { BookingControllers } from './booking.controller';
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/',
   auth('user'),
-  validateRequest(BookingValidation.createBookingValidationSchema),
+  validateRequest(BookingValidations.createBookingValidationSchema),
   BookingControllers.createBooking,
 );
 
@@ -40,7 +40,7 @@ router.get('/:id', BookingControllers.getBookingById);
 router.patch(
   '/:id',
   auth('user'),
-  validateRequest(BookingValidation.updateBookingValidationSchema),
+  validateRequest(BookingValidations.updateBookingValidationSchema),
   BookingControllers.updateBookingRequest,
 );
 
@@ -53,14 +53,14 @@ router.put(
 router.patch(
   '/assign/:id',
   auth('vendor', 'team_member'),
-  validateRequest(BookingValidation.assignedMemberValidationSchema),
+  validateRequest(BookingValidations.assignedMemberValidationSchema),
   BookingControllers.bookingAssignedToMember,
 );
 
 router.put(
   '/update-status/:id',
   auth('vendor', 'team_member'),
-  validateRequest(BookingValidation.updateBookingStatusValidationSchema),
+  validateRequest(BookingValidations.updateBookingStatusValidationSchema),
   BookingControllers.updateBookingStatus,
 );
 

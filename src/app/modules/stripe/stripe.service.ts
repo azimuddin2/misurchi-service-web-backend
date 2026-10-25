@@ -128,7 +128,7 @@ const deleteAllRestrictedTestAccounts = async () => {
   return { count: results.length };
 };
 
-export const stripeService = {
+export const stripeServices = {
   stripLinkAccount,
   refresh,
   returnUrl,

@@ -1,19 +1,19 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
-import { MessagesService } from './message.service';
+import { MessagesServices } from './message.service';
 import sendResponse from '../../utils/sendResponse';
 import { Message } from './message.model';
 import AppError from '../../errors/AppError';
 import { uploadToS3 } from '../../utils/awsS3FileUploader';
 import { IChat } from '../chat/chat.interface';
 import Chat from '../chat/chat.model';
-import { chatService } from '../chat/chat.service';
+import { chatServices } from '../chat/chat.service';
 import { io } from '../../../server';
 import httpStatus from 'http-status';
 
 const createMessages = catchAsync(async (req: Request, res: Response) => {
   req.body.sender = req.user.userId;
-  const result = await MessagesService.createMessages(req.body);
+  const result = await MessagesServices.createMessages(req.body);
 
   sendResponse(res, {
     statusCode: 200,
@@ -24,7 +24,7 @@ const createMessages = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllMessages = catchAsync(async (req: Request, res: Response) => {
-  const result = await MessagesService.getAllMessages(req.query);
+  const result = await MessagesServices.getAllMessages(req.query);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -34,7 +34,7 @@ const getAllMessages = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMessagesByChatId = catchAsync(async (req: Request, res: Response) => {
-  const result = await MessagesService.getMessagesByChatId(req.params.chatId);
+  const result = await MessagesServices.getMessagesByChatId(req.params.chatId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -44,7 +44,7 @@ const getMessagesByChatId = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMessagesById = catchAsync(async (req: Request, res: Response) => {
-  const result = await MessagesService.getMessagesById(req.params.id);
+  const result = await MessagesServices.getMessagesById(req.params.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -67,7 +67,7 @@ const updateMessages = catchAsync(async (req: Request, res: Response) => {
     req.body.imageUrl = imageUrl;
   }
 
-  const result = await MessagesService.updateMessages(req.params.id, req.body);
+  const result = await MessagesServices.updateMessages(req.params.id, req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -82,7 +82,7 @@ const seenMessage = catchAsync(async (req: Request, res: Response) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'chat id is not valid');
   }
 
-  const result = await MessagesService.seenMessage(
+  const result = await MessagesServices.seenMessage(
     req.user.userId,
     req.params.chatId,
   );
@@ -90,9 +90,9 @@ const seenMessage = catchAsync(async (req: Request, res: Response) => {
   const user1 = chatList.participants[0];
   const user2 = chatList.participants[1];
   // //----------------------ChatList------------------------//
-  const ChatListUser1 = await chatService.getMyChatList(user1.toString());
+  const ChatListUser1 = await chatServices.getMyChatList(user1.toString());
 
-  const ChatListUser2 = await chatService.getMyChatList(user2.toString());
+  const ChatListUser2 = await chatServices.getMyChatList(user2.toString());
 
   const user1Chat = 'chat-list::' + user1;
 
@@ -110,7 +110,7 @@ const seenMessage = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteMessages = catchAsync(async (req: Request, res: Response) => {
-  const result = await MessagesService.deleteMessages(req.params.id);
+  const result = await MessagesServices.deleteMessages(req.params.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -119,7 +119,7 @@ const deleteMessages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const MessagesController = {
+export const MessagesControllers = {
   createMessages,
   getAllMessages,
   getMessagesByChatId,

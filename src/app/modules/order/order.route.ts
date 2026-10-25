@@ -1,7 +1,7 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
-import { OrderValidation } from './order.validation';
+import { OrderValidations } from './order.validation';
 import { OrderControllers } from './order.controller';
 import multer, { memoryStorage } from 'multer';
 import parseData from '../../middlewares/parseData';
@@ -12,7 +12,7 @@ const upload = multer({ storage: memoryStorage() });
 router.post(
   '/',
   auth('user'),
-  validateRequest(OrderValidation.createOrderValidationSchema),
+  validateRequest(OrderValidations.createOrderValidationSchema),
   OrderControllers.createOrder,
 );
 
@@ -31,14 +31,14 @@ router.patch(
   auth('user'),
   upload.fields([{ name: 'images', maxCount: 10 }]),
   parseData(),
-  validateRequest(OrderValidation.updateOrderRequestSchema),
+  validateRequest(OrderValidations.updateOrderRequestSchema),
   OrderControllers.requestOrder,
 );
 
 router.put(
   '/update-status/:id',
   auth('vendor', 'team_member'),
-  validateRequest(OrderValidation.updateOrderStatusValidationSchema),
+  validateRequest(OrderValidations.updateOrderStatusValidationSchema),
   OrderControllers.updateOrderStatus,
 );
 

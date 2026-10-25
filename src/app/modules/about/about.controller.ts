@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { AboutService } from './about.service';
+import { AboutServices } from './about.service';
 
 const getAbout = catchAsync(async (req: Request, res: Response) => {
-  const result = await AboutService.getAboutFromDB();
+  const result = await AboutServices.getAboutFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -14,7 +14,7 @@ const getAbout = catchAsync(async (req: Request, res: Response) => {
 });
 
 const upsertAbout = catchAsync(async (req: Request, res: Response) => {
-  const result = await AboutService.upsertAboutIntoDB(req.body);
+  const result = await AboutServices.upsertAboutIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -24,7 +24,7 @@ const upsertAbout = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteAbout = catchAsync(async (req: Request, res: Response) => {
-  const result = await AboutService.deleteAboutFromDB();
+  const result = await AboutServices.deleteAboutFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -33,7 +33,7 @@ const deleteAbout = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const AboutController = {
+export const AboutControllers = {
   getAbout,
   upsertAbout,
   deleteAbout,

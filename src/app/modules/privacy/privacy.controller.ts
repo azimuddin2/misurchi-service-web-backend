@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { PrivacyService } from './privacy.service';
+import { PrivacyServices } from './privacy.service';
 
 const getPrivacy = catchAsync(async (req: Request, res: Response) => {
-  const result = await PrivacyService.getPrivacyFromDB();
+  const result = await PrivacyServices.getPrivacyFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -14,7 +14,7 @@ const getPrivacy = catchAsync(async (req: Request, res: Response) => {
 });
 
 const upsertPrivacy = catchAsync(async (req: Request, res: Response) => {
-  const result = await PrivacyService.upsertPrivacyIntoDB(req.body);
+  const result = await PrivacyServices.upsertPrivacyIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -24,7 +24,7 @@ const upsertPrivacy = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deletePrivacy = catchAsync(async (req: Request, res: Response) => {
-  const result = await PrivacyService.deletePrivacyFromDB();
+  const result = await PrivacyServices.deletePrivacyFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -33,7 +33,7 @@ const deletePrivacy = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const PrivacyController = {
+export const PrivacyControllers = {
   getPrivacy,
   upsertPrivacy,
   deletePrivacy,

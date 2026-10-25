@@ -18,7 +18,7 @@ const updateRecommendedTypeValidationSchema = z.object({
   }),
 });
 
-export const RecommendedTypeValidation = {
+export const RecommendedTypeValidations = {
   createRecommendedTypeValidationSchema,
   updateRecommendedTypeValidationSchema,
 };

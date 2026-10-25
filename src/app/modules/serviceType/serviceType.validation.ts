@@ -18,7 +18,7 @@ const updateServiceTypeValidationSchema = z.object({
   }),
 });
 
-export const ServiceTypeValidation = {
+export const ServiceTypeValidations = {
   createServiceTypeValidationSchema,
   updateServiceTypeValidationSchema,
 };

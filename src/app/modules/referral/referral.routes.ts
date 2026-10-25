@@ -1,38 +1,38 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
 import { USER_ROLE } from '../user/user.constant';
-import { ReferralController } from './referral.controller';
+import { ReferralControllers } from './referral.controller';
 
 const router = express.Router();
 
 router.get(
   '/referral-link',
   auth(USER_ROLE.vendor, USER_ROLE.team_member),
-  ReferralController.getReferralLink,
+  ReferralControllers.getReferralLink,
 );
 
 router.post(
   '/email',
   auth(USER_ROLE.vendor, USER_ROLE.team_member),
-  ReferralController.emailReferralLink,
+  ReferralControllers.emailReferralLink,
 );
 
 router.get(
   '/stats',
   auth(USER_ROLE.vendor, USER_ROLE.team_member),
-  ReferralController.getReferralStats,
+  ReferralControllers.getReferralStats,
 );
 
 router.get(
   '/admin/all-vendors',
   auth(USER_ROLE.admin),
-  ReferralController.getAllVendorReferralStats,
+  ReferralControllers.getAllVendorReferralStats,
 );
 
 router.get(
   '/admin/vendor-detail/:vendorId',
   auth(USER_ROLE.admin),
-  ReferralController.getVendorReferralDetail,
+  ReferralControllers.getVendorReferralDetail,
 );
 
 export const ReferralRoutes = router;

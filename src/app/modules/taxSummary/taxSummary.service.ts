@@ -350,7 +350,7 @@ const getSalesTaxSummaryDetailFromDB = async (
   };
 };
 
-export const TaxSummaryService = {
+export const TaxSummaryServices = {
   getSalesTaxSummaryFromDB,
   getSubscriptionTaxSummaryFromDB,
   getSalesTaxSummaryDetailFromDB,

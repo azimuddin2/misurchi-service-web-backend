@@ -71,7 +71,7 @@ const updateFAQStatusIntoDB = async (
   return { result, message };
 };
 
-export const FAQService = {
+export const FAQServices = {
   createFAQIntoDB,
   getAllFAQFromDB,
   getAllFAQForAdminFromDB,

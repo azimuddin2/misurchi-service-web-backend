@@ -2,13 +2,13 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
-import { SubPaymentsService } from './sub-payment.services';
+import { SubPaymentServices } from './sub-payment.services';
 import config from '../../config';
 import dayjs from 'dayjs';
 
 const subPayCheckout = catchAsync(async (req: Request, res: Response) => {
   req.body.user = req.user?.userId;
-  const result = await SubPaymentsService.subPayCheckout(req.body);
+  const result = await SubPaymentServices.subPayCheckout(req.body);
 
   sendResponse(res, {
     success: true,
@@ -19,7 +19,7 @@ const subPayCheckout = catchAsync(async (req: Request, res: Response) => {
 });
 
 const confirmPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await SubPaymentsService.confirmPayment(req?.query);
+  const result = await SubPaymentServices.confirmPayment(req?.query);
 
   const date = dayjs(result?.createdAt).format('YYYY-MM-DD HH:mm:ss');
 
@@ -137,14 +137,14 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const webhook = catchAsync(async (req: Request, res: Response) => {
-  await SubPaymentsService.webhook(req);
+  await SubPaymentServices.webhook(req);
 });
 
 const cancelPayment = catchAsync(async (req: Request, res: Response) => {
   const { paymentId } = req.query as { paymentId?: string };
 
   if (paymentId) {
-    await SubPaymentsService.cancelSubPayment(paymentId);
+    await SubPaymentServices.cancelSubPayment(paymentId);
   }
 
   res.send(`
@@ -253,7 +253,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllSubPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await SubPaymentsService.getAllSubPaymentFromDB(req.query);
+  const result = await SubPaymentServices.getAllSubPaymentFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -266,7 +266,7 @@ const getAllSubPayment = catchAsync(async (req: Request, res: Response) => {
 
 const getSubPaymentByVendor = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await SubPaymentsService.getSubPaymentByVendorFromDB(
+    const result = await SubPaymentServices.getSubPaymentByVendorFromDB(
       req.query,
     );
 
@@ -280,7 +280,7 @@ const getSubPaymentByVendor = catchAsync(
   },
 );
 
-export const SubPaymentsController = {
+export const SubPaymentsControllers = {
   subPayCheckout,
   confirmPayment,
   webhook,

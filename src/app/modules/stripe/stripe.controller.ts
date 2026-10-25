@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
-import { stripeService } from './stripe.service';
+import { stripeServices } from './stripe.service';
 import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../config';
@@ -8,7 +8,7 @@ import AppError from '../../errors/AppError';
 
 const stripLinkAccount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user!.userId;
-  const result = await stripeService.stripLinkAccount(userId);
+  const result = await stripeServices.stripLinkAccount(userId);
 
   sendResponse(res, {
     success: true,
@@ -19,7 +19,7 @@ const stripLinkAccount = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refresh = catchAsync(async (req: Request, res: Response) => {
-  const url = await stripeService.refresh(req.params.id, req.query);
+  const url = await stripeServices.refresh(req.params.id, req.query);
   return res.redirect(url);
 });
 
@@ -30,7 +30,7 @@ const returnUrl = catchAsync(async (req: Request, res: Response) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Missing query params');
   }
 
-  const result = await stripeService.returnUrl({
+  const result = await stripeServices.returnUrl({
     userId: userId as string,
     stripeAccountId: stripeAccountId as string,
   });
@@ -256,7 +256,7 @@ const returnUrl = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteAllRestricted = catchAsync(async (req: Request, res: Response) => {
-  const result = await stripeService.deleteAllRestrictedTestAccounts();
+  const result = await stripeServices.deleteAllRestrictedTestAccounts();
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -265,7 +265,7 @@ const deleteAllRestricted = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const stripeController = {
+export const stripeControllers = {
   stripLinkAccount,
   refresh,
   returnUrl,

@@ -14,6 +14,6 @@ const createCancellationPolicyValidationSchema = z.object({
   }),
 });
 
-export const CancellationPolicyValidation = {
+export const CancellationPolicyValidations = {
   createCancellationPolicyValidationSchema,
 };

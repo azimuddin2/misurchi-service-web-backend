@@ -9,6 +9,6 @@ const createChatValidation = z.object({
   }),
 });
 
-export const chatValidation = {
+export const chatValidations = {
   createChatValidation,
 };

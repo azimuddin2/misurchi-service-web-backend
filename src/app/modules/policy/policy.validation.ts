@@ -18,7 +18,7 @@ const updatePolicyValidationSchema = z.object({
   }),
 });
 
-export const PolicyValidation = {
+export const PolicyValidations = {
   createPolicyValidationSchema,
   updatePolicyValidationSchema,
 };

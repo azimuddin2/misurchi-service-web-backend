@@ -15,7 +15,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { TSubscribed } from '../user/user.interface';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
-import { ReferralService } from '../referral/referral.service';
+import { ReferralServices } from '../referral/referral.service';
 import { SubPayment } from './sub-payment.module';
 
 const stripe = new Stripe(config.stripe_api_secret as string, {
@@ -261,7 +261,7 @@ const confirmPayment = async (query: Record<string, any>) => {
       `${isUserExist.fullName} has successfully purchased the ${plan.name} subscription plan for $${plan.cost}.`,
     );
 
-    await ReferralService.awardReferralPoint(userId as any);
+    await ReferralServices.awardReferralPoint(userId as any);
 
     await session.commitTransaction();
     return payment;
@@ -408,7 +408,7 @@ const getSubPaymentByVendorFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-export const SubPaymentsService = {
+export const SubPaymentServices = {
   subPayCheckout,
   confirmPayment,
   webhook,

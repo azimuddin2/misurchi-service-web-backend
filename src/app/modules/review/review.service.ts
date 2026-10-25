@@ -153,7 +153,7 @@ const getAllReviewByUserFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-export const ReviewService = {
+export const ReviewServices = {
   createReviewIntoDB,
   getAllReviewsFromDB,
   getAllReviewByUserFromDB,

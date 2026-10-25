@@ -116,7 +116,7 @@ const updateBookingStatusValidationSchema = z.object({
   }),
 });
 
-export const BookingValidation = {
+export const BookingValidations = {
   createBookingValidationSchema,
   updateBookingValidationSchema,
   assignedMemberValidationSchema,

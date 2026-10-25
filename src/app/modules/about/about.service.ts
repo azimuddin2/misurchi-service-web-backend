@@ -45,7 +45,7 @@ const deleteAboutFromDB = async () => {
   return result;
 };
 
-export const AboutService = {
+export const AboutServices = {
   getAboutFromDB,
   upsertAboutIntoDB,
   deleteAboutFromDB,

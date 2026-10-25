@@ -275,7 +275,7 @@ const getVendorPayoutHistory = async (vendorId: Types.ObjectId) => {
   return result;
 };
 
-export const PayoutRequestService = {
+export const PayoutRequestServices = {
   createPayoutRequest,
   getAllPayoutRequests,
   approvePayoutRequest,

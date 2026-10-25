@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { FAQService } from './faq.service';
+import { FAQServices } from './faq.service';
 
 const createFAQ = catchAsync(async (req: Request, res: Response) => {
-  const result = await FAQService.createFAQIntoDB(req.body);
+  const result = await FAQServices.createFAQIntoDB(req.body);
 
   sendResponse(res, {
     statusCode: 201,
@@ -15,7 +15,7 @@ const createFAQ = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllFAQ = catchAsync(async (req: Request, res: Response) => {
-  const result = await FAQService.getAllFAQFromDB();
+  const result = await FAQServices.getAllFAQFromDB();
 
   sendResponse(res, {
     statusCode: 200,
@@ -26,7 +26,7 @@ const getAllFAQ = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllFAQForAdmin = catchAsync(async (req: Request, res: Response) => {
-  const result = await FAQService.getAllFAQForAdminFromDB();
+  const result = await FAQServices.getAllFAQForAdminFromDB();
 
   sendResponse(res, {
     statusCode: 200,
@@ -39,7 +39,7 @@ const getAllFAQForAdmin = catchAsync(async (req: Request, res: Response) => {
 const getFAQById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const result = await FAQService.getFAQByIdFromDB(id);
+  const result = await FAQServices.getFAQByIdFromDB(id);
 
   sendResponse(res, {
     statusCode: 200,
@@ -52,7 +52,7 @@ const getFAQById = catchAsync(async (req: Request, res: Response) => {
 const updateFAQ = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const result = await FAQService.updateFAQIntoDB(id, req.body);
+  const result = await FAQServices.updateFAQIntoDB(id, req.body);
 
   sendResponse(res, {
     statusCode: 200,
@@ -64,7 +64,7 @@ const updateFAQ = catchAsync(async (req: Request, res: Response) => {
 
 const updateFAQStatus = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { result, message } = await FAQService.updateFAQStatusIntoDB(
+  const { result, message } = await FAQServices.updateFAQStatusIntoDB(
     id,
     req.body,
   );

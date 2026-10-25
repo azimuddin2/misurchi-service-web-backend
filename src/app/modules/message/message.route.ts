@@ -4,8 +4,8 @@ import auth from '../../middlewares/auth';
 import { USER_ROLE } from '../user/user.constant';
 import parseData from '../../middlewares/parseData';
 import validateRequest from '../../middlewares/validateRequest';
-import { MessagesController } from './message.controller';
-import { MessagesValidation } from './message.validation';
+import { MessagesControllers } from './message.controller';
+import { MessagesValidations } from './message.validation';
 
 const router = Router();
 
@@ -18,8 +18,8 @@ router.post(
     USER_ROLE.team_member,
   ),
   parseData(),
-  validateRequest(MessagesValidation.sendMessageValidation),
-  MessagesController.createMessages,
+  validateRequest(MessagesValidations.sendMessageValidation),
+  MessagesControllers.createMessages,
 );
 
 router.patch(
@@ -31,7 +31,7 @@ router.patch(
     USER_ROLE.team_member,
   ),
 
-  MessagesController.seenMessage,
+  MessagesControllers.seenMessage,
 );
 
 router.patch(
@@ -43,11 +43,11 @@ router.patch(
     USER_ROLE.team_member,
   ),
   parseData(),
-  validateRequest(MessagesValidation.updateMessageValidation),
-  MessagesController.updateMessages,
+  validateRequest(MessagesValidations.updateMessageValidation),
+  MessagesControllers.updateMessages,
 );
 
-router.get('/my-messages/:chatId', MessagesController.getMessagesByChatId);
+router.get('/my-messages/:chatId', MessagesControllers.getMessagesByChatId);
 
 router.delete(
   '/:id',
@@ -57,7 +57,7 @@ router.delete(
     USER_ROLE.vendor,
     USER_ROLE.team_member,
   ),
-  MessagesController.deleteMessages,
+  MessagesControllers.deleteMessages,
 );
 
 router.get(
@@ -68,7 +68,7 @@ router.get(
     USER_ROLE.vendor,
     USER_ROLE.team_member,
   ),
-  MessagesController.getMessagesById,
+  MessagesControllers.getMessagesById,
 );
 
 router.get(
@@ -79,7 +79,7 @@ router.get(
     USER_ROLE.vendor,
     USER_ROLE.team_member,
   ),
-  MessagesController.getAllMessages,
+  MessagesControllers.getAllMessages,
 );
 
 export const messagesRoutes = router;

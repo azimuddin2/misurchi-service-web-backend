@@ -46,7 +46,7 @@ const deletePolicyFromDB = async () => {
   return result;
 };
 
-export const PolicyService = {
+export const PolicyServices = {
   getPolicyFromDB,
   upsertPolicyIntoDB,
   deletePolicyFromDB,

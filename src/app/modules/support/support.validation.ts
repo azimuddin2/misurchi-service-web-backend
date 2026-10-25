@@ -37,7 +37,7 @@ const helpfulSupportValidationSchema = z.object({
   }),
 });
 
-export const SupportValidation = {
+export const SupportValidations = {
   createSupportValidationSchema,
   replyAdminSupportValidationSchema,
   helpfulSupportValidationSchema,

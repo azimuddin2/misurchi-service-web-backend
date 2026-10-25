@@ -1,7 +1,7 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
-import { ProductTypeValidation } from './productType.validation';
+import { ProductTypeValidations } from './productType.validation';
 import { ProductTypeControllers } from './productType.controller';
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/',
   auth('admin'),
-  validateRequest(ProductTypeValidation.createProductTypeValidationSchema),
+  validateRequest(ProductTypeValidations.createProductTypeValidationSchema),
   ProductTypeControllers.createProductType,
 );
 
@@ -20,7 +20,7 @@ router.get('/:id', ProductTypeControllers.getProductTypeById);
 router.patch(
   '/:id',
   auth('admin'),
-  validateRequest(ProductTypeValidation.updateProductTypeValidationSchema),
+  validateRequest(ProductTypeValidations.updateProductTypeValidationSchema),
   ProductTypeControllers.updateProductType,
 );
 

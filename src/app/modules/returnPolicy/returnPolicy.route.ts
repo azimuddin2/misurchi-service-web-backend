@@ -1,22 +1,22 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
-import { ReturnPolicyValidation } from './returnPolicy.validation';
-import { ReturnPolicyController } from './returnPolicy.controller';
+import { ReturnPolicyValidations } from './returnPolicy.validation';
+import { ReturnPolicyControllers } from './returnPolicy.controller';
 
 const router = express.Router();
 
 router.post(
   '/',
   auth('vendor', 'team_member'),
-  validateRequest(ReturnPolicyValidation.createReturnPolicyValidationSchema),
-  ReturnPolicyController.upsertReturnPolicy,
+  validateRequest(ReturnPolicyValidations.createReturnPolicyValidationSchema),
+  ReturnPolicyControllers.upsertReturnPolicy,
 );
 
 router.get(
   '/:vendorId',
   auth('user', 'vendor', 'team_member', 'admin'),
-  ReturnPolicyController.getReturnPolicy,
+  ReturnPolicyControllers.getReturnPolicy,
 );
 
 export const ReturnPolicyRoutes = router;

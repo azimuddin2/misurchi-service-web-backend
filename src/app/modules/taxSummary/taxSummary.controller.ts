@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
-import { TaxSummaryService } from './taxSummary.service';
+import { TaxSummaryServices } from './taxSummary.service';
 
 const getSalesTaxSummary = catchAsync(async (req: Request, res: Response) => {
   const { vendorId } = req.query;
 
-  const result = await TaxSummaryService.getSalesTaxSummaryFromDB(
+  const result = await TaxSummaryServices.getSalesTaxSummaryFromDB(
     vendorId as string,
   );
 
@@ -23,7 +23,7 @@ const getSubscriptionTaxSummary = catchAsync(
   async (req: Request, res: Response) => {
     const { vendorId } = req.query;
 
-    const result = await TaxSummaryService.getSubscriptionTaxSummaryFromDB(
+    const result = await TaxSummaryServices.getSubscriptionTaxSummaryFromDB(
       vendorId as string,
     );
 
@@ -41,7 +41,7 @@ const getSalesTaxSummaryDetail = catchAsync(
     const { year } = req.params;
     const { vendorId } = req.query;
 
-    const result = await TaxSummaryService.getSalesTaxSummaryDetailFromDB(
+    const result = await TaxSummaryServices.getSalesTaxSummaryDetailFromDB(
       vendorId as string,
       Number(year),
     );
@@ -55,7 +55,7 @@ const getSalesTaxSummaryDetail = catchAsync(
   },
 );
 
-export const TaxSummaryController = {
+export const TaxSummaryControllers = {
   getSalesTaxSummary,
   getSubscriptionTaxSummary,
   getSalesTaxSummaryDetail,

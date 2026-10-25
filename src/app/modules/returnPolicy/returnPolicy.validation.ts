@@ -14,6 +14,6 @@ const createReturnPolicyValidationSchema = z.object({
   }),
 });
 
-export const ReturnPolicyValidation = {
+export const ReturnPolicyValidations = {
   createReturnPolicyValidationSchema,
 };

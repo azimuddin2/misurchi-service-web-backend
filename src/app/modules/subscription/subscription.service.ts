@@ -349,7 +349,7 @@ const getVendorSubscriptionStatusFromDB = async (vendorId: string) => {
   };
 };
 
-export const SubscriptionService = {
+export const SubscriptionServices = {
   createSubscriptionIntoDB,
   getAllSubscriptionFromDB,
   getSubscriptionByIdFromDB,

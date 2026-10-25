@@ -2,13 +2,13 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import { Types } from 'mongoose';
-import { ReferralService } from './referral.service';
+import { ReferralServices } from './referral.service';
 import { Request, Response } from 'express';
 
 const getReferralLink = catchAsync(async (req: Request, res: Response) => {
   const vendorId = req.user.vendorId as Types.ObjectId;
 
-  const result = await ReferralService.getReferralLink(vendorId);
+  const result = await ReferralServices.getReferralLink(vendorId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -22,7 +22,7 @@ const emailReferralLink = catchAsync(async (req: Request, res: Response) => {
   const vendorId = req.user.vendorId as Types.ObjectId;
   const { recipientEmail } = req.body;
 
-  await ReferralService.emailReferralLink(vendorId, recipientEmail);
+  await ReferralServices.emailReferralLink(vendorId, recipientEmail);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -36,7 +36,7 @@ const getReferralStats = catchAsync(async (req: Request, res: Response) => {
   const vendorId = req.user.vendorId as Types.ObjectId;
   const month = req.query.month as string | undefined;
 
-  const result = await ReferralService.getReferralStats(vendorId, month);
+  const result = await ReferralServices.getReferralStats(vendorId, month);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -48,7 +48,7 @@ const getReferralStats = catchAsync(async (req: Request, res: Response) => {
 
 const getAllVendorReferralStats = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await ReferralService.getAllVendorReferralStatsFromDB(
+    const result = await ReferralServices.getAllVendorReferralStatsFromDB(
       req.query,
     );
 
@@ -66,7 +66,7 @@ const getVendorReferralDetail = catchAsync(
   async (req: Request, res: Response) => {
     const { vendorId } = req.params;
 
-    const result = await ReferralService.getVendorReferralDetailFromDB(
+    const result = await ReferralServices.getVendorReferralDetailFromDB(
       vendorId,
       req.query,
     );
@@ -81,7 +81,7 @@ const getVendorReferralDetail = catchAsync(
   },
 );
 
-export const ReferralController = {
+export const ReferralControllers = {
   getReferralLink,
   emailReferralLink,
   getReferralStats,

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { ReturnPolicyService } from './returnPolicy.service';
+import { ReturnPolicyServices } from './returnPolicy.service';
 
 const upsertReturnPolicy = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReturnPolicyService.upsertReturnPolicyIntoDB(req.body);
+  const result = await ReturnPolicyServices.upsertReturnPolicyIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -15,7 +15,7 @@ const upsertReturnPolicy = catchAsync(async (req: Request, res: Response) => {
 
 const getReturnPolicy = catchAsync(async (req: Request, res: Response) => {
   const { vendorId } = req.params;
-  const result = await ReturnPolicyService.getReturnPolicyFromDB(vendorId);
+  const result = await ReturnPolicyServices.getReturnPolicyFromDB(vendorId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -24,7 +24,7 @@ const getReturnPolicy = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const ReturnPolicyController = {
+export const ReturnPolicyControllers = {
   upsertReturnPolicy,
   getReturnPolicy,
 };

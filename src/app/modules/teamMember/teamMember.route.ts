@@ -4,7 +4,7 @@ import parseData from '../../middlewares/parseData';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
 import { TeamMemberControllers } from './teamMember.controller';
-import { TeamMemberValidation } from './teamMember.validation';
+import { TeamMemberValidations } from './teamMember.validation';
 
 const router = express.Router();
 const upload = multer({ storage: memoryStorage() });
@@ -14,7 +14,7 @@ router.post(
   auth('vendor', 'team_member'),
   upload.single('image'),
   parseData(),
-  validateRequest(TeamMemberValidation.createTeamMemberValidationSchema),
+  validateRequest(TeamMemberValidations.createTeamMemberValidationSchema),
   TeamMemberControllers.createTeamMember,
 );
 
@@ -37,7 +37,7 @@ router.patch(
   auth('vendor', 'team_member'),
   upload.single('image'),
   parseData(),
-  validateRequest(TeamMemberValidation.updateTeamMemberValidationSchema),
+  validateRequest(TeamMemberValidations.updateTeamMemberValidationSchema),
   TeamMemberControllers.updateTeamMember,
 );
 

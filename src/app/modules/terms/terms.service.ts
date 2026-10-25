@@ -45,7 +45,7 @@ const deleteTermsFromDB = async () => {
   return result;
 };
 
-export const TermsService = {
+export const TermsServices = {
   getTermsFromDB,
   upsertTermsIntoDB,
   deleteTermsFromDB,

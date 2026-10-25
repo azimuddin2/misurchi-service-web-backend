@@ -45,7 +45,7 @@ const deletePrivacyFromDB = async () => {
   return result;
 };
 
-export const PrivacyService = {
+export const PrivacyServices = {
   getPrivacyFromDB,
   upsertPrivacyIntoDB,
   deletePrivacyFromDB,

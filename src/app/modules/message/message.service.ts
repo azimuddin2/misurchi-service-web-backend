@@ -4,7 +4,7 @@ import Chat from '../chat/chat.model';
 import { Message } from './message.model';
 import AppError from '../../errors/AppError';
 import { io } from '../../../server';
-import { chatService } from '../chat/chat.service';
+import { chatServices } from '../chat/chat.service';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { deleteFromS3 } from '../../utils/awsS3FileUploader';
 
@@ -35,10 +35,10 @@ const createMessages = async (payload: TMessage) => {
     io.emit(senderMessage, result);
 
     // //----------------------ChatList------------------------//
-    const ChatListSender = await chatService.getMyChatList(
+    const ChatListSender = await chatServices.getMyChatList(
       result?.sender.toString(),
     );
-    const ChatListReceiver = await chatService.getMyChatList(
+    const ChatListReceiver = await chatServices.getMyChatList(
       result?.receiver.toString(),
     );
 
@@ -66,7 +66,6 @@ const getAllMessages = async (query: Record<string, any>) => {
     query,
   )
     .filter()
-    // .paginate()
     .sort()
     .fields();
 
@@ -148,7 +147,7 @@ const seenMessage = async (userId: string, chatId: string) => {
   return updateMessages;
 };
 
-export const MessagesService = {
+export const MessagesServices = {
   createMessages,
   getMessagesByChatId,
   getMessagesById,

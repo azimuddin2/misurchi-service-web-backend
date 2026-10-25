@@ -1,19 +1,19 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
-import { ReviewValidation } from './review.validation';
-import { ReviewController } from './review.controller';
+import { ReviewValidations } from './review.validation';
+import { ReviewControllers } from './review.controller';
 
 const router = express.Router();
 
 router.post(
   '/',
   auth('user'),
-  validateRequest(ReviewValidation.createReviewValidationSchema),
-  ReviewController.createReview,
+  validateRequest(ReviewValidations.createReviewValidationSchema),
+  ReviewControllers.createReview,
 );
 
-router.get('/', ReviewController.getAllReviews);
-router.get('/', ReviewController.getAllReviewByUser);
+router.get('/', ReviewControllers.getAllReviews);
+router.get('/', ReviewControllers.getAllReviewByUser);
 
 export const ReviewRoutes = router;

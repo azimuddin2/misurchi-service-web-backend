@@ -20,7 +20,7 @@ import {
 } from './payment.utils';
 import { NotificationServices } from '../notification/notification.service';
 import { ModeType } from '../notification/notification.interface';
-import { ReferralService } from '../referral/referral.service';
+import { ReferralServices } from '../referral/referral.service';
 import { sendEmail } from '../../utils/sendEmail';
 import {
   bookingConfirmedTemplate,
@@ -328,7 +328,7 @@ const confirmPayment = async (query: Record<string, any>) => {
     );
 
     const referredUserId = (payment.user as any)._id;
-    await ReferralService.awardReferralPoint(referredUserId);
+    await ReferralServices.awardReferralPoint(referredUserId);
 
     await session.commitTransaction();
     return payment;
@@ -459,7 +459,7 @@ const getAllPaymentByAdminFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-export const PaymentService = {
+export const PaymentServices = {
   createPayment,
   confirmPayment,
   cancelPayment,

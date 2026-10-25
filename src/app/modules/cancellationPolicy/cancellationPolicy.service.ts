@@ -42,7 +42,7 @@ const getCancellationPolicyFromDB = async (vendorId: string) => {
   return result;
 };
 
-export const CancellationPolicyService = {
+export const CancellationPolicyServices = {
   getCancellationPolicyFromDB,
   upsertCancellationPolicyIntoDB,
 };

@@ -33,6 +33,6 @@ export const createReviewValidationSchema = z.object({
     }),
 });
 
-export const ReviewValidation = {
+export const ReviewValidations = {
   createReviewValidationSchema,
 };

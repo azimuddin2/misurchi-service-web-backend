@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { stripeController } from './stripe.controller';
+import { stripeControllers } from './stripe.controller';
 import auth from '../../middlewares/auth';
 
 const router = Router();
@@ -7,18 +7,18 @@ const router = Router();
 router.patch(
   '/connect-account',
   auth('vendor'),
-  stripeController.stripLinkAccount,
+  stripeControllers.stripLinkAccount,
 );
 
-router.get('/return', stripeController.returnUrl);
+router.get('/return', stripeControllers.returnUrl);
 
-router.get('/refresh/:id', stripeController.refresh);
+router.get('/refresh/:id', stripeControllers.refresh);
 
 // Admin utility
 router.delete(
   '/restricted/delete-all',
   auth('admin'),
-  stripeController.deleteAllRestricted,
+  stripeControllers.deleteAllRestricted,
 );
 
 export const StripeRoute = router;

@@ -4,7 +4,7 @@ import httpStatus from 'http-status';
 import { Types } from 'mongoose';
 import { TUser } from './app/modules/user/user.interface';
 import { User } from './app/modules/user/user.model';
-import { chatService } from './app/modules/chat/chat.service';
+import { chatServices } from './app/modules/chat/chat.service';
 import { IChat } from './app/modules/chat/chat.interface';
 import Chat from './app/modules/chat/chat.model';
 import { Message } from './app/modules/message/message.model';
@@ -41,7 +41,6 @@ const initializeSocketIO = (server: HttpServer) => {
       //----------------------check Token and return user details-------------------------//
       const user: any = await getUserDetailsFromToken(token);
       if (!user) {
-        // io.emit('io-error', {success:false, message:'invalid Token'});
         throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token');
       }
 
@@ -137,7 +136,7 @@ const initializeSocketIO = (server: HttpServer) => {
       //----------------------chat list------------------------//
       socket.on('my-chat-list', async (data, callback) => {
         try {
-          const chatList = await chatService.getMyChatList(user?._id);
+          const chatList = await chatServices.getMyChatList(user?._id);
           const mySocketId = getSocketId(user?._id);
 
           io.to(mySocketId).emit('chat-list', chatList);
@@ -201,11 +200,11 @@ const initializeSocketIO = (server: HttpServer) => {
           const user1 = chatList.participants[0];
           const user2 = chatList.participants[1];
           // //----------------------ChatList------------------------//
-          const ChatListUser1 = await chatService.getMyChatList(
+          const ChatListUser1 = await chatServices.getMyChatList(
             user1.toString(),
           );
 
-          const ChatListUser2 = await chatService.getMyChatList(
+          const ChatListUser2 = await chatServices.getMyChatList(
             user2.toString(),
           );
           const user1SocketId = getSocketId(user1?.toString());
@@ -281,13 +280,13 @@ const initializeSocketIO = (server: HttpServer) => {
 
           // //----------------------ChatList------------------------//
 
-          const ChatListReceiver = await chatService.getMyChatList(
+          const ChatListReceiver = await chatServices.getMyChatList(
             result?.receiver.toString(),
           );
 
           io.to(receiverSocket).emit('chat-list', ChatListReceiver);
 
-          const ChatListSender = await chatService.getMyChatList(
+          const ChatListSender = await chatServices.getMyChatList(
             result?.sender.toString(),
           );
           io.to(userSocket).emit('chat-list', ChatListSender);

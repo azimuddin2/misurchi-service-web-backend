@@ -396,7 +396,7 @@ const getVendorReferralDetailFromDB = async (
   };
 };
 
-export const ReferralService = {
+export const ReferralServices = {
   getReferralLink,
   emailReferralLink,
   getReferralStats,

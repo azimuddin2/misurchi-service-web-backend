@@ -18,7 +18,7 @@ const updatePrivacyValidationSchema = z.object({
   }),
 });
 
-export const PrivacyValidation = {
+export const PrivacyValidations = {
   createPrivacyValidationSchema,
   updatePrivacyValidationSchema,
 };

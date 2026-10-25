@@ -18,7 +18,7 @@ const updateTermsValidationSchema = z.object({
   }),
 });
 
-export const TermsValidation = {
+export const TermsValidations = {
   createTermsValidationSchema,
   updateTermsValidationSchema,
 };

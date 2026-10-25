@@ -1,20 +1,20 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
-import { TermsValidation } from './terms.validation';
-import { TermsController } from './terms.controller';
+import { TermsValidations } from './terms.validation';
+import { TermsControllers } from './terms.controller';
 
 const router = express.Router();
 
-router.get('/', TermsController.getTerms);
+router.get('/', TermsControllers.getTerms);
 
 router.post(
   '/',
   auth('admin'),
-  validateRequest(TermsValidation.createTermsValidationSchema),
-  TermsController.upsertTerms,
+  validateRequest(TermsValidations.createTermsValidationSchema),
+  TermsControllers.upsertTerms,
 );
 
-router.delete('/', auth('admin'), TermsController.deleteTerms);
+router.delete('/', auth('admin'), TermsControllers.deleteTerms);
 
 export const TermsRoutes = router;

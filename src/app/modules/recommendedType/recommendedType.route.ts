@@ -1,7 +1,7 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
-import { RecommendedTypeValidation } from './recommendedType.validation';
+import { RecommendedTypeValidations } from './recommendedType.validation';
 import { RecommendedTypeControllers } from './recommendedType.controller';
 
 const router = express.Router();
@@ -10,7 +10,7 @@ router.post(
   '/',
   auth('admin'),
   validateRequest(
-    RecommendedTypeValidation.createRecommendedTypeValidationSchema,
+    RecommendedTypeValidations.createRecommendedTypeValidationSchema,
   ),
   RecommendedTypeControllers.createRecommendedType,
 );
@@ -23,7 +23,7 @@ router.patch(
   '/:id',
   auth('admin'),
   validateRequest(
-    RecommendedTypeValidation.updateRecommendedTypeValidationSchema,
+    RecommendedTypeValidations.updateRecommendedTypeValidationSchema,
   ),
   RecommendedTypeControllers.updateRecommendedType,
 );

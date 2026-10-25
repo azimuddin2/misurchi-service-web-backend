@@ -1,10 +1,10 @@
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { TermsService } from './terms.service';
+import { TermsServices } from './terms.service';
 import { Request, Response } from 'express';
 
 const getTerms = catchAsync(async (req: Request, res: Response) => {
-  const result = await TermsService.getTermsFromDB();
+  const result = await TermsServices.getTermsFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -14,7 +14,7 @@ const getTerms = catchAsync(async (req: Request, res: Response) => {
 });
 
 const upsertTerms = catchAsync(async (req: Request, res: Response) => {
-  const result = await TermsService.upsertTermsIntoDB(req.body);
+  const result = await TermsServices.upsertTermsIntoDB(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -24,7 +24,7 @@ const upsertTerms = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteTerms = catchAsync(async (req: Request, res: Response) => {
-  const result = await TermsService.deleteTermsFromDB();
+  const result = await TermsServices.deleteTermsFromDB();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -33,7 +33,7 @@ const deleteTerms = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const TermsController = {
+export const TermsControllers = {
   getTerms,
   upsertTerms,
   deleteTerms,

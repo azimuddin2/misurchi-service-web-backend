@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { PaymentService } from './payment.service';
+import { PaymentServices } from './payment.service';
 import dayjs from 'dayjs';
 import config from '../../config';
 
 const createPayment = catchAsync(async (req: Request, res: Response) => {
-  const url = await PaymentService.createPayment(req.body);
+  const url = await PaymentServices.createPayment(req.body);
   sendResponse(res, {
     statusCode: 201,
     success: true,
@@ -21,7 +21,7 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
     paymentId: string;
   };
 
-  const result = await PaymentService.confirmPayment({ sessionId, paymentId });
+  const result = await PaymentServices.confirmPayment({ sessionId, paymentId });
 
   const date = dayjs(result.createdAt).format('YYYY-MM-DD HH:mm:ss');
 
@@ -183,7 +183,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
   const { paymentId } = req.query as { paymentId?: string };
 
   if (paymentId) {
-    await PaymentService.cancelPayment(paymentId);
+    await PaymentServices.cancelPayment(paymentId);
   }
 
   res.send(`
@@ -328,7 +328,7 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.getAllPaymentFromDB(req.query);
+  const result = await PaymentServices.getAllPaymentFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -340,7 +340,7 @@ const getAllPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllPaymentByAdmin = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.getAllPaymentByAdminFromDB(req.query);
+  const result = await PaymentServices.getAllPaymentByAdminFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -351,7 +351,7 @@ const getAllPaymentByAdmin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const PaymentController = {
+export const PaymentControllers = {
   createPayment,
   confirmPayment,
   cancelPayment,

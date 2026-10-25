@@ -42,6 +42,6 @@ const createPaymentValidationSchema = z.object({
   body: z.union([orderPaymentSchema, bookingPaymentSchema]),
 });
 
-export const PaymentValidation = {
+export const PaymentValidations = {
   createPaymentValidationSchema,
 };

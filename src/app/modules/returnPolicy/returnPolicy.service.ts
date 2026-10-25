@@ -43,7 +43,7 @@ const getReturnPolicyFromDB = async (vendorId: string) => {
   return result;
 };
 
-export const ReturnPolicyService = {
+export const ReturnPolicyServices = {
   getReturnPolicyFromDB,
   upsertReturnPolicyIntoDB,
 };

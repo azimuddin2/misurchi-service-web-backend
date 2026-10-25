@@ -1,7 +1,7 @@
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
-import { ServiceTypeValidation } from './serviceType.validation';
+import { ServiceTypeValidations } from './serviceType.validation';
 import { ServiceTypeControllers } from './serviceType.controller';
 
 const router = express.Router();
@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/',
   auth('admin'),
-  validateRequest(ServiceTypeValidation.createServiceTypeValidationSchema),
+  validateRequest(ServiceTypeValidations.createServiceTypeValidationSchema),
   ServiceTypeControllers.createServiceType,
 );
 
@@ -20,7 +20,7 @@ router.get('/:id', ServiceTypeControllers.getServiceTypeById);
 router.patch(
   '/:id',
   auth('admin'),
-  validateRequest(ServiceTypeValidation.updateServiceTypeValidationSchema),
+  validateRequest(ServiceTypeValidations.updateServiceTypeValidationSchema),
   ServiceTypeControllers.updateServiceType,
 );
 

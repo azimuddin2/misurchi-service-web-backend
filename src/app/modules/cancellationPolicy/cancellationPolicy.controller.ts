@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { CancellationPolicyService } from './cancellationPolicy.service';
+import { CancellationPolicyServices } from './cancellationPolicy.service';
 
 const upsertCancellationPolicy = catchAsync(
   async (req: Request, res: Response) => {
     const result =
-      await CancellationPolicyService.upsertCancellationPolicyIntoDB(req.body);
+      await CancellationPolicyServices.upsertCancellationPolicyIntoDB(req.body);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -20,7 +20,7 @@ const getCancellationPolicy = catchAsync(
   async (req: Request, res: Response) => {
     const { vendorId } = req.params;
     const result =
-      await CancellationPolicyService.getCancellationPolicyFromDB(vendorId);
+      await CancellationPolicyServices.getCancellationPolicyFromDB(vendorId);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -30,7 +30,7 @@ const getCancellationPolicy = catchAsync(
   },
 );
 
-export const CancellationPolicyController = {
+export const CancellationPolicyControllers = {
   upsertCancellationPolicy,
   getCancellationPolicy,
 };

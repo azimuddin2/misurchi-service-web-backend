@@ -2,13 +2,13 @@ import httpStatus from 'http-status';
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { PayoutRequestService } from './payoutRequest.service';
+import { PayoutRequestServices } from './payoutRequest.service';
 import { Types } from 'mongoose';
 
 const createPayoutRequest = catchAsync(async (req: Request, res: Response) => {
   const vendorId = req.user.vendorId as unknown as Types.ObjectId;
 
-  const result = await PayoutRequestService.createPayoutRequest(vendorId);
+  const result = await PayoutRequestServices.createPayoutRequest(vendorId);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -19,7 +19,7 @@ const createPayoutRequest = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllPayoutRequests = catchAsync(async (req: Request, res: Response) => {
-  const result = await PayoutRequestService.getAllPayoutRequests(req.query);
+  const result = await PayoutRequestServices.getAllPayoutRequests(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -33,7 +33,7 @@ const getAllPayoutRequests = catchAsync(async (req: Request, res: Response) => {
 const approvePayoutRequest = catchAsync(async (req: Request, res: Response) => {
   const { requestId } = req.params;
 
-  const result = await PayoutRequestService.approvePayoutRequest(requestId);
+  const result = await PayoutRequestServices.approvePayoutRequest(requestId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -46,7 +46,7 @@ const approvePayoutRequest = catchAsync(async (req: Request, res: Response) => {
 const rejectPayoutRequest = catchAsync(async (req: Request, res: Response) => {
   const { requestId } = req.params;
 
-  const result = await PayoutRequestService.rejectPayoutRequest(requestId);
+  const result = await PayoutRequestServices.rejectPayoutRequest(requestId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -60,7 +60,8 @@ const getPayoutRequestDetail = catchAsync(
   async (req: Request, res: Response) => {
     const { requestId } = req.params;
 
-    const result = await PayoutRequestService.getPayoutRequestDetail(requestId);
+    const result =
+      await PayoutRequestServices.getPayoutRequestDetail(requestId);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -75,7 +76,7 @@ const getVendorPayoutHistory = catchAsync(
   async (req: Request, res: Response) => {
     const vendorId = req.user.vendorId as unknown as Types.ObjectId;
 
-    const result = await PayoutRequestService.getVendorPayoutHistory(vendorId);
+    const result = await PayoutRequestServices.getVendorPayoutHistory(vendorId);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -86,7 +87,7 @@ const getVendorPayoutHistory = catchAsync(
   },
 );
 
-export const PayoutRequestController = {
+export const PayoutRequestControllers = {
   createPayoutRequest,
   getAllPayoutRequests,
   approvePayoutRequest,

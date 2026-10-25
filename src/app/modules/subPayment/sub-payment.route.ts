@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SubPaymentsController } from './sub-payment.controller';
+import { SubPaymentsControllers } from './sub-payment.controller';
 import auth from '../../middlewares/auth';
 
 const router = Router();
@@ -7,21 +7,21 @@ const router = Router();
 router.post(
   '/sub-checkout',
   auth('vendor'),
-  SubPaymentsController.subPayCheckout,
+  SubPaymentsControllers.subPayCheckout,
 );
 
-router.get('/confirm-sub-payment', SubPaymentsController.confirmPayment);
+router.get('/confirm-sub-payment', SubPaymentsControllers.confirmPayment);
 
-router.post('/webhook', SubPaymentsController.webhook);
+router.post('/webhook', SubPaymentsControllers.webhook);
 
-router.get('/cancel', SubPaymentsController.cancelPayment);
+router.get('/cancel', SubPaymentsControllers.cancelPayment);
 
-router.get('/', auth('admin'), SubPaymentsController.getAllSubPayment);
+router.get('/', auth('admin'), SubPaymentsControllers.getAllSubPayment);
 
 router.get(
   '/vendor',
   auth('vendor', 'team_member'),
-  SubPaymentsController.getSubPaymentByVendor,
+  SubPaymentsControllers.getSubPaymentByVendor,
 );
 
 export const SubPaymentsRoutes = router;

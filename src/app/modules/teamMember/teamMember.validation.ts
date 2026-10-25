@@ -80,7 +80,7 @@ const updateTeamMemberValidationSchema = z.object({
     .strict(),
 });
 
-export const TeamMemberValidation = {
+export const TeamMemberValidations = {
   createTeamMemberValidationSchema,
   updateTeamMemberValidationSchema,
 };

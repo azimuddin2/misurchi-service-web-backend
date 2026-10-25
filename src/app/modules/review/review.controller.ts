@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { ReviewService } from './review.service';
+import { ReviewServices } from './review.service';
 
 const createReview = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.createReviewIntoDB(req.body);
+  const result = await ReviewServices.createReviewIntoDB(req.body);
 
   sendResponse(res, {
     statusCode: 201,
@@ -15,7 +15,7 @@ const createReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.getAllReviewsFromDB(req.query);
+  const result = await ReviewServices.getAllReviewsFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -27,7 +27,7 @@ const getAllReviews = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllReviewByUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.getAllReviewByUserFromDB(req.query);
+  const result = await ReviewServices.getAllReviewByUserFromDB(req.query);
 
   sendResponse(res, {
     statusCode: 200,
@@ -38,7 +38,7 @@ const getAllReviewByUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const ReviewController = {
+export const ReviewControllers = {
   createReview,
   getAllReviews,
   getAllReviewByUser,

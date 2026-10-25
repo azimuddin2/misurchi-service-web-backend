@@ -17,7 +17,6 @@ const multyUploader = async (
     const uploadedUrls: string[] = [];
     const imagePaths: string[] = [];
 
-    console.log('-------------------------', Array.isArray(files));
     if (files?.length) {
       for (const file of files) {
         const ext = file.originalname.split('.').pop();

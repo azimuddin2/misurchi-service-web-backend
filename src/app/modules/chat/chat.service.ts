@@ -1,5 +1,4 @@
 import httpStatus from 'http-status';
-
 import { IChat } from './chat.interface';
 import { User } from '../user/user.model';
 import { Message } from '../message/message.model';
@@ -7,7 +6,6 @@ import AppError from '../../errors/AppError';
 import Chat from './chat.model';
 import { deleteFromS3 } from '../../utils/awsS3FileUploader';
 
-// Create chat
 const createChat = async (payload: IChat) => {
   const user1 = await User.findById(payload?.participants[0]);
 
@@ -36,7 +34,6 @@ const createChat = async (payload: IChat) => {
   return result;
 };
 
-// Get my chat list
 const getMyChatList = async (userId: string) => {
   const chats = await Chat.find({
     participants: { $all: userId },
@@ -79,7 +76,6 @@ const getMyChatList = async (userId: string) => {
   return data;
 };
 
-// Get chat by ID
 const getChatById = async (id: string) => {
   const result = await Chat.findById(id).populate({
     path: 'participants',
@@ -92,7 +88,6 @@ const getChatById = async (id: string) => {
   return result;
 };
 
-// Update chat list
 const updateChatList = async (id: string, payload: Partial<IChat>) => {
   const result = await Chat.findByIdAndUpdate(id, payload, { new: true });
   if (!result) {
@@ -101,7 +96,6 @@ const updateChatList = async (id: string, payload: Partial<IChat>) => {
   return result;
 };
 
-// Delete chat list
 const deleteChatList = async (id: string) => {
   await deleteFromS3(`images/messages/${id}`);
   const result = await Chat.findByIdAndDelete(id);
@@ -111,7 +105,7 @@ const deleteChatList = async (id: string) => {
   return result;
 };
 
-export const chatService = {
+export const chatServices = {
   createChat,
   getMyChatList,
   getChatById,

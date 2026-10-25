@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
-import { chatService } from './chat.service';
+import { chatServices } from './chat.service';
 import sendResponse from '../../utils/sendResponse';
 
 const createChat = catchAsync(async (req: Request, res: Response) => {
-  const chat = await chatService.createChat(req.body);
+  const chat = await chatServices.createChat(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -14,7 +14,7 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMyChatList = catchAsync(async (req: Request, res: Response) => {
-  const result = await chatService.getMyChatList(req.user.userId);
+  const result = await chatServices.getMyChatList(req.user.userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -24,7 +24,7 @@ const getMyChatList = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getChatById = catchAsync(async (req: Request, res: Response) => {
-  const result = await chatService.getChatById(req.params.id);
+  const result = await chatServices.getChatById(req.params.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -34,7 +34,7 @@ const getChatById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateChat = catchAsync(async (req: Request, res: Response) => {
-  const result = await chatService.updateChatList(req.params.id, req.body);
+  const result = await chatServices.updateChatList(req.params.id, req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -44,7 +44,7 @@ const updateChat = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteChat = catchAsync(async (req: Request, res: Response) => {
-  const result = await chatService.deleteChatList(req.params.id);
+  const result = await chatServices.deleteChatList(req.params.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -53,7 +53,7 @@ const deleteChat = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const chatController = {
+export const chatControllers = {
   createChat,
   getMyChatList,
   getChatById,

@@ -36,6 +36,6 @@ const createImageUploadIntoDB = async (files: UploadedFiles) => {
   }
 };
 
-export const ImageUploadService = {
+export const ImageUploadServices = {
   createImageUploadIntoDB,
 };

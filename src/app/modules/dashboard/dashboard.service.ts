@@ -287,7 +287,7 @@ const getAdminEarningOverviewChart = async (year?: number) => {
   };
 };
 
-export const DashboardService = {
+export const DashboardServices = {
   getAdminDashboardStats,
   getAdminUserOverviewChart,
   getAdminEarningOverviewChart,
