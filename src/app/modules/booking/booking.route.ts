@@ -39,7 +39,7 @@ router.get('/:id', BookingControllers.getBookingById);
 
 router.patch(
   '/:id',
-  auth('user'),
+  auth('user', 'vendor', 'team_member'),
   validateRequest(BookingValidations.updateBookingValidationSchema),
   BookingControllers.updateBookingRequest,
 );

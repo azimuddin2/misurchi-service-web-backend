@@ -257,10 +257,8 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
     throw new AppError(400, 'Invalid Vendor ID');
   }
 
-  // Base query
   const bookingQuery: any = { vendor, isDeleted: false };
 
-  // Filter by date if provided
   if (date) {
     bookingQuery.date = date;
   }
@@ -268,7 +266,6 @@ const getBookingAppointmentsFromDB = async (query: Record<string, unknown>) => {
   // Apply other dynamic filters
   Object.assign(bookingQuery, filters);
 
-  // Fetch bookings
   const bookings = await Booking.find(bookingQuery)
     .sort({ date: -1 })
     .populate({
@@ -331,12 +328,10 @@ const getBookingsByAssignedMember = async (query: Record<string, unknown>) => {
 };
 
 const getBookingsByEmailFromDB = async (email: string) => {
-  // ✅ Validate email
   if (!email) {
     throw new AppError(400, 'Email is required');
   }
 
-  // ✅ Fetch bookings directly by email
   const bookings = await Booking.find({ email, isDeleted: false })
     .populate({
       path: 'vendor',

@@ -196,7 +196,7 @@ const requestOrderIntoDB = async (
       console.log(imgsArray);
 
       try {
-        payload.images = await uploadManyToS3(imgsArray); // Await all uploads before proceeding
+        payload.images = await uploadManyToS3(imgsArray);
       } catch (error) {
         throw new AppError(500, 'Image upload failed');
       }
